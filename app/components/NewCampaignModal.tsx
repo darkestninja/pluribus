@@ -78,7 +78,9 @@ export function NewCampaignModal({ onClose, onCreate }: NewCampaignModalProps) {
                     key={tmpl.id}
                     onClick={() => {
                       setSelectedTemplate(tmpl.id);
-                      if (tmpl.id !== "blank") {
+                      if (tmpl.id === "blank") {
+                        setWorkflowId("");
+                      } else {
                         setName(tmpl.name);
                         setDesc(tmpl.brief);
                         setWorkflowId(tmpl.workflowId);

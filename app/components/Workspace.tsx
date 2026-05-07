@@ -100,6 +100,7 @@ export function Workspace({ workspaceId: _id, prefill, onBack }: WorkspaceProps)
 
   // Render settings
   const [selectedRatio, setSelectedRatio] = useState(initialRatio);
+  const [ratioLocked, setRatioLocked] = useState(initialWorkflow?.aspectRatioLocked ?? false);
   const [selectedRes, setSelectedRes] = useState<typeof RESOLUTIONS[number]>("4K");
   const [colorTreatment, setColorTreatment] = useState("Colour");
   const [qualityTier, setQualityTier] = useState(2);
@@ -146,7 +147,8 @@ export function Workspace({ workspaceId: _id, prefill, onBack }: WorkspaceProps)
   const [showRail, setShowRail] = useState(false);
 
   const athlete = athletes.find(a => a.id === selectedAthleteId);
-  const preset  = getRecipes().find(r => r.id === selectedPreset);
+  const recipes = getRecipes();
+  const preset  = recipes.find(r => r.id === selectedPreset);
   const tier    = QUALITY_TIERS[qualityTier];
   const isTemplate = promptMode === "template" && !!preset;
   const selectedModel = IMAGE_MODELS.find(m => m.id === selectedModelId) ?? DEFAULT_IMAGE_MODEL;
@@ -207,6 +209,7 @@ export function Workspace({ workspaceId: _id, prefill, onBack }: WorkspaceProps)
     setPromptMode("template");
     if (wf.defaultLook)  setColorTreatment(wf.defaultLook);
     if (wf.aspectRatio)  setSelectedRatio(wf.aspectRatio);
+    setRatioLocked(wf.aspectRatioLocked ?? false);
     setCustomNotes("");
     setShowStylePicker(false);
   };
@@ -695,11 +698,12 @@ export function Workspace({ workspaceId: _id, prefill, onBack }: WorkspaceProps)
             )}
 
             {/* Aspect ratio — dropdown */}
-            <Section label="Aspect ratio">
+            <Section label={ratioLocked ? "Aspect ratio (locked by recipe)" : "Aspect ratio"}>
               <select
                 value={selectedRatio}
                 onChange={e => setSelectedRatio(e.target.value)}
-                className="w-full h-9 px-3 bg-card border border-border rounded-md text-sm focus-visible:border-accent text-foreground"
+                disabled={ratioLocked}
+                className={`w-full h-9 px-3 bg-card border border-border rounded-md text-sm text-foreground ${ratioLocked ? "opacity-60 cursor-not-allowed" : "focus-visible:border-accent"}`}
               >
                 {RATIO_OPTIONS.map(r => (
                   <option key={r.value} value={r.value}>{r.label}</option>
@@ -1117,7 +1121,7 @@ export function Workspace({ workspaceId: _id, prefill, onBack }: WorkspaceProps)
               </button>
             </div>
             <div className="p-4 space-y-2">
-              {getRecipes().map(recipe => (
+              {recipes.map(recipe => (
                 <button
                   key={recipe.id}
                   onClick={() => switchStyle(recipe.id)}
@@ -1144,7 +1148,7 @@ export function Workspace({ workspaceId: _id, prefill, onBack }: WorkspaceProps)
                 </button>
               ))}
               <button
-                onClick={() => { setPromptMode("custom"); setSelectedPreset(""); setShowStylePicker(false); }}
+                onClick={() => { setPromptMode("custom"); setSelectedPreset(""); setRatioLocked(false); setShowStylePicker(false); }}
                 className="w-full flex items-center gap-3 p-3 rounded-lg border-2 border-dashed border-border hover:border-accent/40 text-left transition-all"
               >
                 <div className="size-16 rounded-md bg-secondary flex items-center justify-center shrink-0">

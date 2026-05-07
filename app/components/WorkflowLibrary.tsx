@@ -20,12 +20,19 @@ const CATEGORIES: { id: CategoryFilter; label: string }[] = [
 
 const ASPECT_RATIOS = ["1:1", "4:5", "3:4", "9:16", "16:9", "2:3", "4:3"];
 
+const RECIPE_THUMBNAILS = [
+  "/workflows/wf-1.jpg", "/workflows/wf-2.jpg", "/workflows/wf-3.jpg",
+  "/workflows/wf-4.jpg", "/workflows/wf-5.jpg", "/workflows/wf-6.jpg",
+  "/workflows/wf-7.jpg", "/workflows/wf-8.jpg",
+];
+
 type ListField = "styleRules" | "lightingRules" | "compositionRules" | "qualityChecklist" | "tags";
 
 function emptyForm() {
   return {
     name: "", description: "", useCase: "", prompt: "", negativePrompt: "",
     aspectRatio: "4:5", aspectRatioLocked: false,
+    thumbnail: RECIPE_THUMBNAILS[0],
     styleRules: [] as string[], lightingRules: [] as string[],
     compositionRules: [] as string[], qualityChecklist: [] as string[], tags: [] as string[],
   };
@@ -70,6 +77,7 @@ export function WorkflowLibrary({ onSelectWorkflow }: WorkflowLibraryProps) {
     setEditingId(r.id);
     setForm({ name: r.name, description: r.description, useCase: r.useCase, prompt: r.prompt,
       negativePrompt: r.negativePrompt, aspectRatio: r.aspectRatio, aspectRatioLocked: r.aspectRatioLocked,
+      thumbnail: r.thumbnail,
       styleRules: [...r.styleRules], lightingRules: [...r.lightingRules],
       compositionRules: [...r.compositionRules], qualityChecklist: [...r.qualityChecklist], tags: [...r.tags] });
     setModalTab("basic"); setShowModal(true);
@@ -79,6 +87,7 @@ export function WorkflowLibrary({ onSelectWorkflow }: WorkflowLibraryProps) {
     setEditingId(null);
     setForm({ name: `${r.name} (copy)`, description: r.description, useCase: r.useCase, prompt: r.prompt,
       negativePrompt: r.negativePrompt, aspectRatio: r.aspectRatio, aspectRatioLocked: r.aspectRatioLocked,
+      thumbnail: r.thumbnail,
       styleRules: [...r.styleRules], lightingRules: [...r.lightingRules],
       compositionRules: [...r.compositionRules], qualityChecklist: [...r.qualityChecklist], tags: [...r.tags] });
     setModalTab("basic"); setShowModal(true);
@@ -95,7 +104,7 @@ export function WorkflowLibrary({ onSelectWorkflow }: WorkflowLibraryProps) {
       updateRecipe(editingId, { ...form });
     } else {
       const now = new Date().toISOString();
-      addRecipe({ id: `recipe-${Date.now()}`, ...form, thumbnail: "/workflows/wf-1.jpg",
+      addRecipe({ id: `recipe-${Date.now()}`, ...form,
         isSystemRecipe: false, createdAt: now, updatedAt: now });
     }
     refresh(); closeModal();
@@ -351,6 +360,17 @@ export function WorkflowLibrary({ onSelectWorkflow }: WorkflowLibraryProps) {
                     placeholder="e.g. colour tones, HDR glow, watermark, bad anatomy, text overlay…"
                     rows={3}
                     className="w-full px-3 py-2 bg-card border border-border rounded-md text-sm resize-none focus:outline-none focus:border-accent placeholder:text-muted-foreground/50" />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs text-muted-foreground">Thumbnail</label>
+                  <div className="grid grid-cols-8 gap-1.5">
+                    {RECIPE_THUMBNAILS.map(src => (
+                      <button key={src} onClick={() => setForm(f => ({ ...f, thumbnail: src }))}
+                        className={`relative aspect-square rounded-md overflow-hidden border-2 transition-colors ${form.thumbnail === src ? "border-accent" : "border-transparent hover:border-border"}`}>
+                        <img src={src} alt="" className="w-full h-full object-cover" />
+                      </button>
+                    ))}
+                  </div>
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-xs text-muted-foreground">Tags</label>
