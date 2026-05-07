@@ -95,11 +95,18 @@ Candidates from backlog (choose next):
 |---|---|---|---|
 | All product data is localStorage-only | Critical | Mitigated | Phase 2 complete — Supabase write-through live; localStorage kept as offline fallback |
 | fal.ai CDN URLs expire → approved assets 404 | High | Mitigated | Assets now mirrored to Supabase Storage non-blocking post-generation; originalFalUrl kept as debug field |
-| No HTTPS — credentials over HTTP | Critical | Active | certbot on server; P0 user action |
+| No HTTPS — credentials over HTTP | Critical | Resolved | certbot/Let's Encrypt live |
 | localStorage size limit (base64 images) | High | Mitigated | Reference images uploaded to Supabase Storage on capture; base64 kept as offline fallback |
-| Supabase schema not migrated | High | Blocking | Manual user action required |
-| LibraryPage onMarkRejectedLikeness not wired | Medium | Known bug | Sprint 9 fix |
+| Supabase schema not migrated | High | Resolved | All Phase 1–3 tables created |
+| /storage/ nginx rule missing → silent mirror failures | High | Fixed | Sprint 12 — nginx rule added |
+| SSRF via /storage/mirror falUrl parameter | High | Fixed | Sprint 12 — fal.ai CDN domain allowlist enforced in proxy |
+| Date.now() IDs — collision in same-millisecond batch | High | Fixed | Sprint 12 — replaced with crypto.randomUUID() slice |
+| Review token race condition — duplicate insert | Medium | Fixed | Sprint 12 — insert-first, SELECT on 23505 unique violation |
+| Supabase write-through fire-and-forget — no retry on failure | Medium | Active | Failed writes logged to console; retry queue not yet implemented |
+| stale reviewerUserId in CampaignWorkspace | Medium | Active | userId read once on mount; session changes not tracked |
+| ReviewPage fetch has no AbortController | Low | Active | Orphaned request if component unmounts; no data loss |
 | App.tsx / CampaignWorkspace.tsx / AthleteLibrary.tsx monolith size | Medium | Mitigated | CampaignWorkspace split into CampaignGallery + CampaignSidebar; AthleteLibrary has CaptureTab + IdentityTab sub-components |
 | CommandPalette ViewType manual sync | Low | Active | Keep in sync when adding views |
 | No server-side credit enforcement | Medium | Active | Credits are UI-only; bypass possible |
 | Resemblance scorer accuracy | Known | Active | Phase 2: replace histogram with ML classifier |
+| No structured logging / error tracking in proxy | Medium | Active | Console.warn only; no visibility into production errors |

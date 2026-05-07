@@ -252,7 +252,7 @@ export function Workspace({ workspaceId: _id, prefill, onBack }: WorkspaceProps)
     setScoringState("idle");
 
     const enrichedPrompt = buildPrompt();
-    const queueId = `q-${Date.now()}`;
+    const queueId = `q-${crypto.randomUUID().slice(0, 8)}`;
     const modelLabel = mode === "image" ? selectedModel.label : tier.label;
 
     pushQueueItem({

@@ -160,7 +160,7 @@ export function CampaignWorkspace({ project, onBack, onLaunchStudio }: CampaignW
     if (batchRunning) return;
     setBatchRunning(true);
     const athlete = getAthletes().find(a => a.id === output.athleteId);
-    const runId = `run-${Date.now()}-regen`;
+    const runId = `run-${crypto.randomUUID().slice(0, 8)}-regen`;
     const basePrompt = wf?.prompt ?? `Professional sports portrait. Athlete: ${athlete?.name ?? "athlete"}`;
     const constraints = getProfilePromptConstraints(athlete ? getAthleteProfile(athlete.id) : null);
     const prompt = athlete ? buildCampaignPrompt(basePrompt, athlete, constraints, brief || undefined) : basePrompt;
@@ -214,7 +214,7 @@ export function CampaignWorkspace({ project, onBack, onLaunchStudio }: CampaignW
 
     for (let i = 0; i < projAthletes.length; i++) {
       const athlete = projAthletes[i];
-      const runId = `run-${Date.now()}-${athlete.id}`;
+      const runId = `run-${crypto.randomUUID().slice(0, 8)}-${athlete.id}`;
       const basePrompt = wf?.prompt ?? `Professional sports portrait. Athlete: ${athlete.name}.`;
       const constraints = getProfilePromptConstraints(getAthleteProfile(athlete.id));
       const enrichedPrompt = buildCampaignPrompt(basePrompt, athlete, constraints, brief || undefined);
@@ -236,7 +236,7 @@ export function CampaignWorkspace({ project, onBack, onLaunchStudio }: CampaignW
         });
 
         if (result[0]?.url) {
-          const outId = `out-${Date.now()}-${athlete.id}`;
+          const outId = `out-${crypto.randomUUID().slice(0, 8)}-${athlete.id}`;
           const falUrl = result[0].url;
           const out: CampaignOutput = {
             id: outId, campaignId: project.id, athleteId: athlete.id, runId,
@@ -294,7 +294,7 @@ export function CampaignWorkspace({ project, onBack, onLaunchStudio }: CampaignW
       toast({ type: "error", title: "Cannot re-run", body: "Athlete no longer found." });
       return;
     }
-    const newRunId = `run-${Date.now()}-rerun`;
+    const newRunId = `run-${crypto.randomUUID().slice(0, 8)}-rerun`;
     addRun({
       id: newRunId, campaignId: project.id, athleteId: athlete.id, athleteName: athlete.name,
       recipeId: run.recipeId, recipeName: run.recipeName, prompt: run.prompt,
@@ -310,7 +310,7 @@ export function CampaignWorkspace({ project, onBack, onLaunchStudio }: CampaignW
         aspectRatio: run.aspectRatio, seed: run.seed, onSeed: s => { capturedSeed = s; },
       });
       if (result[0]?.url) {
-        const outId = `out-${Date.now()}-rerun`;
+        const outId = `out-${crypto.randomUUID().slice(0, 8)}-rerun`;
         const falUrl = result[0].url;
         addCampaignOutput({
           id: outId, campaignId: project.id, athleteId: athlete.id, runId: newRunId,
