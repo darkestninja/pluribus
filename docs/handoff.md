@@ -1,104 +1,67 @@
 # Handoff
 
-## Handoff — 2025-05-07 (Sprint 2)
+## Handoff — 2025-05-07 (Sprint 3)
 
 ### Completed This Session
-- Sprint 1: Identity Profiles (committed)
-- Sprint 2: Creative Recipes (complete)
+- Sprint 1: Identity Profiles ✓
+- Sprint 2: Creative Recipes ✓
+- Sprint 3: Generation Run Records ✓
 
-### Sprint 2 — What Was Built
-
-**`data/recipes.ts`** (new file):
-- `Recipe` interface: id, name, description, thumbnail, useCase, prompt, negativePrompt, aspectRatio, aspectRatioLocked, defaultLook, styleRules[], lightingRules[], compositionRules[], qualityChecklist[], tags[], isSystemRecipe, createdAt, updatedAt
-- 6 seed recipes with full prompts, negative prompts, checklists:
-  - Classic Noir (wf-noir-studio) — B&W studio portrait
-  - Daylight Action (wf-daylight-action) — golden hour sports
-  - Victory Podium (wf-victory-podium) — celebration coverage
-  - Editorial Portrait (recipe-editorial-portrait) — press kit headshot
-  - Social Vertical (recipe-social-vertical) — 9:16 social content
-  - Athlete Announcement (recipe-announcement) — broadcast-ready portrait
+### Sprint 3 — What Was Built
 
 **`app/lib/store.ts`** additions:
-- `seedRecipes` imported from data/recipes.ts
-- All users get recipes seeded on first login (not just demo account)
-- `getRecipes()`, `addRecipe()`, `updateRecipe()`, `deleteRecipe()` — full CRUD
+- `Run` interface: id, campaignId, athleteId, athleteName, recipeId, recipeName, prompt, negativePrompt, seed, model, aspectRatio, status ("running" | "complete" | "failed"), startedAt, completedAt, assetIds[], errorMessage
+- `getRuns(campaignId)` → `Run[]`
+- `addRun(run)` → void
+- `updateRun(campaignId, id, patch)` → void
+- Storage key: `plb_{userId}_runs_{campaignId}`
+- `CampaignOutput.runId?: string` — added optional field (backward compatible)
 
-**`app/lib/generate.ts`**:
-- `negativePrompt?: string` added to `GenerateImageParams`
-- Passed to fal.ai as `negative_prompt` field in request input
+**`app/lib/generate.ts`** additions:
+- `onSeed?: (seed: number) => void` added to `GenerateImageParams`
+- Calls `onSeed(data.seed)` after fal.ai returns, before returning images
+- Zero breaking changes to existing callers
 
-**`app/components/WorkflowLibrary.tsx`** (complete rewrite):
-- Loads recipes from `getRecipes()` (not static import)
-- Browse with category filter and search
-- Recipe cards: thumbnail, name, useCase, tags, neg/checklist badge indicators
-- Expandable checklist preview per card
-- Clone button (all recipes) → opens create modal pre-filled
-- Edit button (user recipes only)
-- Delete button with confirmation (user recipes only)
-- System recipes marked with shield icon, cannot be deleted
-- Create/edit modal with 3 tabs: Basic (name, prompt, negative, tags), Creative Direction (style/lighting/composition rules), Checklist (quality checklist items)
-- All recipes persist to localStorage
-
-**`app/components/NewCampaignModal.tsx`**:
-- Removed `workflowTemplates` import
-- "Recipe" section now calls `getRecipes()` to show all recipes
-
-**`app/components/CampaignWorkspace.tsx`**:
-- Imports `getRecipes`, `CheckSquare`
-- `wf = getRecipes().find(r => r.id === project.workflowId)` (was workflowTemplates.find)
-- `runBatch` passes `negativePrompt: wf?.negativePrompt`
-- `regenerateOutput` passes `negativePrompt: wf?.negativePrompt`
-- Right sidebar: "Recipe" section (was "Style")
-- Right sidebar: "Review checklist" section shows qualityChecklist items as visual checkboxes
-
-**`app/components/Workspace.tsx`**:
-- Removed `workflowTemplates` import
-- All 4 usages replaced with `getRecipes()` / `.find(r => r.id === ...)`
-- `generateImage` call now passes `negativePrompt: preset?.negativePrompt`
-
-**`app/App.tsx`**:
-- Nav label "Styles" → "Recipes"
-- PAGE_TITLES "Styles" → "Recipes"
-
-### In Progress
-
-Nothing — Sprint 2 complete and build verified clean.
+**`app/components/CampaignWorkspace.tsx`** — full rewrite:
+- `runs` state, loaded via `getRuns(project.id)`
+- `refreshRuns()` callback alongside `refreshOutputs()`
+- `activeRunFilter` state — click a run to filter gallery to its outputs
+- `detailOutput` state — click image to open asset detail modal
+- `runBatch`: creates Run before generation, captures seed via `onSeed`, links `outId` to run, updates run to `complete` or `failed`
+- `regenerateOutput`: creates Run, captures seed, updates output with `runId`
+- `rerunFromRun(run)`: creates new Run using stored prompt + seed from a previous run
+- Run history section in right sidebar: status dot, relative time, output count, seed, re-run button, click to filter
+- Asset detail panel: full image, subject, generation lineage table (recipe, model, seed, aspect ratio, time), full prompt, full negative prompt, approve/reject/regen actions
+- Pre-Sprint-3 outputs (no runId) show info message in detail panel
+- Stop propagation on action buttons so clicking image doesn't trigger actions
 
 ### Immediate Next Action
 
-Begin Sprint 3: Generation Run Records.
+Sprint 4: Approval System Expansion.
 
-1. Create `Run` interface in `data/runs.ts` (or `app/lib/store.ts`)
-2. Add `getRuns`, `addRun`, `updateRun` to store.ts
-3. In `generate.ts` / `CampaignWorkspace.tsx`: create run record before generation, update on completion
-4. In `CampaignWorkspace.tsx`: run history panel (timeline/list)
-5. Add `runId` field to `CampaignOutput`
-6. Asset detail view: show run ID, prompt, seed, model, resemblance score
+1. Extend `CampaignOutput.status` to `"pending" | "approved" | "rejected" | "flagged" | "needs_revision"`
+2. Add `comments: { text, author, createdAt }[]` to `CampaignOutput`
+3. Add reviewer attribution (from Supabase session user name)
+4. Add comment input + history in asset detail panel
+5. Remove or implement the fake "Share" button
 
-### Modified Files (Sprint 2)
-
-- `data/recipes.ts` — new file
-- `app/lib/store.ts` — recipe CRUD + seeding
-- `app/lib/generate.ts` — negativePrompt param
-- `app/components/WorkflowLibrary.tsx` — complete rewrite
-- `app/components/NewCampaignModal.tsx` — use getRecipes()
-- `app/components/CampaignWorkspace.tsx` — recipe lookup, checklist, negative prompt
-- `app/components/Workspace.tsx` — recipe source swap + negativePrompt
-- `app/App.tsx` — nav label rename
+### Modified Files (Sprint 3)
+- `app/lib/store.ts` — Run interface, CRUD, runId on CampaignOutput
+- `app/lib/generate.ts` — onSeed callback
+- `app/components/CampaignWorkspace.tsx` — run tracking, history sidebar, asset detail panel
 
 ### Important Notes
-
-- Seed recipes use same IDs as old workflow templates (wf-noir-studio, etc.). Existing projects continue to resolve their workflowId correctly — no data migration needed.
-- `data/workflows.ts` is now superseded but left in place for safety. It is no longer imported by any component. Can be removed in Sprint 6 cleanup.
-- `negative_prompt` field is passed to fal.ai for all models. If a model doesn't support it, fal.ai ignores the field gracefully.
-- Recipe seeding for all users uses `plb_{userId}_recipes_seeded` flag to run only once per user.
+- Run records are stored per campaign: `plb_{userId}_runs_{campaignId}`. If campaignId changes this data is separate.
+- Seed capture depends on fal.ai returning a `seed` field. Some models may not return it — seed shows "random" in that case.
+- The `rerunFromRun` function passes the captured seed back to fal.ai via `generateImage({ seed: run.seed })`. FLUX models should produce similar (not identical) output with the same seed — consistency depends on model version.
+- Pre-existing outputs (before this sprint) have no `runId`. The asset detail panel handles this with a graceful info message.
+- `relativeTime()` helper formats ISO timestamps as "just now", "5m ago", etc. — no external dependency.
 
 ### Active Blockers (User Action Required)
-
 - Supabase schema migration not run
 - Demo account not created in Supabase
 - Site URL not set in Supabase
 
 ### Risks Introduced
-
-- None significant. Build passes clean. No generation flow changes other than adding optional negativePrompt.
+- CampaignWorkspace is now ~400 lines. Asset detail panel adds complexity but is self-contained.
+- Run records per campaign could accumulate. No cleanup mechanism yet. Consider capping at 50 runs per campaign in Sprint 5.

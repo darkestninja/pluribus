@@ -130,6 +130,8 @@ export interface GenerateImageParams {
   numInferenceSteps?: number;
   seed?: number;
   onProgress?: (pct: number) => void;
+  /** Called with the seed used by fal.ai — useful for recording run lineage. */
+  onSeed?: (seed: number) => void;
 }
 
 export interface GenerateVideoParams {
@@ -164,6 +166,7 @@ export async function generateImage(params: GenerateImageParams): Promise<Genera
     numInferenceSteps,
     seed,
     onProgress,
+    onSeed,
   } = params;
 
   const model = IMAGE_MODELS.find(m => m.id === modelId) ?? DEFAULT_IMAGE_MODEL;
@@ -198,7 +201,9 @@ export async function generateImage(params: GenerateImageParams): Promise<Genera
     },
   });
 
-  return (result.data as FalImageResponse).images;
+  const data = result.data as FalImageResponse;
+  if (data.seed !== undefined && onSeed) onSeed(data.seed);
+  return data.images;
 }
 
 // ── Video generation ──────────────────────────────────────────────────────

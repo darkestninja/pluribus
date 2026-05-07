@@ -183,11 +183,44 @@ export function removeQueueItem(id: string): QueueItem[] {
   return list;
 }
 
+// ---------- generation runs ----------
+export interface Run {
+  id: string;
+  campaignId: string;
+  athleteId?: string;
+  athleteName?: string;
+  recipeId?: string;
+  recipeName?: string;
+  prompt: string;
+  negativePrompt?: string;
+  seed?: number;
+  model: string;
+  aspectRatio: string;
+  status: "running" | "complete" | "failed";
+  startedAt: string;
+  completedAt?: string;
+  assetIds: string[];
+  errorMessage?: string;
+}
+
+export function getRuns(campaignId: string): Run[] {
+  return load<Run[]>(`runs_${campaignId}`, []);
+}
+export function addRun(run: Run): void {
+  const list = [run, ...getRuns(run.campaignId)];
+  save(`runs_${run.campaignId}`, list);
+}
+export function updateRun(campaignId: string, id: string, patch: Partial<Run>): void {
+  const list = getRuns(campaignId).map(r => r.id === id ? { ...r, ...patch } : r);
+  save(`runs_${campaignId}`, list);
+}
+
 // ---------- campaign outputs ----------
 export interface CampaignOutput {
   id: string;
   campaignId: string;
   athleteId?: string;
+  runId?: string;
   url: string;
   status: "pending" | "approved" | "rejected";
   resemblanceScore?: number;
