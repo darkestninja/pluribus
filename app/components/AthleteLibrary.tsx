@@ -343,6 +343,303 @@ export function AthleteLibrary({ preSelectedAthleteId, onAthleteDeselect, onGene
   const capturedFaceCount = FACE_ANGLES.filter(a => athlete ? getAngleDataUrl(a.key, athlete) : false).length;
   const capturedBodyCount = BODY_ANGLES.filter(a => athlete ? getAngleDataUrl(a.key, athlete) : false).length;
 
+  // ── CaptureTab ─────────────────────────────────────────────────────────────
+  function CaptureTab() {
+    if (!athlete) return null;
+    return (
+      <div className="space-y-6">
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Face captures</h3>
+            <span className="text-xs text-muted-foreground">{capturedFaceCount} / {FACE_ANGLES.length}</span>
+          </div>
+          {(() => {
+            const r = athleteReadiness(athlete);
+            return (
+              <div className="flex items-center justify-between bg-card border border-border rounded-md px-3 py-2">
+                <div>
+                  <p className="text-xs font-medium">Likeness quality</p>
+                  <p className="text-xs text-muted-foreground">Upload more angles to improve</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-lg font-semibold" style={{ color: r.color }}>{r.pct}%</p>
+                  <p className="text-xs text-muted-foreground">{r.label}</p>
+                </div>
+              </div>
+            );
+          })()}
+          <div className="grid grid-cols-5 gap-1.5">
+            {FACE_ANGLES.map(a => <AngleSlot key={a.key} angleKey={a.key} label={a.label} aspectRatio="3/4" />)}
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Full body</h3>
+            <span className="text-xs text-muted-foreground">{capturedBodyCount} / {BODY_ANGLES.length}</span>
+          </div>
+          <div className="grid grid-cols-4 gap-1.5">
+            {BODY_ANGLES.map(a => <AngleSlot key={a.key} angleKey={a.key} label={a.label} aspectRatio="2/5" />)}
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Tattoos & marks</h3>
+            <button onClick={() => setAddingMark(true)}
+              className="h-6 px-2 rounded text-xs text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors flex items-center gap-1">
+              <Plus className="size-3" strokeWidth={2} /> Add
+            </button>
+          </div>
+          {addingMark && (
+            <div className="bg-card border border-border rounded-md p-3 space-y-2">
+              <input type="text" placeholder="Description (e.g. Eagle tattoo)" value={newMark.description}
+                onChange={e => setNewMark(m => ({ ...m, description: e.target.value }))}
+                className="w-full h-8 px-3 bg-secondary border border-border rounded text-sm placeholder:text-muted-foreground focus-visible:border-accent" autoFocus />
+              <input type="text" placeholder="Location (e.g. Left forearm)" value={newMark.location}
+                onChange={e => setNewMark(m => ({ ...m, location: e.target.value }))}
+                className="w-full h-8 px-3 bg-secondary border border-border rounded text-sm placeholder:text-muted-foreground focus-visible:border-accent" />
+              <div className="flex gap-2">
+                <button onClick={handleAddMark}
+                  className="flex-1 h-7 rounded bg-foreground text-background text-xs font-medium hover:bg-foreground/90 transition-colors">Save</button>
+                <button onClick={() => { setAddingMark(false); setNewMark({ description: "", location: "" }); }}
+                  className="h-7 px-3 rounded bg-secondary text-muted-foreground hover:text-foreground text-xs transition-colors">Cancel</button>
+              </div>
+            </div>
+          )}
+          {(profile?.tattoos ?? []).length === 0 && !addingMark ? (
+            <p className="text-xs text-muted-foreground py-2">No marks recorded</p>
+          ) : (
+            <div className="space-y-1.5">
+              {(profile?.tattoos ?? []).map(mark => (
+                <div key={mark.id} className="flex items-start justify-between gap-2 py-2 px-3 bg-card border border-border rounded-md">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-foreground">{mark.description}</p>
+                    {mark.location && <p className="text-xs text-muted-foreground">{mark.location}</p>}
+                  </div>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <button onClick={() => toggleMarkVisible(mark.id)}
+                      title={mark.visible ? "Visible in prompts" : "Hidden from prompts"}
+                      className={`text-xs px-1.5 py-0.5 rounded transition-colors ${mark.visible ? "text-emerald-500 bg-emerald-500/10" : "text-muted-foreground/50 bg-secondary"}`}>
+                      {mark.visible ? "visible" : "hidden"}
+                    </button>
+                    <button onClick={() => handleRemoveMark(mark.id)}
+                      className="p-0.5 hover:bg-secondary rounded transition-colors">
+                      <X className="size-3 text-muted-foreground" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1.5">
+              <ShieldCheck className="size-3.5 text-muted-foreground" strokeWidth={1.75} />
+              <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Do-not-change rules</h3>
+            </div>
+            <button onClick={() => setAddingConstraint(true)}
+              className="h-6 px-2 rounded text-xs text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors flex items-center gap-1">
+              <Plus className="size-3" strokeWidth={2} /> Add
+            </button>
+          </div>
+          <p className="text-xs text-muted-foreground/70">These constraints are automatically injected into every generation prompt for this athlete.</p>
+          {addingConstraint && (
+            <div className="bg-card border border-border rounded-md p-3 space-y-2">
+              <input type="text" placeholder="e.g. never remove chest tattoo"
+                value={newConstraint} onChange={e => setNewConstraint(e.target.value)}
+                onKeyDown={e => { if (e.key === "Enter") handleAddConstraint(); if (e.key === "Escape") { setAddingConstraint(false); setNewConstraint(""); } }}
+                className="w-full h-8 px-3 bg-secondary border border-border rounded text-sm placeholder:text-muted-foreground focus-visible:border-accent" autoFocus />
+              <div className="flex gap-2">
+                <button onClick={handleAddConstraint}
+                  className="flex-1 h-7 rounded bg-foreground text-background text-xs font-medium hover:bg-foreground/90 transition-colors">Save</button>
+                <button onClick={() => { setAddingConstraint(false); setNewConstraint(""); }}
+                  className="h-7 px-3 rounded bg-secondary text-muted-foreground hover:text-foreground text-xs transition-colors">Cancel</button>
+              </div>
+            </div>
+          )}
+          {(profile?.doNotChange ?? []).length === 0 && !addingConstraint ? (
+            <p className="text-xs text-muted-foreground py-1">No constraints set</p>
+          ) : (
+            <div className="space-y-1">
+              {(profile?.doNotChange ?? []).map((rule, idx) => (
+                <div key={idx} className="flex items-center justify-between gap-2 px-3 py-2 bg-card border border-border rounded-md">
+                  <p className="text-xs text-foreground flex-1">{rule}</p>
+                  <button onClick={() => handleRemoveConstraint(idx)}
+                    className="p-0.5 hover:bg-secondary rounded transition-colors shrink-0">
+                    <X className="size-3 text-muted-foreground" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {athlete.status !== "pending" && (
+          <div className="bg-card border border-border rounded-md overflow-hidden">
+            {[
+              { label: "Capture date", value: athlete.captureDate ?? "—" },
+              { label: "Profile version", value: `v${profile?.version ?? 0}` },
+            ].map((row, i, arr) => (
+              <div key={row.label} className={`flex justify-between px-3 py-2 text-sm ${i < arr.length - 1 ? "border-b border-border" : ""}`}>
+                <span className="text-muted-foreground">{row.label}</span>
+                <span className="font-medium text-foreground">{row.value}</span>
+              </div>
+            ))}
+          </div>
+        )}
+        {athlete.status === "pending" && (
+          <div className="bg-secondary border border-border rounded-md p-6 text-center space-y-3">
+            <Clock className="size-8 mx-auto text-muted-foreground" />
+            <p className="text-sm font-medium text-foreground">No captures yet</p>
+            <p className="text-xs text-muted-foreground">Click any angle slot above to upload</p>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // ── IdentityTab ─────────────────────────────────────────────────────────────
+  function IdentityTab() {
+    if (!athlete) return null;
+    return (
+      <div className="space-y-5">
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <h4 className="text-sm font-semibold text-foreground">Physical features</h4>
+            {!editingAttrs && (
+              <button onClick={() => openEditAttrs(athlete)}
+                className="h-6 px-2 rounded text-xs text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors flex items-center gap-1">
+                <Pencil className="size-3" strokeWidth={1.75} /> Edit
+              </button>
+            )}
+          </div>
+          {editingAttrs ? (
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-2">
+                {([
+                  { label: "Name", key: "name" },
+                  { label: "Sport", key: "sport" },
+                  { label: "Event", key: "event" },
+                  { label: "Height", key: "height", placeholder: "5'8\"" },
+                  { label: "Weight", key: "weight", placeholder: "145 lbs" },
+                  { label: "Build", key: "build", placeholder: "Athletic" },
+                  { label: "Skin tone", key: "skinTone", placeholder: "Medium brown" },
+                  { label: "Hair", key: "hair", placeholder: "Long braids" },
+                  { label: "Age", key: "age", type: "number" },
+                  { label: "Country", key: "country", placeholder: "USA" },
+                ] as { label: string; key: keyof typeof attrForm; placeholder?: string; type?: string }[]).map(({ label, key, placeholder, type }) => (
+                  <div key={key}>
+                    <p className="text-[10px] text-muted-foreground mb-1">{label}</p>
+                    <input
+                      type={type ?? "text"}
+                      placeholder={placeholder}
+                      value={attrForm[key]}
+                      onChange={e => setAttrForm(f => ({ ...f, [key]: e.target.value }))}
+                      className="w-full h-8 px-2.5 bg-secondary border border-border rounded text-xs focus:outline-none focus:border-accent placeholder:text-muted-foreground/50"
+                    />
+                  </div>
+                ))}
+              </div>
+              <div className="flex gap-2">
+                <button onClick={saveAttrs}
+                  className="flex-1 h-8 rounded bg-foreground text-background text-xs font-medium hover:bg-foreground/90 transition-colors flex items-center justify-center gap-1.5">
+                  <Check className="size-3" strokeWidth={2.5} /> Save
+                </button>
+                <button onClick={() => setEditingAttrs(false)}
+                  className="h-8 px-3 rounded bg-secondary text-muted-foreground hover:text-foreground text-xs transition-colors">
+                  Cancel
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="bg-card border border-border rounded-md overflow-hidden text-sm">
+              {[
+                { label: "Height", value: athlete.height },
+                { label: "Weight", value: athlete.weight },
+                { label: "Build", value: athlete.build },
+                { label: "Skin tone", value: athlete.skinTone },
+                { label: "Hair", value: athlete.hair },
+                { label: "Age", value: athlete.age?.toString() },
+                { label: "Country", value: athlete.country },
+              ].filter(r => r.value).map((row, i, arr) => (
+                <div key={row.label} className={`flex justify-between px-3 py-2 ${i < arr.length - 1 ? "border-b border-border" : ""}`}>
+                  <span className="text-muted-foreground">{row.label}</span>
+                  <span className="font-medium text-foreground">{row.value}</span>
+                </div>
+              ))}
+              {![athlete.height, athlete.weight, athlete.build, athlete.skinTone, athlete.hair, athlete.age, athlete.country].some(Boolean) && (
+                <p className="text-xs text-muted-foreground px-3 py-2">No physical attributes set</p>
+              )}
+            </div>
+          )}
+        </div>
+
+        <div className="space-y-2">
+          <h4 className="text-sm font-semibold text-foreground">Identity notes</h4>
+          <p className="text-xs text-muted-foreground/70">Scars, distinguishing marks, expression preferences, wardrobe constraints.</p>
+          <textarea
+            value={profile?.notes ?? ""}
+            onChange={e => handleNotesChange(e.target.value)}
+            rows={4}
+            placeholder="e.g. Prominent scar on left chin — keep visible. Prefers slightly squinted expression. Chest tattoo must always be visible."
+            className="w-full px-3 py-2 bg-card border border-border rounded-md text-sm resize-none focus:outline-none focus:border-accent placeholder:text-muted-foreground/50"
+          />
+        </div>
+
+        {(profile?.approvedLikeness ?? []).length > 0 && (
+          <div className="space-y-2">
+            <h4 className="text-sm font-semibold text-foreground">Approved likeness</h4>
+            <p className="text-xs text-muted-foreground/70">Mark outputs as likeness references from the campaign workspace.</p>
+            <div className="grid grid-cols-2 gap-2">
+              {(profile?.approvedLikeness ?? []).map((item, idx) => (
+                <div key={idx} className="rounded-md overflow-hidden border border-border bg-card group relative">
+                  <div className="aspect-[3/4] overflow-hidden relative">
+                    <img src={item.imageUrl} alt="Approved likeness" className="w-full h-full object-cover" />
+                    <button
+                      onClick={() => handleRemoveLikeness(idx)}
+                      title="Remove reference"
+                      className="absolute top-1.5 right-1.5 size-5 rounded-full bg-black/60 hover:bg-red-500/90 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all"
+                    >
+                      <X className="size-2.5 text-white" strokeWidth={2.5} />
+                    </button>
+                  </div>
+                  <p className="text-[10px] text-muted-foreground p-2 truncate">{item.context || "Approved reference"}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {(profile?.rejectedLikeness ?? []).length > 0 && (
+          <div className="space-y-2">
+            <h4 className="text-sm font-semibold text-foreground">Rejected likeness</h4>
+            <p className="text-xs text-muted-foreground/70">Outputs marked as identity mismatches — used to guide future generation.</p>
+            <div className="grid grid-cols-2 gap-2">
+              {(profile?.rejectedLikeness as RejectedLikeness[] ?? []).map((item, idx) => (
+                <div key={idx} className="rounded-md overflow-hidden border border-red-500/30 bg-red-500/5 group relative">
+                  <div className="aspect-[3/4] overflow-hidden relative">
+                    <img src={item.imageUrl} alt="Rejected likeness" className="w-full h-full object-cover opacity-70" />
+                    <button
+                      onClick={() => handleRemoveRejectedLikeness(idx)}
+                      title="Remove"
+                      className="absolute top-1.5 right-1.5 size-5 rounded-full bg-black/60 hover:bg-red-500/90 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all"
+                    >
+                      <X className="size-2.5 text-white" strokeWidth={2.5} />
+                    </button>
+                  </div>
+                  <p className="text-[10px] text-red-400/80 p-2 truncate">{item.context || "Rejected reference"}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="h-full flex bg-background">
       <div className="flex-1 overflow-y-auto">
@@ -483,309 +780,10 @@ export function AthleteLibrary({ preSelectedAthleteId, onAthleteDeselect, onGene
           <div className="p-5">
 
             {/* ── CAPTURE TAB ── */}
-            {activeTab === "capture" && (
-              <div className="space-y-6">
-                {/* Face captures */}
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Face captures</h3>
-                    <span className="text-xs text-muted-foreground">{capturedFaceCount} / {FACE_ANGLES.length}</span>
-                  </div>
-                  {(() => {
-                    const r = athleteReadiness(athlete);
-                    return (
-                      <div className="flex items-center justify-between bg-card border border-border rounded-md px-3 py-2">
-                        <div>
-                          <p className="text-xs font-medium">Likeness quality</p>
-                          <p className="text-xs text-muted-foreground">Upload more angles to improve</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-lg font-semibold" style={{ color: r.color }}>{r.pct}%</p>
-                          <p className="text-xs text-muted-foreground">{r.label}</p>
-                        </div>
-                      </div>
-                    );
-                  })()}
-                  <div className="grid grid-cols-5 gap-1.5">
-                    {FACE_ANGLES.map(a => <AngleSlot key={a.key} angleKey={a.key} label={a.label} aspectRatio="3/4" />)}
-                  </div>
-                </div>
-
-                {/* Body captures */}
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Full body</h3>
-                    <span className="text-xs text-muted-foreground">{capturedBodyCount} / {BODY_ANGLES.length}</span>
-                  </div>
-                  <div className="grid grid-cols-4 gap-1.5">
-                    {BODY_ANGLES.map(a => <AngleSlot key={a.key} angleKey={a.key} label={a.label} aspectRatio="2/5" />)}
-                  </div>
-                </div>
-
-                {/* Tattoos & marks */}
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Tattoos & marks</h3>
-                    <button onClick={() => setAddingMark(true)}
-                      className="h-6 px-2 rounded text-xs text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors flex items-center gap-1">
-                      <Plus className="size-3" strokeWidth={2} /> Add
-                    </button>
-                  </div>
-
-                  {addingMark && (
-                    <div className="bg-card border border-border rounded-md p-3 space-y-2">
-                      <input type="text" placeholder="Description (e.g. Eagle tattoo)" value={newMark.description}
-                        onChange={e => setNewMark(m => ({ ...m, description: e.target.value }))}
-                        className="w-full h-8 px-3 bg-secondary border border-border rounded text-sm placeholder:text-muted-foreground focus-visible:border-accent" autoFocus />
-                      <input type="text" placeholder="Location (e.g. Left forearm)" value={newMark.location}
-                        onChange={e => setNewMark(m => ({ ...m, location: e.target.value }))}
-                        className="w-full h-8 px-3 bg-secondary border border-border rounded text-sm placeholder:text-muted-foreground focus-visible:border-accent" />
-                      <div className="flex gap-2">
-                        <button onClick={handleAddMark}
-                          className="flex-1 h-7 rounded bg-foreground text-background text-xs font-medium hover:bg-foreground/90 transition-colors">Save</button>
-                        <button onClick={() => { setAddingMark(false); setNewMark({ description: "", location: "" }); }}
-                          className="h-7 px-3 rounded bg-secondary text-muted-foreground hover:text-foreground text-xs transition-colors">Cancel</button>
-                      </div>
-                    </div>
-                  )}
-
-                  {(profile?.tattoos ?? []).length === 0 && !addingMark ? (
-                    <p className="text-xs text-muted-foreground py-2">No marks recorded</p>
-                  ) : (
-                    <div className="space-y-1.5">
-                      {(profile?.tattoos ?? []).map(mark => (
-                        <div key={mark.id} className="flex items-start justify-between gap-2 py-2 px-3 bg-card border border-border rounded-md">
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm text-foreground">{mark.description}</p>
-                            {mark.location && <p className="text-xs text-muted-foreground">{mark.location}</p>}
-                          </div>
-                          <div className="flex items-center gap-1 shrink-0">
-                            <button onClick={() => toggleMarkVisible(mark.id)}
-                              title={mark.visible ? "Visible in prompts" : "Hidden from prompts"}
-                              className={`text-xs px-1.5 py-0.5 rounded transition-colors ${mark.visible ? "text-emerald-500 bg-emerald-500/10" : "text-muted-foreground/50 bg-secondary"}`}>
-                              {mark.visible ? "visible" : "hidden"}
-                            </button>
-                            <button onClick={() => handleRemoveMark(mark.id)}
-                              className="p-0.5 hover:bg-secondary rounded transition-colors">
-                              <X className="size-3 text-muted-foreground" />
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {/* Do-not-change constraints */}
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1.5">
-                      <ShieldCheck className="size-3.5 text-muted-foreground" strokeWidth={1.75} />
-                      <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Do-not-change rules</h3>
-                    </div>
-                    <button onClick={() => setAddingConstraint(true)}
-                      className="h-6 px-2 rounded text-xs text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors flex items-center gap-1">
-                      <Plus className="size-3" strokeWidth={2} /> Add
-                    </button>
-                  </div>
-                  <p className="text-xs text-muted-foreground/70">These constraints are automatically injected into every generation prompt for this athlete.</p>
-
-                  {addingConstraint && (
-                    <div className="bg-card border border-border rounded-md p-3 space-y-2">
-                      <input type="text" placeholder="e.g. never remove chest tattoo"
-                        value={newConstraint} onChange={e => setNewConstraint(e.target.value)}
-                        onKeyDown={e => { if (e.key === "Enter") handleAddConstraint(); if (e.key === "Escape") { setAddingConstraint(false); setNewConstraint(""); } }}
-                        className="w-full h-8 px-3 bg-secondary border border-border rounded text-sm placeholder:text-muted-foreground focus-visible:border-accent" autoFocus />
-                      <div className="flex gap-2">
-                        <button onClick={handleAddConstraint}
-                          className="flex-1 h-7 rounded bg-foreground text-background text-xs font-medium hover:bg-foreground/90 transition-colors">Save</button>
-                        <button onClick={() => { setAddingConstraint(false); setNewConstraint(""); }}
-                          className="h-7 px-3 rounded bg-secondary text-muted-foreground hover:text-foreground text-xs transition-colors">Cancel</button>
-                      </div>
-                    </div>
-                  )}
-
-                  {(profile?.doNotChange ?? []).length === 0 && !addingConstraint ? (
-                    <p className="text-xs text-muted-foreground py-1">No constraints set</p>
-                  ) : (
-                    <div className="space-y-1">
-                      {(profile?.doNotChange ?? []).map((rule, idx) => (
-                        <div key={idx} className="flex items-center justify-between gap-2 px-3 py-2 bg-card border border-border rounded-md">
-                          <p className="text-xs text-foreground flex-1">{rule}</p>
-                          <button onClick={() => handleRemoveConstraint(idx)}
-                            className="p-0.5 hover:bg-secondary rounded transition-colors shrink-0">
-                            <X className="size-3 text-muted-foreground" />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {/* Metadata */}
-                {athlete.status !== "pending" && (
-                  <div className="bg-card border border-border rounded-md overflow-hidden">
-                    {[
-                      { label: "Capture date", value: athlete.captureDate ?? "—" },
-                      { label: "Profile version", value: `v${profile?.version ?? 0}` },
-                    ].map((row, i, arr) => (
-                      <div key={row.label} className={`flex justify-between px-3 py-2 text-sm ${i < arr.length - 1 ? "border-b border-border" : ""}`}>
-                        <span className="text-muted-foreground">{row.label}</span>
-                        <span className="font-medium text-foreground">{row.value}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {athlete.status === "pending" && (
-                  <div className="bg-secondary border border-border rounded-md p-6 text-center space-y-3">
-                    <Clock className="size-8 mx-auto text-muted-foreground" />
-                    <p className="text-sm font-medium text-foreground">No captures yet</p>
-                    <p className="text-xs text-muted-foreground">Click any angle slot above to upload</p>
-                  </div>
-                )}
-              </div>
-            )}
+            {activeTab === "capture" && <CaptureTab />}
 
             {/* ── IDENTITY TAB ── */}
-            {activeTab === "identity" && (
-              <div className="space-y-5">
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <h4 className="text-sm font-semibold text-foreground">Physical features</h4>
-                    {!editingAttrs && (
-                      <button onClick={() => openEditAttrs(athlete)}
-                        className="h-6 px-2 rounded text-xs text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors flex items-center gap-1">
-                        <Pencil className="size-3" strokeWidth={1.75} /> Edit
-                      </button>
-                    )}
-                  </div>
-
-                  {editingAttrs ? (
-                    <div className="space-y-3">
-                      <div className="grid grid-cols-2 gap-2">
-                        {([
-                          { label: "Name", key: "name" },
-                          { label: "Sport", key: "sport" },
-                          { label: "Event", key: "event" },
-                          { label: "Height", key: "height", placeholder: "5'8\"" },
-                          { label: "Weight", key: "weight", placeholder: "145 lbs" },
-                          { label: "Build", key: "build", placeholder: "Athletic" },
-                          { label: "Skin tone", key: "skinTone", placeholder: "Medium brown" },
-                          { label: "Hair", key: "hair", placeholder: "Long braids" },
-                          { label: "Age", key: "age", type: "number" },
-                          { label: "Country", key: "country", placeholder: "USA" },
-                        ] as { label: string; key: keyof typeof attrForm; placeholder?: string; type?: string }[]).map(({ label, key, placeholder, type }) => (
-                          <div key={key}>
-                            <p className="text-[10px] text-muted-foreground mb-1">{label}</p>
-                            <input
-                              type={type ?? "text"}
-                              placeholder={placeholder}
-                              value={attrForm[key]}
-                              onChange={e => setAttrForm(f => ({ ...f, [key]: e.target.value }))}
-                              className="w-full h-8 px-2.5 bg-secondary border border-border rounded text-xs focus:outline-none focus:border-accent placeholder:text-muted-foreground/50"
-                            />
-                          </div>
-                        ))}
-                      </div>
-                      <div className="flex gap-2">
-                        <button onClick={saveAttrs}
-                          className="flex-1 h-8 rounded bg-foreground text-background text-xs font-medium hover:bg-foreground/90 transition-colors flex items-center justify-center gap-1.5">
-                          <Check className="size-3" strokeWidth={2.5} /> Save
-                        </button>
-                        <button onClick={() => setEditingAttrs(false)}
-                          className="h-8 px-3 rounded bg-secondary text-muted-foreground hover:text-foreground text-xs transition-colors">
-                          Cancel
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="bg-card border border-border rounded-md overflow-hidden text-sm">
-                      {[
-                        { label: "Height", value: athlete.height },
-                        { label: "Weight", value: athlete.weight },
-                        { label: "Build", value: athlete.build },
-                        { label: "Skin tone", value: athlete.skinTone },
-                        { label: "Hair", value: athlete.hair },
-                        { label: "Age", value: athlete.age?.toString() },
-                        { label: "Country", value: athlete.country },
-                      ].filter(r => r.value).map((row, i, arr) => (
-                        <div key={row.label} className={`flex justify-between px-3 py-2 ${i < arr.length - 1 ? "border-b border-border" : ""}`}>
-                          <span className="text-muted-foreground">{row.label}</span>
-                          <span className="font-medium text-foreground">{row.value}</span>
-                        </div>
-                      ))}
-                      {![athlete.height, athlete.weight, athlete.build, athlete.skinTone, athlete.hair, athlete.age, athlete.country].some(Boolean) && (
-                        <p className="text-xs text-muted-foreground px-3 py-2">No physical attributes set</p>
-                      )}
-                    </div>
-                  )}
-                </div>
-
-                {/* Identity notes */}
-                <div className="space-y-2">
-                  <h4 className="text-sm font-semibold text-foreground">Identity notes</h4>
-                  <p className="text-xs text-muted-foreground/70">Scars, distinguishing marks, expression preferences, wardrobe constraints.</p>
-                  <textarea
-                    value={profile?.notes ?? ""}
-                    onChange={e => handleNotesChange(e.target.value)}
-                    rows={4}
-                    placeholder="e.g. Prominent scar on left chin — keep visible. Prefers slightly squinted expression. Chest tattoo must always be visible."
-                    className="w-full px-3 py-2 bg-card border border-border rounded-md text-sm resize-none focus:outline-none focus:border-accent placeholder:text-muted-foreground/50"
-                  />
-                </div>
-
-                {/* Approved likeness */}
-                {(profile?.approvedLikeness ?? []).length > 0 && (
-                  <div className="space-y-2">
-                    <h4 className="text-sm font-semibold text-foreground">Approved likeness</h4>
-                    <p className="text-xs text-muted-foreground/70">Mark outputs as likeness references from the campaign workspace.</p>
-                    <div className="grid grid-cols-2 gap-2">
-                      {(profile?.approvedLikeness ?? []).map((item, idx) => (
-                        <div key={idx} className="rounded-md overflow-hidden border border-border bg-card group relative">
-                          <div className="aspect-[3/4] overflow-hidden relative">
-                            <img src={item.imageUrl} alt="Approved likeness" className="w-full h-full object-cover" />
-                            <button
-                              onClick={() => handleRemoveLikeness(idx)}
-                              title="Remove reference"
-                              className="absolute top-1.5 right-1.5 size-5 rounded-full bg-black/60 hover:bg-red-500/90 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all"
-                            >
-                              <X className="size-2.5 text-white" strokeWidth={2.5} />
-                            </button>
-                          </div>
-                          <p className="text-[10px] text-muted-foreground p-2 truncate">{item.context || "Approved reference"}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Rejected likeness */}
-                {(profile?.rejectedLikeness ?? []).length > 0 && (
-                  <div className="space-y-2">
-                    <h4 className="text-sm font-semibold text-foreground">Rejected likeness</h4>
-                    <p className="text-xs text-muted-foreground/70">Outputs marked as identity mismatches — used to guide future generation.</p>
-                    <div className="grid grid-cols-2 gap-2">
-                      {(profile?.rejectedLikeness as RejectedLikeness[] ?? []).map((item, idx) => (
-                        <div key={idx} className="rounded-md overflow-hidden border border-red-500/30 bg-red-500/5 group relative">
-                          <div className="aspect-[3/4] overflow-hidden relative">
-                            <img src={item.imageUrl} alt="Rejected likeness" className="w-full h-full object-cover opacity-70" />
-                            <button
-                              onClick={() => handleRemoveRejectedLikeness(idx)}
-                              title="Remove"
-                              className="absolute top-1.5 right-1.5 size-5 rounded-full bg-black/60 hover:bg-red-500/90 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all"
-                            >
-                              <X className="size-2.5 text-white" strokeWidth={2.5} />
-                            </button>
-                          </div>
-                          <p className="text-[10px] text-red-400/80 p-2 truncate">{item.context || "Rejected reference"}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
+            {activeTab === "identity" && <IdentityTab />}
 
             {/* ── BRAND TAB ── */}
             {activeTab === "brand" && (

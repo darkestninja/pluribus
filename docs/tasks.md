@@ -2,10 +2,11 @@
 
 ## Immediate (P0 — User Action Required)
 
-- [ ] Add HTTPS — certbot/Let's Encrypt on the server (credentials currently sent over HTTP)
-- [ ] Run Supabase schema migration in SQL editor
-- [ ] Create demo account: daniel@pluribus.ai / demo123 in Supabase Auth > Users
-- [ ] Set Site URL: http://185.158.132.125 in Supabase Auth > URL Configuration
+- [x] Add HTTPS — certbot/Let's Encrypt — **done**, site is at https://pluribus.danielasiegbunam.com
+- [ ] Run Supabase schema migration in SQL editor — paste SQL from `cd /opt/pluribus-proxy && bun run migrate.ts`
+- [ ] Run Storage RLS policies in SQL editor — printed by `bun run setup.ts` (run from proxy dir)
+- [x] Create demo account: daniel@pluribus.ai — already exists in Supabase Auth
+- [ ] Set Site URL + redirect URL in Supabase Auth > URL Configuration (https://pluribus.danielasiegbunam.com)
 
 ## Current Sprint — Sprint 11 (TBD)
 
@@ -82,7 +83,7 @@ Candidates from backlog (choose next):
 | localStorage size limit (base64 images) | High | Active | Supabase Storage migration planned |
 | Supabase schema not migrated | High | Blocking | Manual user action required |
 | LibraryPage onMarkRejectedLikeness not wired | Medium | Known bug | Sprint 9 fix |
-| App.tsx / CampaignWorkspace.tsx / AthleteLibrary.tsx monolith size | Medium | Active | Refactor before Sprint 11 |
+| App.tsx / CampaignWorkspace.tsx / AthleteLibrary.tsx monolith size | Medium | Mitigated | CampaignWorkspace split into CampaignGallery + CampaignSidebar; AthleteLibrary has CaptureTab + IdentityTab sub-components |
 | CommandPalette ViewType manual sync | Low | Active | Keep in sync when adding views |
 | No server-side credit enforcement | Medium | Active | Credits are UI-only; bypass possible |
 | Resemblance scorer accuracy | Known | Active | Phase 2: replace histogram with ML classifier |
