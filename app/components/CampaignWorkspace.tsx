@@ -14,6 +14,9 @@ import {
   type CampaignOutput, type Run, type OutputStatus, type OutputComment, type ExportLogEntry,
 } from "../lib/store";
 import { downloadZip } from "../lib/utils";
+import {
+  mirrorAsset, generatedAssetPath, likenessPath, ASSETS_BUCKET,
+} from "../lib/storage";
 import type { ApprovedLikeness } from "../../data/athletes";
 import { AssetDetailPanel } from "./AssetDetailPanel";
 import { CampaignGallery, type OutputTab } from "./CampaignGallery";
@@ -53,6 +56,7 @@ export function CampaignWorkspace({ project, onBack, onLaunchStudio }: CampaignW
   const [detailOutput, setDetailOutput]   = useState<CampaignOutput | null>(null);
   const [showAllRuns, setShowAllRuns]     = useState(false);
   const [reviewerEmail, setReviewerEmail] = useState("");
+  const [reviewerUserId, setReviewerUserId] = useState("");
   const [brief, setBrief]               = useState(() => getProjects().find(p => p.id === project.id)?.brief ?? project.brief ?? "");
   const [briefSaved, setBriefSaved]     = useState(false);
   const briefSavedTimerRef              = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -71,6 +75,7 @@ export function CampaignWorkspace({ project, onBack, onLaunchStudio }: CampaignW
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user?.email) setReviewerEmail(session.user.email);
+      if (session?.user?.id)    setReviewerUserId(session.user.id);
     });
   }, []);
 
@@ -175,11 +180,23 @@ export function CampaignWorkspace({ project, onBack, onLaunchStudio }: CampaignW
         prompt, negativePrompt: wf?.negativePrompt || undefined,
         aspectRatio: wf?.aspectRatio ?? "9:16", onSeed: s => { capturedSeed = s; },
       });
-      const patch = { url: result[0].url, status: "pending" as OutputStatus, runId };
+      const falUrl = result[0].url;
+      const patch = { url: falUrl, originalFalUrl: falUrl, status: "pending" as OutputStatus, runId };
       updateCampaignOutput(output.id, patch);
       setOutputs(prev => prev.map(o => o.id === output.id ? { ...o, ...patch } : o));
       if (detailOutput?.id === output.id) setDetailOutput(prev => prev ? { ...prev, ...patch } : null);
       updateRun(project.id, runId, { status: "complete", seed: capturedSeed, completedAt: new Date().toISOString(), assetIds: [output.id] });
+      if (reviewerUserId) {
+        mirrorAsset(falUrl, generatedAssetPath(reviewerUserId, project.id, output.id))
+          .then(stored => {
+            if (stored?.signedUrl) {
+              updateCampaignOutput(output.id, { url: stored.signedUrl, storagePath: stored.path });
+              setOutputs(prev => prev.map(o => o.id === output.id ? { ...o, url: stored.signedUrl, storagePath: stored.path } : o));
+              if (detailOutput?.id === output.id) setDetailOutput(prev => prev ? { ...prev, url: stored.signedUrl, storagePath: stored.path } : null);
+            }
+          })
+          .catch(() => {});
+      }
     } catch (err: any) {
       updateRun(project.id, runId, { status: "failed", errorMessage: err?.message, completedAt: new Date().toISOString() });
       toast({ type: "error", title: "Regeneration failed", body: err?.message });
@@ -220,9 +237,10 @@ export function CampaignWorkspace({ project, onBack, onLaunchStudio }: CampaignW
 
         if (result[0]?.url) {
           const outId = `out-${Date.now()}-${athlete.id}`;
+          const falUrl = result[0].url;
           const out: CampaignOutput = {
             id: outId, campaignId: project.id, athleteId: athlete.id, runId,
-            url: result[0].url, status: "pending", createdAt: new Date().toISOString(),
+            url: falUrl, originalFalUrl: falUrl, status: "pending", createdAt: new Date().toISOString(),
           };
           addCampaignOutput(out);
           updateRun(project.id, runId, { status: "complete", seed: capturedSeed, completedAt: new Date().toISOString(), assetIds: [outId] });
@@ -230,8 +248,20 @@ export function CampaignWorkspace({ project, onBack, onLaunchStudio }: CampaignW
           refreshOutputs();
           refreshRuns();
 
+          // Mirror to permanent storage non-blocking — updates url once done
+          if (reviewerUserId) {
+            mirrorAsset(falUrl, generatedAssetPath(reviewerUserId, project.id, outId))
+              .then(stored => {
+                if (stored?.signedUrl) {
+                  updateCampaignOutput(outId, { url: stored.signedUrl, storagePath: stored.path });
+                  setOutputs(prev => prev.map(o => o.id === outId ? { ...o, url: stored.signedUrl, storagePath: stored.path } : o));
+                }
+              })
+              .catch(() => {});
+          }
+
           if (athlete.image) {
-            computeResemblanceScore(athlete.image, result[0].url)
+            computeResemblanceScore(athlete.image, falUrl)
               .then(score => {
                 if (score !== null) {
                   setOutputs(prev => prev.map(o => o.id === outId ? { ...o, resemblanceScore: score } : o));
@@ -281,13 +311,24 @@ export function CampaignWorkspace({ project, onBack, onLaunchStudio }: CampaignW
       });
       if (result[0]?.url) {
         const outId = `out-${Date.now()}-rerun`;
+        const falUrl = result[0].url;
         addCampaignOutput({
           id: outId, campaignId: project.id, athleteId: athlete.id, runId: newRunId,
-          url: result[0].url, status: "pending", createdAt: new Date().toISOString(),
+          url: falUrl, originalFalUrl: falUrl, status: "pending", createdAt: new Date().toISOString(),
         });
         updateRun(project.id, newRunId, { status: "complete", seed: capturedSeed, completedAt: new Date().toISOString(), assetIds: [outId] });
         refreshOutputs();
         toast({ type: "success", title: "Re-run complete", body: `New output for ${athlete.name}` });
+        if (reviewerUserId) {
+          mirrorAsset(falUrl, generatedAssetPath(reviewerUserId, project.id, outId))
+            .then(stored => {
+              if (stored?.signedUrl) {
+                updateCampaignOutput(outId, { url: stored.signedUrl, storagePath: stored.path });
+                refreshOutputs();
+              }
+            })
+            .catch(() => {});
+        }
       }
     } catch (err: any) {
       updateRun(project.id, newRunId, { status: "failed", errorMessage: err?.message, completedAt: new Date().toISOString() });
@@ -310,6 +351,22 @@ export function CampaignWorkspace({ project, onBack, onLaunchStudio }: CampaignW
     const profile = existing ?? createEmptyProfile(athlete.id);
     saveAthleteProfile({ ...profile, approvedLikeness: [...profile.approvedLikeness, entry], version: profile.version + 1, updatedAt: new Date().toISOString() });
     toast({ type: "success", title: "Likeness reference saved", body: `Added to ${athlete.name}'s identity profile` });
+    // Mirror the source URL to the approved-likeness path in storage (non-blocking)
+    const srcUrl = output.originalFalUrl ?? output.url;
+    if (reviewerUserId && srcUrl && !srcUrl.startsWith("data:")) {
+      mirrorAsset(srcUrl, likenessPath(reviewerUserId, athlete.id, "approved", output.id))
+        .then(stored => {
+          if (stored?.signedUrl) {
+            // Patch the entry with the permanent URL
+            const p = getAthleteProfile(athlete.id);
+            if (p) {
+              const updated = p.approvedLikeness.map(e => e.imageUrl === entry.imageUrl ? { ...e, imageUrl: stored.signedUrl } : e);
+              saveAthleteProfile({ ...p, approvedLikeness: updated, version: p.version + 1, updatedAt: new Date().toISOString() });
+            }
+          }
+        })
+        .catch(() => {});
+    }
   };
 
   const handleExport = async () => {
@@ -339,13 +396,33 @@ export function CampaignWorkspace({ project, onBack, onLaunchStudio }: CampaignW
 
   const handleMarkRejectedLikeness = (output: CampaignOutput) => {
     if (!output.athleteId) return;
+    const athlete = getAthletes().find(a => a.id === output.athleteId);
     addRejectedLikeness(output.athleteId, {
       imageUrl: output.url,
       context: `${wf?.name ?? "Generated"} · ${new Date().toLocaleDateString()}`,
       rejectedAt: new Date().toISOString(),
     });
-    const athlete = getAthletes().find(a => a.id === output.athleteId);
     toast({ type: "success", title: "Rejected likeness saved", body: `Added to ${athlete?.name ?? "athlete"}'s profile as what to avoid` });
+    // Mirror to rejected-likeness path in storage (non-blocking)
+    const srcUrl = output.originalFalUrl ?? output.url;
+    if (reviewerUserId && output.athleteId && srcUrl && !srcUrl.startsWith("data:")) {
+      mirrorAsset(srcUrl, likenessPath(reviewerUserId, output.athleteId, "rejected", output.id))
+        .then(stored => {
+          if (stored?.signedUrl) {
+            // Patch the last rejected entry with the permanent URL
+            const p = getAthleteProfile(output.athleteId!);
+            if (p?.rejectedLikeness?.length) {
+              const entries = [...p.rejectedLikeness];
+              const last = entries[entries.length - 1];
+              if (last.imageUrl === output.url) {
+                entries[entries.length - 1] = { ...last, imageUrl: stored.signedUrl };
+                saveAthleteProfile({ ...p, rejectedLikeness: entries, version: p.version + 1, updatedAt: new Date().toISOString() });
+              }
+            }
+          }
+        })
+        .catch(() => {});
+    }
   };
 
   const detailRun = detailOutput?.runId ? runs.find(r => r.id === detailOutput.runId) : undefined;

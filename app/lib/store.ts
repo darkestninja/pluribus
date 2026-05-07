@@ -265,7 +265,12 @@ export interface CampaignOutput {
   campaignId: string;
   athleteId?: string;
   runId?: string;
+  /** Display URL — Supabase Storage signed URL when available, CDN URL as fallback. */
   url: string;
+  /** Permanent path inside pluribus-assets-private. Set after successful mirror. */
+  storagePath?: string;
+  /** Original fal.ai CDN URL (temporary — kept for debugging/re-mirror). */
+  originalFalUrl?: string;
   status: OutputStatus;
   resemblanceScore?: number;
   createdAt: string;

@@ -4,9 +4,11 @@ export type AngleKey =
 
 export interface CaptureAngle {
   key: AngleKey;
-  dataUrl: string;       // base64 data URL — never a blob URL
+  dataUrl: string;        // base64 data URL — local fallback
   uploadedAt: string;
   notes?: string;
+  storageUrl?: string;    // Supabase Storage signed URL (long-lived) — preferred for display
+  storagePath?: string;   // Storage path for URL refresh
 }
 
 export interface TattooMark {

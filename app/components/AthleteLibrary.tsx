@@ -4,6 +4,8 @@ import type { Athlete, AngleKey, AthleteProfile, CaptureAngle, TattooMark } from
 import { getAthletes, saveAthletes, addAthlete, getCampaignOutputs, getAthleteProfile, saveAthleteProfile, createEmptyProfile, removeRejectedLikeness, type CampaignOutput, type RejectedLikeness } from "../lib/store";
 import { compressToDataUrl } from "../lib/imageUtils";
 import { toast } from "../lib/notifications";
+import { uploadFile, referenceImagePath } from "../lib/storage";
+import { supabase } from "../lib/supabase";
 
 interface AthleteLibraryProps {
   preSelectedAthleteId?: string | null;
@@ -57,6 +59,7 @@ export function AthleteLibrary({ preSelectedAthleteId, onAthleteDeselect, onGene
   const [attrForm, setAttrForm] = useState({ name: "", sport: "", event: "", height: "", weight: "", build: "", skinTone: "", hair: "", age: "", country: "" });
   const [confirmDelete, setConfirmDelete] = useState(false);
 
+  const [userId, setUserId] = useState("");
   const angleFileRef = useRef<HTMLInputElement>(null);
   const [pendingAngle, setPendingAngle] = useState<AngleKey | null>(null);
   const notesSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -70,6 +73,13 @@ export function AthleteLibrary({ preSelectedAthleteId, onAthleteDeselect, onGene
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [photoDataUrl, setPhotoDataUrl] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  // ── Resolve logged-in user ID ──────────────────────────────────────────────
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user?.id) setUserId(session.user.id);
+    });
+  }, []);
 
   // ── Load profile when selected athlete changes ─────────────────────────────
   useEffect(() => {
@@ -161,15 +171,34 @@ export function AthleteLibrary({ preSelectedAthleteId, onAthleteDeselect, onGene
 
   // ── Capture angle upload ───────────────────────────────────────────────────
   const handleAngleUpload = async (angleKey: AngleKey, file: File) => {
-    if (!profile) return;
+    if (!profile || !selectedAthlete) return;
     const dataUrl = await compressToDataUrl(file);
     const newAngle: CaptureAngle = {
-      key: angleKey,
+      key:        angleKey,
       dataUrl,
       uploadedAt: new Date().toISOString(),
     };
     const existing = profile.captureAngles.filter(a => a.key !== angleKey);
     persistProfile({ captureAngles: [...existing, newAngle] }, profile);
+
+    // Also upload to Supabase Storage (non-blocking — dataUrl is the reliable fallback)
+    if (userId) {
+      const storagePath = referenceImagePath(userId, selectedAthlete, angleKey);
+      uploadFile(storagePath, file, file.type || "image/jpeg")
+        .then(stored => {
+          if (stored?.signedUrl) {
+            // Patch the angle entry with permanent storage URL
+            const p = getAthleteProfile(selectedAthlete);
+            if (p) {
+              const angles = p.captureAngles.map(a =>
+                a.key === angleKey ? { ...a, storageUrl: stored.signedUrl, storagePath: stored.path } : a
+              );
+              saveAthleteProfile({ ...p, captureAngles: angles, version: p.version + 1, updatedAt: new Date().toISOString() });
+            }
+          }
+        })
+        .catch(() => {});
+    }
   };
 
   const openAnglePicker = (angle: AngleKey) => {
@@ -299,7 +328,7 @@ export function AthleteLibrary({ preSelectedAthleteId, onAthleteDeselect, onGene
   // ── Helpers ────────────────────────────────────────────────────────────────
   const getAngleDataUrl = (angleKey: AngleKey, athlete: Athlete): string | undefined => {
     const stored = profile?.captureAngles.find(a => a.key === angleKey);
-    if (stored) return stored.dataUrl;
+    if (stored) return stored.storageUrl ?? stored.dataUrl;
     // Fall back to athlete.image for front slots only if it's not a stale blob URL
     if ((angleKey === "face-front" || angleKey === "body-front") && athlete.image && !athlete.image.startsWith("blob:")) {
       return athlete.image;
