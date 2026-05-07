@@ -1,0 +1,302 @@
+import { useState } from "react";
+import { X, Check, RefreshCw, Bookmark, Info, PenLine, Flag, MessageSquare } from "lucide-react";
+import type { Athlete } from "../../data/athletes";
+import type { Run } from "../lib/store";
+import { type CampaignOutput, type OutputStatus, type OutputComment } from "../lib/store";
+
+interface AssetDetailPanelProps {
+  output: CampaignOutput;
+  run?: Run;
+  athlete?: Athlete;
+  reviewerEmail: string;
+  onClose: () => void;
+  onStatusChange: (id: string, status: OutputStatus) => void;
+  onRegenerate: (output: CampaignOutput) => void;
+  onMarkLikeness: (output: CampaignOutput) => void;
+  onCommentAdded: (outputId: string, comment: OutputComment) => void;
+}
+
+function relativeTime(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  return `${Math.floor(hrs / 24)}d ago`;
+}
+
+const STATUS_OPTIONS: { status: OutputStatus; label: string; active: string; inactive: string }[] = [
+  {
+    status: "pending",
+    label: "Pending",
+    active: "bg-secondary text-foreground border-border",
+    inactive: "border-border text-muted-foreground hover:text-foreground hover:bg-secondary",
+  },
+  {
+    status: "approved",
+    label: "Approve",
+    active: "bg-emerald-500/20 text-emerald-400 border-emerald-500/40",
+    inactive: "border-border text-muted-foreground hover:text-emerald-400 hover:border-emerald-500/40",
+  },
+  {
+    status: "needs_revision",
+    label: "Revision",
+    active: "bg-blue-500/20 text-blue-400 border-blue-500/40",
+    inactive: "border-border text-muted-foreground hover:text-blue-400 hover:border-blue-500/40",
+  },
+  {
+    status: "flagged",
+    label: "Flag",
+    active: "bg-amber-500/20 text-amber-400 border-amber-500/40",
+    inactive: "border-border text-muted-foreground hover:text-amber-400 hover:border-amber-500/40",
+  },
+  {
+    status: "rejected",
+    label: "Reject",
+    active: "bg-red-500/20 text-red-400 border-red-500/40",
+    inactive: "border-border text-muted-foreground hover:text-red-400 hover:border-red-500/40",
+  },
+];
+
+const STATUS_BADGE: Record<OutputStatus, string> = {
+  pending:        "bg-secondary text-muted-foreground",
+  approved:       "bg-emerald-500/20 text-emerald-400",
+  needs_revision: "bg-blue-500/20 text-blue-400",
+  flagged:        "bg-amber-500/20 text-amber-400",
+  rejected:       "bg-red-500/20 text-red-400",
+};
+
+const STATUS_LABEL: Record<OutputStatus, string> = {
+  pending:        "Pending",
+  approved:       "Approved",
+  needs_revision: "Needs revision",
+  flagged:        "Flagged",
+  rejected:       "Rejected",
+};
+
+export function AssetDetailPanel({
+  output, run, athlete, reviewerEmail,
+  onClose, onStatusChange, onRegenerate, onMarkLikeness, onCommentAdded,
+}: AssetDetailPanelProps) {
+  const [commentText, setCommentText] = useState("");
+
+  const handlePost = () => {
+    const text = commentText.trim();
+    if (!text) return;
+    onCommentAdded(output.id, {
+      id: `cmt-${Date.now()}`,
+      text,
+      author: reviewerEmail || "unknown",
+      createdAt: new Date().toISOString(),
+    });
+    setCommentText("");
+  };
+
+  const comments = output.comments ?? [];
+
+  return (
+    <div
+      onClick={onClose}
+      className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+    >
+      <div
+        onClick={e => e.stopPropagation()}
+        className="bg-popover border border-border rounded-xl overflow-hidden flex max-w-3xl w-full max-h-[90vh]"
+      >
+        {/* Image */}
+        <div className="w-64 shrink-0 bg-black">
+          <img src={output.url} alt="" className="w-full h-full object-contain" />
+        </div>
+
+        {/* Panel */}
+        <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+
+          {/* Header */}
+          <div className="px-5 py-3.5 flex items-center justify-between border-b border-border shrink-0 gap-3">
+            <div className="flex items-center gap-2 min-w-0 flex-wrap">
+              <span className={`h-5 px-2 rounded-full text-xs font-medium flex items-center shrink-0 ${STATUS_BADGE[output.status]}`}>
+                {STATUS_LABEL[output.status]}
+              </span>
+              {output.resemblanceScore !== undefined && (
+                <span className={`h-5 px-2 rounded-full text-xs font-medium flex items-center shrink-0 ${
+                  output.resemblanceScore >= 75 ? "bg-emerald-500/20 text-emerald-400"
+                    : output.resemblanceScore >= 55 ? "bg-amber-500/20 text-amber-400"
+                    : "bg-red-500/20 text-red-400"
+                }`}>
+                  {output.resemblanceScore}% match
+                </span>
+              )}
+              {output.reviewedBy && output.reviewedAt && (
+                <span className="text-[10px] text-muted-foreground truncate">
+                  by {output.reviewedBy.split("@")[0]} · {relativeTime(output.reviewedAt)}
+                </span>
+              )}
+            </div>
+            <button
+              onClick={onClose}
+              className="size-7 rounded-md flex items-center justify-center hover:bg-secondary shrink-0"
+            >
+              <X className="size-3.5 text-muted-foreground" strokeWidth={1.75} />
+            </button>
+          </div>
+
+          {/* Scroll area */}
+          <div className="flex-1 overflow-y-auto p-5 space-y-5">
+
+            {/* Subject */}
+            {athlete && (
+              <div className="space-y-1.5">
+                <p className="text-xs text-muted-foreground uppercase tracking-wider">Subject</p>
+                <div className="flex items-center gap-2.5">
+                  <img
+                    src={athlete.image.startsWith("blob:") ? "/athletes/placeholder.jpg" : athlete.image}
+                    alt={athlete.name}
+                    className="size-8 rounded-md object-cover"
+                  />
+                  <div>
+                    <p className="text-sm font-medium">{athlete.name}</p>
+                    <p className="text-xs text-muted-foreground">{athlete.sport}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Generation lineage */}
+            {run ? (
+              <>
+                <div className="space-y-1.5">
+                  <p className="text-xs text-muted-foreground uppercase tracking-wider">Generation lineage</p>
+                  <div className="bg-card border border-border rounded-md overflow-hidden text-xs">
+                    {[
+                      { label: "Recipe",       value: run.recipeName ?? "—" },
+                      { label: "Model",        value: run.model },
+                      { label: "Aspect ratio", value: run.aspectRatio },
+                      { label: "Seed",         value: run.seed !== undefined ? String(run.seed) : "random" },
+                      { label: "Generated",    value: relativeTime(run.startedAt) },
+                    ].map((row, i, arr) => (
+                      <div
+                        key={row.label}
+                        className={`flex justify-between px-3 py-2 ${i < arr.length - 1 ? "border-b border-border" : ""}`}
+                      >
+                        <span className="text-muted-foreground">{row.label}</span>
+                        <span className="font-medium truncate ml-4 text-right">{row.value}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <p className="text-xs text-muted-foreground uppercase tracking-wider">Prompt used</p>
+                  <p className="text-xs text-muted-foreground leading-relaxed bg-card border border-border rounded-md p-3">
+                    {run.prompt}
+                  </p>
+                </div>
+
+                {run.negativePrompt && (
+                  <div className="space-y-1.5">
+                    <p className="text-xs text-muted-foreground uppercase tracking-wider">Negative prompt</p>
+                    <p className="text-xs text-muted-foreground leading-relaxed bg-card border border-border rounded-md p-3">
+                      {run.negativePrompt}
+                    </p>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="flex items-center gap-2 text-xs text-muted-foreground bg-card border border-border rounded-md p-3">
+                <Info className="size-3.5 shrink-0" strokeWidth={1.75} />
+                No run record — generated before lineage tracking was added.
+              </div>
+            )}
+
+            {/* Comments */}
+            <div className="space-y-2.5">
+              <p className="text-xs text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                <MessageSquare className="size-3" strokeWidth={1.75} />
+                Comments
+                {comments.length > 0 && (
+                  <span className="ml-auto text-muted-foreground/60">{comments.length}</span>
+                )}
+              </p>
+
+              {comments.length === 0 ? (
+                <p className="text-xs text-muted-foreground">No comments yet.</p>
+              ) : (
+                <div className="space-y-3">
+                  {comments.map(c => (
+                    <div key={c.id} className="flex gap-2.5">
+                      <div className="size-6 rounded-full bg-secondary flex items-center justify-center shrink-0 text-[10px] font-semibold text-muted-foreground">
+                        {c.author.charAt(0).toUpperCase()}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] font-medium truncate">{c.author.split("@")[0]}</span>
+                          <span className="text-[10px] text-muted-foreground shrink-0">{relativeTime(c.createdAt)}</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">{c.text}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="flex gap-2 pt-0.5">
+                <input
+                  type="text"
+                  value={commentText}
+                  onChange={e => setCommentText(e.target.value)}
+                  onKeyDown={e => { if (e.key === "Enter") handlePost(); }}
+                  placeholder="Leave a comment…"
+                  className="flex-1 h-8 px-3 bg-card border border-border rounded-md text-xs focus:outline-none focus:border-accent placeholder:text-muted-foreground/50"
+                />
+                <button
+                  onClick={handlePost}
+                  disabled={!commentText.trim()}
+                  className="h-8 px-3 rounded-md bg-accent hover:bg-accent/90 disabled:opacity-40 text-accent-foreground text-xs font-medium transition-colors"
+                >
+                  Post
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="px-5 pb-5 pt-3 border-t border-border space-y-2 shrink-0">
+            {/* Status selector */}
+            <div className="flex gap-1">
+              {STATUS_OPTIONS.map(opt => (
+                <button
+                  key={opt.status}
+                  onClick={() => onStatusChange(output.id, opt.status)}
+                  className={`flex-1 h-7 rounded-md text-xs font-medium border transition-colors ${
+                    output.status === opt.status ? opt.active : opt.inactive
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Secondary actions */}
+            <div className="flex gap-2">
+              <button
+                onClick={() => { onRegenerate(output); onClose(); }}
+                className="flex-1 h-8 rounded-md bg-card border border-border hover:bg-secondary text-muted-foreground hover:text-foreground text-xs transition-colors flex items-center justify-center gap-1.5"
+              >
+                <RefreshCw className="size-3" strokeWidth={1.75} /> Regenerate
+              </button>
+              {output.athleteId && (
+                <button
+                  onClick={() => onMarkLikeness(output)}
+                  className="h-8 px-3 rounded-md bg-card border border-border hover:bg-secondary text-muted-foreground hover:text-foreground text-xs transition-colors flex items-center justify-center gap-1.5"
+                >
+                  <Bookmark className="size-3" strokeWidth={1.75} /> Save likeness
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

@@ -1,20 +1,23 @@
 import { useState, useEffect, useCallback } from "react";
 import {
-  ArrowLeft, Share2, Download, MoreHorizontal, Sparkles,
-  Check, X, RefreshCw, Bookmark, CheckSquare, Clock, RotateCcw, Info,
+  ArrowLeft, Download, MoreHorizontal, Sparkles,
+  Check, X, RefreshCw, Bookmark, CheckSquare, Clock, RotateCcw, Flag, PenLine,
 } from "lucide-react";
 import { Project } from "../../data/projects";
 import { generateImage, DEFAULT_IMAGE_MODEL } from "../lib/generate";
+import { supabase } from "../lib/supabase";
 import { toast } from "../lib/notifications";
 import { computeResemblanceScore } from "../lib/faceScore";
 import { buildCampaignPrompt } from "../lib/promptEnhancer";
 import {
-  getAthletes, getCampaignOutputs, addCampaignOutput, updateCampaignOutput,
+  getAthletes, getCampaignOutputs, addCampaignOutput,
   getAthleteProfile, saveAthleteProfile, createEmptyProfile, getProfilePromptConstraints,
   getRecipes, getRuns, addRun, updateRun,
-  type CampaignOutput, type Run,
+  setOutputStatus, addOutputComment,
+  type CampaignOutput, type Run, type OutputStatus, type OutputComment,
 } from "../lib/store";
 import type { ApprovedLikeness } from "../../data/athletes";
+import { AssetDetailPanel } from "./AssetDetailPanel";
 
 interface CampaignWorkspaceProps {
   project: Project;
@@ -22,12 +25,21 @@ interface CampaignWorkspaceProps {
   onLaunchStudio: (opts: { workspaceId?: string; workflowId?: string; athleteId?: string }) => void;
 }
 
-type OutputTab = "all" | "approved" | "pending" | "rejected";
+type OutputTab = "all" | "approved" | "pending" | "needs_revision" | "flagged" | "rejected";
+
+const TAB_LABELS: Record<OutputTab, string> = {
+  all:            "All",
+  approved:       "Approved",
+  pending:        "Pending",
+  needs_revision: "Revision",
+  flagged:        "Flagged",
+  rejected:       "Rejected",
+};
 
 const STATUS_COLOR: Record<string, string> = {
   "In Progress": "bg-muted-foreground/40",
-  Review: "bg-accent",
-  Complete: "bg-emerald-500",
+  Review:        "bg-accent",
+  Complete:      "bg-emerald-500",
 };
 
 function getProjectAthletes(p: Project) {
@@ -50,18 +62,35 @@ function relativeTime(iso: string): string {
   return `${Math.floor(hrs / 24)}d ago`;
 }
 
+function cardBorderClass(status: OutputStatus): string {
+  switch (status) {
+    case "approved":       return "ring-2 ring-emerald-500 border-emerald-500/40";
+    case "needs_revision": return "ring-2 ring-blue-500 border-blue-500/40";
+    case "flagged":        return "ring-2 ring-amber-500 border-amber-500/40";
+    case "rejected":       return "border-border opacity-40";
+    default:               return "border-border";
+  }
+}
+
 export function CampaignWorkspace({ project, onBack, onLaunchStudio }: CampaignWorkspaceProps) {
-  const [outputs, setOutputs] = useState<CampaignOutput[]>(() => getCampaignOutputs(project.id));
-  const [runs, setRuns] = useState<Run[]>(() => getRuns(project.id));
-  const [activeTab, setActiveTab] = useState<OutputTab>("all");
+  const [outputs, setOutputs]             = useState<CampaignOutput[]>(() => getCampaignOutputs(project.id));
+  const [runs, setRuns]                   = useState<Run[]>(() => getRuns(project.id));
+  const [activeTab, setActiveTab]         = useState<OutputTab>("all");
   const [activeRunFilter, setActiveRunFilter] = useState<string | null>(null);
-  const [batchRunning, setBatchRunning] = useState(false);
+  const [batchRunning, setBatchRunning]   = useState(false);
   const [batchProgress, setBatchProgress] = useState(0);
-  const [detailOutput, setDetailOutput] = useState<CampaignOutput | null>(null);
-  const [showAllRuns, setShowAllRuns] = useState(false);
+  const [detailOutput, setDetailOutput]   = useState<CampaignOutput | null>(null);
+  const [showAllRuns, setShowAllRuns]     = useState(false);
+  const [reviewerEmail, setReviewerEmail] = useState("");
 
   const projAthletes = getProjectAthletes(project);
   const wf = getRecipes().find(r => r.id === project.workflowId);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user?.email) setReviewerEmail(session.user.email);
+    });
+  }, []);
 
   const refreshOutputs = useCallback(() => {
     setOutputs(getCampaignOutputs(project.id));
@@ -76,11 +105,13 @@ export function CampaignWorkspace({ project, onBack, onLaunchStudio }: CampaignW
     refreshRuns();
   }, [refreshOutputs, refreshRuns]);
 
-  const tabCounts = {
-    all: outputs.length,
-    approved: outputs.filter(o => o.status === "approved").length,
-    pending: outputs.filter(o => o.status === "pending").length,
-    rejected: outputs.filter(o => o.status === "rejected").length,
+  const tabCounts: Record<OutputTab, number> = {
+    all:            outputs.length,
+    approved:       outputs.filter(o => o.status === "approved").length,
+    pending:        outputs.filter(o => o.status === "pending").length,
+    needs_revision: outputs.filter(o => o.status === "needs_revision").length,
+    flagged:        outputs.filter(o => o.status === "flagged").length,
+    rejected:       outputs.filter(o => o.status === "rejected").length,
   };
 
   const filteredByRun = activeRunFilter
@@ -90,19 +121,30 @@ export function CampaignWorkspace({ project, onBack, onLaunchStudio }: CampaignW
     ? filteredByRun
     : filteredByRun.filter(o => o.status === activeTab);
 
-  const approveOutput = (id: string) => {
-    updateCampaignOutput(id, { status: "approved" });
-    setOutputs(prev => prev.map(o => o.id === id ? { ...o, status: "approved" } : o));
-    if (detailOutput?.id === id) setDetailOutput(prev => prev ? { ...prev, status: "approved" } : null);
+  const changeStatus = (id: string, status: OutputStatus) => {
+    const now = new Date().toISOString();
+    setOutputStatus(id, status, reviewerEmail);
+    const patch = { status, reviewedBy: reviewerEmail, reviewedAt: now };
+    setOutputs(prev => prev.map(o => o.id === id ? { ...o, ...patch } : o));
+    if (detailOutput?.id === id) setDetailOutput(prev => prev ? { ...prev, ...patch } : null);
   };
 
-  const rejectOutput = (id: string) => {
-    updateCampaignOutput(id, { status: "rejected" });
-    setOutputs(prev => prev.map(o => o.id === id ? { ...o, status: "rejected" } : o));
-    if (detailOutput?.id === id) setDetailOutput(prev => prev ? { ...prev, status: "rejected" } : null);
+  const handleCommentAdded = (outputId: string, comment: OutputComment) => {
+    addOutputComment(outputId, comment);
+    setOutputs(prev => prev.map(o =>
+      o.id === outputId ? { ...o, comments: [...(o.comments ?? []), comment] } : o
+    ));
+    if (detailOutput?.id === outputId) {
+      setDetailOutput(prev => prev
+        ? { ...prev, comments: [...(prev.comments ?? []), comment] }
+        : null
+      );
+    }
   };
 
   const regenerateOutput = async (output: CampaignOutput) => {
+    if (batchRunning) return;
+    setBatchRunning(true);
     const athlete = getAthletes().find(a => a.id === output.athleteId);
     const runId = `run-${Date.now()}-regen`;
     const basePrompt = wf?.prompt ?? `Professional sports portrait. Athlete: ${athlete?.name ?? "athlete"}`;
@@ -134,20 +176,20 @@ export function CampaignWorkspace({ project, onBack, onLaunchStudio }: CampaignW
         aspectRatio: wf?.aspectRatio ?? "9:16",
         onSeed: s => { capturedSeed = s; },
       });
-      updateCampaignOutput(output.id, { url: result[0].url, status: "pending", runId });
+      const patch = { url: result[0].url, status: "pending" as OutputStatus, runId };
+      setOutputs(prev => prev.map(o => o.id === output.id ? { ...o, ...patch } : o));
+      if (detailOutput?.id === output.id) setDetailOutput(prev => prev ? { ...prev, ...patch } : null);
       updateRun(project.id, runId, {
         status: "complete",
         seed: capturedSeed,
         completedAt: new Date().toISOString(),
         assetIds: [output.id],
       });
-      setOutputs(prev => prev.map(o => o.id === output.id ? { ...o, url: result[0].url, status: "pending", runId } : o));
-      if (detailOutput?.id === output.id) {
-        setDetailOutput(prev => prev ? { ...prev, url: result[0].url, status: "pending", runId } : null);
-      }
     } catch (err: any) {
       updateRun(project.id, runId, { status: "failed", errorMessage: err?.message, completedAt: new Date().toISOString() });
       toast({ type: "error", title: "Regeneration failed", body: err?.message });
+    } finally {
+      setBatchRunning(false);
     }
     refreshRuns();
   };
@@ -217,8 +259,7 @@ export function CampaignWorkspace({ project, onBack, onLaunchStudio }: CampaignW
             computeResemblanceScore(athlete.image, result[0].url)
               .then(score => {
                 if (score !== null) {
-                  updateCampaignOutput(outId, { resemblanceScore: score });
-                  refreshOutputs();
+                  setOutputs(prev => prev.map(o => o.id === outId ? { ...o, resemblanceScore: score } : o));
                 }
               })
               .catch(() => {});
@@ -324,24 +365,12 @@ export function CampaignWorkspace({ project, onBack, onLaunchStudio }: CampaignW
     toast({ type: "success", title: "Likeness reference saved", body: `Added to ${athlete.name}'s identity profile` });
   };
 
-  const handleShare = () => {
-    navigator.clipboard.writeText(window.location.href + "/review/" + project.id).then(() => {
-      toast({ type: "success", title: "Link copied", body: "Review link copied to clipboard" });
-    });
-  };
-
   const handleExport = () => {
     outputs.filter(o => o.status === "approved").forEach(o => window.open(o.url, "_blank"));
   };
 
-  // Derive run details for the asset detail panel
-  const detailRun = detailOutput?.runId
-    ? runs.find(r => r.id === detailOutput.runId)
-    : undefined;
-  const detailAthlete = detailOutput?.athleteId
-    ? getAthletes().find(a => a.id === detailOutput.athleteId)
-    : undefined;
-
+  const detailRun = detailOutput?.runId ? runs.find(r => r.id === detailOutput.runId) : undefined;
+  const detailAthlete = detailOutput?.athleteId ? getAthletes().find(a => a.id === detailOutput.athleteId) : undefined;
   const approvedCount = tabCounts.approved;
 
   return (
@@ -363,10 +392,6 @@ export function CampaignWorkspace({ project, onBack, onLaunchStudio }: CampaignW
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <button onClick={handleShare}
-            className="h-8 px-3 rounded-md bg-card border border-border hover:bg-secondary text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1.5">
-            <Share2 className="size-3.5" strokeWidth={1.75} /> Share
-          </button>
           <button onClick={handleExport} disabled={approvedCount === 0}
             className="h-8 px-3 rounded-md bg-card border border-border hover:bg-secondary text-xs text-muted-foreground hover:text-foreground disabled:opacity-40 transition-colors flex items-center gap-1.5">
             <Download className="size-3.5" strokeWidth={1.75} />
@@ -384,26 +409,26 @@ export function CampaignWorkspace({ project, onBack, onLaunchStudio }: CampaignW
         <div className="flex-1 flex flex-col overflow-hidden min-w-0">
           {/* Tab + generate bar */}
           <div className="h-11 border-b border-border px-4 flex items-center justify-between shrink-0 gap-2">
-            <div className="flex items-center gap-0.5">
-              {(["all", "approved", "pending", "rejected"] as OutputTab[]).map(tab => (
+            <div className="flex items-center gap-0.5 overflow-x-auto scrollbar-none">
+              {(Object.keys(TAB_LABELS) as OutputTab[]).map(tab => (
                 <button key={tab} onClick={() => setActiveTab(tab)}
-                  className={`h-7 px-3 rounded-md text-xs transition-colors flex items-center gap-1.5 ${
+                  className={`h-7 px-2.5 rounded-md text-xs transition-colors flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
                     activeTab === tab ? "bg-secondary text-foreground" : "text-muted-foreground hover:text-foreground hover:bg-card"
                   }`}>
-                  <span className="capitalize">{tab}</span>
+                  <span>{TAB_LABELS[tab]}</span>
                   <span className="text-muted-foreground/60">{tabCounts[tab]}</span>
                 </button>
               ))}
               {activeRunFilter && (
                 <button onClick={() => setActiveRunFilter(null)}
-                  className="h-7 px-2 rounded-md text-xs bg-accent/10 text-accent border border-accent/30 flex items-center gap-1 ml-1">
+                  className="h-7 px-2 rounded-md text-xs bg-accent/10 text-accent border border-accent/30 flex items-center gap-1 ml-1 shrink-0">
                   Run filter
                   <X className="size-2.5" strokeWidth={2} />
                 </button>
               )}
             </div>
             <button onClick={runBatch} disabled={batchRunning}
-              className={`h-7 px-3 rounded-md text-xs font-medium transition-colors flex items-center gap-1.5 ${
+              className={`h-7 px-3 rounded-md text-xs font-medium transition-colors flex items-center gap-1.5 shrink-0 ${
                 batchRunning ? "bg-card border border-border text-muted-foreground" : "bg-accent hover:bg-accent/90 text-accent-foreground"
               }`}>
               {batchRunning ? (
@@ -438,13 +463,8 @@ export function CampaignWorkspace({ project, onBack, onLaunchStudio }: CampaignW
                   const athlete = getAthletes().find(a => a.id === output.athleteId);
                   return (
                     <div key={output.id}
-                      className={`group relative rounded-lg overflow-hidden border transition-all ${
-                        output.status === "approved" ? "ring-2 ring-emerald-500 border-emerald-500/40"
-                          : output.status === "rejected" ? "border-border opacity-40"
-                          : "border-border"
-                      }`}>
+                      className={`group relative rounded-lg overflow-hidden border transition-all ${cardBorderClass(output.status)}`}>
                       <div className="aspect-[3/4] relative overflow-hidden">
-                        {/* Clickable image → detail panel */}
                         <button
                           onClick={() => setDetailOutput(output)}
                           className="absolute inset-0 w-full h-full"
@@ -462,6 +482,22 @@ export function CampaignWorkspace({ project, onBack, onLaunchStudio }: CampaignW
                         {output.status === "rejected" && (
                           <div className="absolute top-2 right-2 size-5 rounded-full bg-red-500 flex items-center justify-center pointer-events-none">
                             <X className="size-3 text-white" strokeWidth={2.5} />
+                          </div>
+                        )}
+                        {output.status === "needs_revision" && (
+                          <div className="absolute top-2 right-2 size-5 rounded-full bg-blue-500 flex items-center justify-center pointer-events-none">
+                            <PenLine className="size-2.5 text-white" strokeWidth={2.5} />
+                          </div>
+                        )}
+                        {output.status === "flagged" && (
+                          <div className="absolute top-2 right-2 size-5 rounded-full bg-amber-500 flex items-center justify-center pointer-events-none">
+                            <Flag className="size-2.5 text-white" strokeWidth={2.5} />
+                          </div>
+                        )}
+                        {/* Comment count badge */}
+                        {(output.comments?.length ?? 0) > 0 && (
+                          <div className="absolute top-2 left-2 h-4 px-1.5 rounded bg-black/60 backdrop-blur-sm flex items-center gap-1 pointer-events-none">
+                            <span className="text-[9px] text-white/80">{output.comments!.length}</span>
                           </div>
                         )}
 
@@ -484,12 +520,20 @@ export function CampaignWorkspace({ project, onBack, onLaunchStudio }: CampaignW
                         </div>
 
                         {/* Hover action overlay */}
-                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-center pb-3 gap-2">
-                          <button onClick={e => { e.stopPropagation(); approveOutput(output.id); }} title="Approve"
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-center pb-3 gap-1.5">
+                          <button onClick={e => { e.stopPropagation(); changeStatus(output.id, "approved"); }} title="Approve"
                             className="size-8 rounded-full bg-emerald-500/90 hover:bg-emerald-500 text-white flex items-center justify-center transition-colors">
                             <Check className="size-3.5" strokeWidth={2.5} />
                           </button>
-                          <button onClick={e => { e.stopPropagation(); rejectOutput(output.id); }} title="Reject"
+                          <button onClick={e => { e.stopPropagation(); changeStatus(output.id, "needs_revision"); }} title="Needs revision"
+                            className="size-8 rounded-full bg-blue-500/90 hover:bg-blue-500 text-white flex items-center justify-center transition-colors">
+                            <PenLine className="size-3.5" strokeWidth={2} />
+                          </button>
+                          <button onClick={e => { e.stopPropagation(); changeStatus(output.id, "flagged"); }} title="Flag"
+                            className="size-8 rounded-full bg-amber-500/90 hover:bg-amber-500 text-white flex items-center justify-center transition-colors">
+                            <Flag className="size-3.5" strokeWidth={2} />
+                          </button>
+                          <button onClick={e => { e.stopPropagation(); changeStatus(output.id, "rejected"); }} title="Reject"
                             className="size-8 rounded-full bg-red-500/90 hover:bg-red-500 text-white flex items-center justify-center transition-colors">
                             <X className="size-3.5" strokeWidth={2.5} />
                           </button>
@@ -585,10 +629,10 @@ export function CampaignWorkspace({ project, onBack, onLaunchStudio }: CampaignW
                 <p className="text-xs text-muted-foreground uppercase tracking-wider">Stats</p>
                 <div className="grid grid-cols-2 gap-2">
                   {[
-                    { label: "Generated", value: outputs.length },
-                    { label: "Approved", value: tabCounts.approved },
-                    { label: "Rejected", value: tabCounts.rejected },
-                    { label: "Pending", value: tabCounts.pending },
+                    { label: "Generated",  value: outputs.length },
+                    { label: "Approved",   value: tabCounts.approved },
+                    { label: "Revision",   value: tabCounts.needs_revision },
+                    { label: "Flagged",    value: tabCounts.flagged },
                   ].map(({ label, value }) => (
                     <div key={label} className="p-2.5 bg-card border border-border rounded-lg text-center">
                       <p className="text-base font-semibold">{value}</p>
@@ -674,123 +718,17 @@ export function CampaignWorkspace({ project, onBack, onLaunchStudio }: CampaignW
 
       {/* Asset detail panel */}
       {detailOutput && (
-        <div onClick={() => setDetailOutput(null)}
-          className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div onClick={e => e.stopPropagation()}
-            className="bg-popover border border-border rounded-xl overflow-hidden flex max-w-3xl w-full max-h-[90vh]">
-            {/* Image */}
-            <div className="w-64 shrink-0 bg-black">
-              <img src={detailOutput.url} alt="" className="w-full h-full object-contain" />
-            </div>
-
-            {/* Details */}
-            <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-              <div className="px-5 py-4 flex items-center justify-between border-b border-border shrink-0">
-                <div className="flex items-center gap-2">
-                  <span className={`h-5 px-2 rounded-full text-xs font-medium flex items-center ${
-                    detailOutput.status === "approved" ? "bg-emerald-500/20 text-emerald-400"
-                      : detailOutput.status === "rejected" ? "bg-red-500/20 text-red-400"
-                      : "bg-secondary text-muted-foreground"
-                  }`}>
-                    {detailOutput.status}
-                  </span>
-                  {detailOutput.resemblanceScore !== undefined && (
-                    <span className={`h-5 px-2 rounded-full text-xs font-medium flex items-center ${
-                      detailOutput.resemblanceScore >= 75 ? "bg-emerald-500/20 text-emerald-400"
-                        : detailOutput.resemblanceScore >= 55 ? "bg-amber-500/20 text-amber-400"
-                        : "bg-red-500/20 text-red-400"
-                    }`}>
-                      {detailOutput.resemblanceScore}% match
-                    </span>
-                  )}
-                </div>
-                <button onClick={() => setDetailOutput(null)}
-                  className="size-7 rounded-md flex items-center justify-center hover:bg-secondary">
-                  <X className="size-3.5 text-muted-foreground" strokeWidth={1.75} />
-                </button>
-              </div>
-
-              <div className="flex-1 overflow-y-auto p-5 space-y-5">
-                {/* Subject */}
-                {detailAthlete && (
-                  <div className="space-y-1">
-                    <p className="text-xs text-muted-foreground uppercase tracking-wider">Subject</p>
-                    <div className="flex items-center gap-2.5">
-                      <img src={detailAthlete.image.startsWith("blob:") ? "/athletes/placeholder.jpg" : detailAthlete.image}
-                        alt={detailAthlete.name} className="size-8 rounded-md object-cover" />
-                      <div>
-                        <p className="text-sm font-medium">{detailAthlete.name}</p>
-                        <p className="text-xs text-muted-foreground">{detailAthlete.sport}</p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Generation details */}
-                {detailRun ? (
-                  <>
-                    <div className="space-y-1">
-                      <p className="text-xs text-muted-foreground uppercase tracking-wider">Generation lineage</p>
-                      <div className="bg-card border border-border rounded-md overflow-hidden text-xs">
-                        {[
-                          { label: "Recipe", value: detailRun.recipeName ?? "—" },
-                          { label: "Model", value: detailRun.model },
-                          { label: "Aspect ratio", value: detailRun.aspectRatio },
-                          { label: "Seed", value: detailRun.seed !== undefined ? String(detailRun.seed) : "random" },
-                          { label: "Generated", value: relativeTime(detailRun.startedAt) },
-                        ].map((row, i, arr) => (
-                          <div key={row.label} className={`flex justify-between px-3 py-2 ${i < arr.length - 1 ? "border-b border-border" : ""}`}>
-                            <span className="text-muted-foreground">{row.label}</span>
-                            <span className="font-medium truncate ml-4 text-right">{row.value}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="space-y-1">
-                      <p className="text-xs text-muted-foreground uppercase tracking-wider">Prompt used</p>
-                      <p className="text-xs text-muted-foreground leading-relaxed bg-card border border-border rounded-md p-3">
-                        {detailRun.prompt}
-                      </p>
-                    </div>
-
-                    {detailRun.negativePrompt && (
-                      <div className="space-y-1">
-                        <p className="text-xs text-muted-foreground uppercase tracking-wider">Negative prompt</p>
-                        <p className="text-xs text-muted-foreground leading-relaxed bg-card border border-border rounded-md p-3">
-                          {detailRun.negativePrompt}
-                        </p>
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground bg-card border border-border rounded-md p-3">
-                    <Info className="size-3.5 shrink-0" strokeWidth={1.75} />
-                    No run record — generated before lineage tracking was added.
-                  </div>
-                )}
-              </div>
-
-              {/* Actions */}
-              <div className="px-5 pb-5 pt-4 border-t border-border flex gap-2 shrink-0">
-                <button onClick={() => approveOutput(detailOutput.id)}
-                  disabled={detailOutput.status === "approved"}
-                  className="flex-1 h-8 rounded-md bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20 disabled:opacity-40 text-xs font-medium transition-colors flex items-center justify-center gap-1.5">
-                  <Check className="size-3" strokeWidth={2.5} /> Approve
-                </button>
-                <button onClick={() => rejectOutput(detailOutput.id)}
-                  disabled={detailOutput.status === "rejected"}
-                  className="flex-1 h-8 rounded-md bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500/20 disabled:opacity-40 text-xs font-medium transition-colors flex items-center justify-center gap-1.5">
-                  <X className="size-3" strokeWidth={2.5} /> Reject
-                </button>
-                <button onClick={() => { regenerateOutput(detailOutput); setDetailOutput(null); }}
-                  className="h-8 px-3 rounded-md bg-card border border-border hover:bg-secondary text-muted-foreground hover:text-foreground text-xs transition-colors flex items-center gap-1.5">
-                  <RefreshCw className="size-3" strokeWidth={1.75} /> Regen
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+        <AssetDetailPanel
+          output={detailOutput}
+          run={detailRun}
+          athlete={detailAthlete}
+          reviewerEmail={reviewerEmail}
+          onClose={() => setDetailOutput(null)}
+          onStatusChange={changeStatus}
+          onRegenerate={regenerateOutput}
+          onMarkLikeness={markAsLikeness}
+          onCommentAdded={handleCommentAdded}
+        />
       )}
     </div>
   );

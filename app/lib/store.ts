@@ -216,15 +216,27 @@ export function updateRun(campaignId: string, id: string, patch: Partial<Run>): 
 }
 
 // ---------- campaign outputs ----------
+export type OutputStatus = "pending" | "approved" | "needs_revision" | "rejected" | "flagged";
+
+export interface OutputComment {
+  id: string;
+  text: string;
+  author: string;
+  createdAt: string;
+}
+
 export interface CampaignOutput {
   id: string;
   campaignId: string;
   athleteId?: string;
   runId?: string;
   url: string;
-  status: "pending" | "approved" | "rejected";
+  status: OutputStatus;
   resemblanceScore?: number;
   createdAt: string;
+  comments?: OutputComment[];
+  reviewedBy?: string;
+  reviewedAt?: string;
 }
 
 export function getCampaignOutputs(campaignId?: string): CampaignOutput[] {
@@ -239,6 +251,16 @@ export function addCampaignOutput(output: CampaignOutput): void {
 }
 export function updateCampaignOutput(id: string, patch: Partial<CampaignOutput>): void {
   saveCampaignOutputs(getCampaignOutputs().map(o => o.id === id ? { ...o, ...patch } : o));
+}
+export function setOutputStatus(id: string, status: OutputStatus, reviewedBy: string): void {
+  updateCampaignOutput(id, { status, reviewedBy, reviewedAt: new Date().toISOString() });
+}
+export function addOutputComment(outputId: string, comment: OutputComment): void {
+  saveCampaignOutputs(
+    getCampaignOutputs().map(o =>
+      o.id === outputId ? { ...o, comments: [...(o.comments ?? []), comment] } : o
+    )
+  );
 }
 
 // ---------- onboarding ----------
