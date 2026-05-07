@@ -89,6 +89,9 @@ Pre-launch. Sprints 1–7 complete. Sprint 8 next (TBD).
 - [x] Brief injected into `enhancePrompt` as "Campaign brief: …" after identity constraints
 - [x] `buildCampaignPrompt` accepts optional `brief` 4th param
 - [x] Recipe card is now collapsible — expands to show styleRules, lightingRules, compositionRules, negativePrompt
+- [x] Stale-prop fix: brief textarea reads from localStorage directly, not from stale parent state
+- [x] setTimeout cleanup: briefSavedTimerRef prevents setState on unmounted component
+- [x] Sidebar "Athletes" → "Subjects" label (Sprint 6 rename missed this location)
 
 ### Sprint 6 — Organization Layer ✓
 - [x] `Athlete.sport` widened from enum → `string` (backward compatible)
@@ -103,9 +106,9 @@ Pre-launch. Sprints 1–7 complete. Sprint 8 next (TBD).
 
 Nothing — ready for Sprint 8.
 
-## Next Sprint
+## Next Sprint — Sprint 8 (TBD)
 
-TBD — candidates:
+Candidates (user to choose):
 - Side-by-side asset comparison
 - Export packs (ZIP with metadata)
 - Contact sheet view
@@ -117,6 +120,7 @@ TBD — candidates:
 - localStorage limit: base64 images ~2MB per athlete for full angle set
 - `buildCampaignPrompt` param named `doNotChange` but receives full constraints — minor rename
 - Hover overlay 6 icons may clip on 2-column grid at narrow viewports
+- `CommandPalette` has its own local `ViewType` definition — must be kept in sync with `App.tsx` manually
 
 ## Blockers (User Action Required)
 

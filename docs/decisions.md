@@ -19,6 +19,9 @@
 - All new fields added to `CampaignOutput` (`runId`, `comments`, `reviewedBy`, `reviewedAt`, `tags`) are optional — no data migration ever required.
 - `LibraryPage` reads from localStorage on mount and does not subscribe to store changes. Navigating away and back refreshes the list. This is acceptable given the single-user localStorage model.
 - Tag strings are stored lowercase and trimmed. `addOutputTag` is idempotent.
+- `brief` state in `CampaignWorkspace` is initialized directly from `getProjects()` (localStorage), not from the `project` prop passed by the parent. The parent holds stale state after `updateProject` writes to localStorage — reading from the store directly at init avoids this without restructuring the parent.
+- Quality checklist checked state is session-local (`Set<number>` in component state). It resets on navigation. This is intentional — checklist is a review aid, not a persistent approval record.
+- `briefSavedTimerRef` pattern (useRef + clearTimeout before each new setTimeout) is the project standard for transient UI feedback timers that must not stack or leak on unmount.
 
 ## UX Decisions
 

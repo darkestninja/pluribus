@@ -6,35 +6,13 @@
 - [ ] Create demo account: daniel@pluribus.ai / demo123 in Supabase Auth > Users
 - [ ] Set Site URL: http://185.158.132.125 in Supabase Auth > URL Configuration
 
-## Current Sprint — Sprint 7: Creative Constitution UX
+## Current Sprint — Sprint 8: TBD
 
-### [S7-1] Interactive Quality Checklist ✓
-Reviewers can check off quality items while reviewing a campaign's outputs.
-
-**Acceptance:**
-- [x] Checklist items are interactive buttons — toggle on click
-- [x] Checked state: filled emerald indicator + strikethrough text
-- [x] Progress counter visible in section header (e.g. "2 / 5")
-- [x] State is session-local — resets on navigation (intentional, review aid not record)
-
-### [S7-2] Per-Campaign Creative Brief ✓
-Art directors can write a campaign-specific brief that feeds into generation.
-
-**Acceptance:**
-- [x] `brief?: string` added to `Project` (optional, backward compatible)
-- [x] `updateProject(id, patch)` helper added to store
-- [x] Brief textarea in campaign workspace right sidebar (280 char limit)
-- [x] Auto-saves on blur via `updateProject`, "saved" confirmation shown for 2s
-- [x] Brief injected into `enhancePrompt` as "Campaign brief: …" after identity constraints
-
-### [S7-3] Creative Direction Summary ✓
-Recipe's style, lighting, and composition rules are accessible in the workspace.
-
-**Acceptance:**
-- [x] Recipe card is now a toggle button — click to expand/collapse direction detail
-- [x] Shows: Style rules, Lighting rules, Composition rules, Negative prompt (truncated)
-- [x] Collapsed by default; ChevronDown animates on toggle
-- [x] Gracefully absent if recipe has no rules for a given category
+Candidates (user to choose before planning):
+- Side-by-side asset comparison
+- Export packs (ZIP + metadata JSON)
+- Contact sheet view
+- Batch feedback / bulk status actions
 
 ## Backlog
 
@@ -69,7 +47,7 @@ Recipe's style, lighting, and composition rules are accessible in the workspace.
 - [x] Sprint 3 fixes: model field, concurrency lock, regen disable, expandable run list
 - [x] Sprint 4: Approval System Expansion — 5-state OutputStatus, comments, AssetDetailPanel extraction, 6 filter tabs, card badges, reviewer attribution, concurrency + URL persistence fixes
 - [x] Sprint 5: Asset Tagging + Cross-Campaign Search — tags on CampaignOutput, tag chip UI, LibraryPage, relativeTime to utils, addRun capped at 50
-- [x] Sprint 7: Creative Constitution UX — interactive quality checklist, per-campaign creative brief (prompt-injected), recipe direction summary panel
+- [x] Sprint 7: Creative Constitution UX — interactive quality checklist, per-campaign creative brief (prompt-injected), recipe direction summary panel; post-review: stale-prop brief fix, setTimeout cleanup, "Subjects" label fix
 - [x] Sprint 6: Organization Layer — sport: string, free-text sport/event, Subjects rename, getRecipes() replaces workflowTemplates, data/workflows.ts deleted, Library nav
 
 ## Risks

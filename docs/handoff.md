@@ -1,6 +1,87 @@
 # Handoff
 
-## Handoff — 2026-05-07 (Post-Sprint 6) ← CURRENT
+## Handoff — 2026-05-07 (Post-Sprint 7) ← CURRENT
+
+### Completed This Session
+- Sprint 7: Creative Constitution UX ✓
+- Post-review fixes ✓ (3 issues from review pass)
+
+### Last Completed Work
+
+**Sprint 7** — interactive quality checklist, per-campaign creative brief, recipe direction panel.
+
+**`data/projects.ts`**:
+- `brief?: string` added to `Project` interface (optional, backward compatible)
+
+**`app/lib/store.ts`**:
+- `updateProject(id, patch)` helper added — patches active projects list in localStorage
+
+**`app/lib/promptEnhancer.ts`**:
+- `brief?: string` added to `EnhanceOptions`
+- `enhancePrompt` injects `"Campaign brief: …"` after identity constraints, before quality tail
+- `buildCampaignPrompt` gains 4th param `brief?: string`
+
+**`app/components/CampaignWorkspace.tsx`** additions:
+- `brief` state — initialized from localStorage directly (`getProjects().find(...)`) to avoid stale prop
+- `briefSavedTimerRef` — `useRef` for setTimeout cleanup on unmount
+- `handleBriefBlur` — saves via `updateProject`, shows "saved" toast for 2 s, clears previous timer
+- `directionOpen` state — recipe card is now a toggle button (collapsed by default)
+- `checkedItems` state — `Set<number>`, new Set copy on each toggle (React immutability)
+- Creative brief textarea in sidebar (280 char limit, auto-save on blur, char counter, "saved" indicator)
+- Recipe card: click to expand/collapse; ChevronDown animates; shows style/lighting/composition/negative prompt bullet lists (each section gated on `.length > 0`)
+- Quality checklist: `<button>` items toggle `checkedItems`, emerald checked state with Check icon + strikethrough, progress counter "N / M" in section header
+- `runBatch` and `regenerateOutput` both pass `brief || undefined` as 4th arg to `buildCampaignPrompt`
+- Sidebar section header + empty-state copy: "Athletes" → "Subjects" (Sprint 6 rename missed this)
+
+### Post-Review Fixes Applied
+1. **Medium** — Brief textarea was reading stale `project.brief` prop. Parent (`Projects.tsx`) holds `allProjects` in state initialized once from `getProjects()` and never re-read from localStorage. Fixed: `useState(() => getProjects().find(p => p.id === project.id)?.brief ?? project.brief ?? "")`.
+2. **Low** — `setTimeout` in `handleBriefBlur` leaked on unmount. Fixed: timer stored in `briefSavedTimerRef`, cleared in cleanup `useEffect` and on each re-blur.
+3. **Low** — Sidebar "Athletes" label and "No athletes assigned" empty-state copy not updated during Sprint 6 rename. Fixed: both changed to "Subjects".
+
+### Current State
+
+- Sprints 1–7 complete.
+- No in-progress work.
+- Build passes (Vite production build, 0 errors).
+
+### Next Sprint: Sprint 8 — TBD
+
+Candidates (user to choose):
+- **Side-by-side asset comparison** — select 2–4 outputs and compare them in a split view
+- **Export packs** — ZIP download with approved assets + metadata JSON
+- **Contact sheet view** — printable/shareable grid layout for client review
+- **Batch feedback / bulk status actions** — multi-select gallery cards, apply status to selection
+
+### Next Recommended Action
+
+```
+Read docs/prompts/02-plan-sprint.md and plan Sprint 8. Do not code yet.
+```
+
+### Modified Files (Sprint 7)
+- `data/projects.ts` — `brief?: string` added to Project interface
+- `app/lib/store.ts` — `updateProject` helper added
+- `app/lib/promptEnhancer.ts` — `brief` param in `EnhanceOptions` + `buildCampaignPrompt`
+- `app/components/CampaignWorkspace.tsx` — creative brief, recipe direction panel, interactive checklist, Subjects rename, stale-prop fix, setTimeout cleanup
+
+### Important Implementation Notes
+- Brief injection is double-guarded: `brief || undefined` at the call site prevents empty-string from reaching `enhancePrompt`; `enhancePrompt` also guards with `if (brief && brief.trim())`.
+- Checklist state is session-local and intentional — it resets on navigation. It is a review aid, not a persistent record.
+- `updateProject` only patches active projects (not archived). This matches expected usage — archived campaigns should not receive new briefs.
+- `briefSavedTimerRef` is always cleared before a new timer is set, so rapid blur events never stack multiple "saved" indicators.
+- Recipe direction panel guards on `.length > 0` for each rules array — no empty section headers are rendered for recipes with partial content.
+
+### Active Blockers (User Action Required)
+- [ ] Run Supabase schema migration in SQL editor
+- [ ] Create demo account: daniel@pluribus.ai / demo123 in Supabase Auth > Users
+- [ ] Set Site URL: http://185.158.132.125 in Supabase Auth > URL Configuration
+
+### Known Risks
+- localStorage size limit active for base64 identity images (~2MB per athlete for full angle set)
+- `buildCampaignPrompt` param named `doNotChange` but receives full constraints — minor rename (tech debt)
+- Hover overlay 6 icons may clip on 2-column grid at narrow viewport widths
+
+## Handoff — 2026-05-07 (Post-Sprint 6)
 
 ### Completed This Session
 - Sprint 5: Asset Tagging + Cross-Campaign Search ✓
