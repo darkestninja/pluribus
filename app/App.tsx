@@ -11,6 +11,7 @@ import { ArchivePage } from "./components/ArchivePage";
 import { CommandPalette } from "./components/CommandPalette";
 import { Onboarding } from "./components/Onboarding";
 import { AuthScreen } from "./components/AuthScreen";
+import { ReviewPage } from "./components/ReviewPage";
 import { NewCampaignModal } from "./components/NewCampaignModal";
 import { AddAthleteModal } from "./components/AddAthleteModal";
 import {
@@ -18,7 +19,7 @@ import {
   Home, Folder, Users, LayoutGrid, Images, PanelLeft, Menu, X, Bell,
   CheckCircle, AlertCircle, Info, LogOut,
 } from "lucide-react";
-import { getQueue, isOnboarded, setOnboarded, initStore } from "./lib/store";
+import { getQueue, isOnboarded, setOnboarded, initStore, hydrateStore } from "./lib/store";
 import { onToast, Toast } from "./lib/notifications";
 import { supabase, toAppUser, signOut } from "./lib/auth";
 import type { AppUser } from "./lib/auth";
@@ -38,7 +39,19 @@ const PAGE_TITLES: Record<ViewType, string> = {
   settings: "Settings",
 };
 
+// Detect shareable review route at module load — value is stable for the page lifetime.
+const _reviewToken = (() => {
+  const m = window.location.pathname.match(/^\/review\/([a-f0-9]{32})$/);
+  return m?.[1] ?? null;
+})();
+
+// Top-level shell: routes to ReviewPage (no auth) or the full authenticated app.
 export default function App() {
+  if (_reviewToken) return <ReviewPage token={_reviewToken} />;
+  return <AuthenticatedApp />;
+}
+
+function AuthenticatedApp() {
   const [authed, setAuthed] = useState(false);
   const [sessionLoading, setSessionLoading] = useState(true);
   const [appUser, setAppUser] = useState<AppUser | null>(null);
@@ -71,8 +84,11 @@ export default function App() {
 
   // Restore session and subscribe to future auth state changes
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) initStore(session.user.id, session.user.email ?? "");
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (session?.user) {
+        initStore(session.user.id, session.user.email ?? "");
+        await hydrateStore(session.user.id);
+      }
       setAuthed(!!session);
       setAppUser(session?.user ? toAppUser(session.user) : null);
       if (session) setShowOnboarding(!isOnboarded());

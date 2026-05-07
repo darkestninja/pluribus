@@ -6,9 +6,9 @@
 - [ ] Run Supabase schema migration in SQL editor — paste SQL from `cd /opt/pluribus-proxy && bun run migrate.ts`
 - [ ] Run Storage RLS policies in SQL editor — printed by `bun run setup.ts` (run from proxy dir)
 - [x] Create demo account: daniel@pluribus.ai — already exists in Supabase Auth
-- [ ] Set Site URL + redirect URL in Supabase Auth > URL Configuration (https://pluribus.danielasiegbunam.com)
+- [x] Set Site URL in Supabase Auth > URL Configuration — done (https://pluribus.danielasiegbunam.com)
 
-## Current Sprint — Sprint 11 (TBD)
+## Current Sprint — Sprint 13 (TBD)
 
 Candidates from backlog (choose next):
 - Keyboard navigation in gallery (arrow keys, J/K approve/reject)
@@ -16,6 +16,22 @@ Candidates from backlog (choose next):
 - Batch multi-select + bulk status actions in CampaignWorkspace gallery
 - Rejection reason structured tags on rejected outputs
 - Profile completeness % signal on athlete card
+
+## Done (Sprint 12 — External review links)
+
+1. **ReviewPage** (`app/components/ReviewPage.tsx`) — public read-only gallery at `/review/{token}`; no login required; tab bar (All / Approved / Pending / Revision / Flagged); status badges; lightbox with ←→ Esc keyboard nav; per-image download on approved assets; clean error state for invalid/expired tokens
+2. **"Share for review" button** in `CampaignSidebar` — creates a token via `POST /api/review/create` (idempotent, same link on repeat clicks); shows copyable URL inline with 2s copy confirmation
+3. **Proxy endpoints** — `POST /review/create` (auth required) and `GET /review/:token` (public); both route through nginx `/api/review/`
+4. **`review_tokens` SQL table** — `(user_id, campaign_id)` unique constraint; service-role RLS for proxy reads; added to `migrate.ts` Phase 3 block
+5. **nginx** — added `/storage/` proxy rule (was missing — asset mirroring was silently failing) and `/api/review/` rule
+6. **App.tsx** — module-level `_reviewToken` IIFE routes before auth; `App` is now a thin shell routing to `ReviewPage` or `AuthenticatedApp`
+
+## Done (Sprint 11 — Phase 2 Supabase Postgres)
+
+1. **Phase 2 SQL tables** — `subjects`, `subject_profiles`, `campaigns`, `recipes`, `campaign_outputs`, `campaign_runs` added to `migrate.ts`; composite `(user_id, id)` PKs, RLS policies, indexes; all 6 tables confirmed live in Supabase
+2. **store.ts rewrite** — in-memory cache backed by Supabase; `initStore()` populates cache from localStorage synchronously; new `hydrateStore(userId)` async function hydrates from Supabase on login (6 parallel queries); all mutations write cache → localStorage → fire-and-forget Supabase upsert; all existing function signatures unchanged
+3. **App.tsx** — `hydrateStore` awaited inside `getSession` callback before clearing `sessionLoading`; existing loading spinner covers hydration
+4. **Auto-migration** — first login after Phase 2 pushes all localStorage data to Supabase automatically (one-time); subsequent sessions load from Postgres
 
 ## Done (Sprint 10)
 
@@ -36,8 +52,8 @@ Candidates from backlog (choose next):
 - Keyboard navigation in gallery (arrow keys, J/K approve/reject)
 - Recipe mood board: 1-3 reference image uploads per recipe
 - "What worked" signal per recipe (approval rate, avg resemblance score)
-- External review links (shareable stakeholder token, no login required)
-- Supabase persistence (migrate CampaignOutput, Run, Athlete, AthleteProfile from localStorage)
+- ~~External review links (shareable stakeholder token, no login required)~~ ✓ done (Sprint 12)
+- ~~Supabase persistence (migrate CampaignOutput, Run, Athlete, AthleteProfile from localStorage)~~ ✓ done (Sprint 11)
 - Supabase Storage for reference images (remove base64-in-localStorage) + auto-download approved assets
 - Version history on recipes and subjects
 - AI-assisted failure tagging
@@ -77,10 +93,10 @@ Candidates from backlog (choose next):
 
 | Risk | Severity | Status | Mitigation |
 |---|---|---|---|
-| All product data is localStorage-only | Critical | Active | Migrate to Supabase (Phase 2) |
-| fal.ai CDN URLs expire → approved assets 404 | High | Active | downloadZip mitigates; Supabase Storage is permanent fix |
+| All product data is localStorage-only | Critical | Mitigated | Phase 2 complete — Supabase write-through live; localStorage kept as offline fallback |
+| fal.ai CDN URLs expire → approved assets 404 | High | Mitigated | Assets now mirrored to Supabase Storage non-blocking post-generation; originalFalUrl kept as debug field |
 | No HTTPS — credentials over HTTP | Critical | Active | certbot on server; P0 user action |
-| localStorage size limit (base64 images) | High | Active | Supabase Storage migration planned |
+| localStorage size limit (base64 images) | High | Mitigated | Reference images uploaded to Supabase Storage on capture; base64 kept as offline fallback |
 | Supabase schema not migrated | High | Blocking | Manual user action required |
 | LibraryPage onMarkRejectedLikeness not wired | Medium | Known bug | Sprint 9 fix |
 | App.tsx / CampaignWorkspace.tsx / AthleteLibrary.tsx monolith size | Medium | Mitigated | CampaignWorkspace split into CampaignGallery + CampaignSidebar; AthleteLibrary has CaptureTab + IdentityTab sub-components |

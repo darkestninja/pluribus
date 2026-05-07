@@ -1,9 +1,11 @@
-import { Download, Sparkles, FileText, ChevronDown, CheckSquare, Check, Clock, RotateCcw } from "lucide-react";
+import { useState } from "react";
+import { Download, Sparkles, FileText, ChevronDown, CheckSquare, Check, Clock, RotateCcw, Share2, Copy, CheckCheck } from "lucide-react";
 import type { Project } from "../../data/projects";
 import type { Athlete } from "../../data/athletes";
 import type { Recipe } from "../../data/recipes";
 import { relativeTime } from "../lib/utils";
 import type { Run, ExportLogEntry } from "../lib/store";
+import { supabase } from "../lib/supabase";
 
 interface StatsOutputCounts {
   generated: number;
@@ -43,6 +45,35 @@ export function CampaignSidebar({
   statsOutputCounts, exportLog, runs, showAllRuns, setShowAllRuns,
   activeRunFilter, setActiveRunFilter, batchRunning, runBatch, rerunFromRun, onLaunchStudio,
 }: CampaignSidebarProps) {
+  const [reviewUrl, setReviewUrl] = useState<string | null>(null);
+  const [reviewLoading, setReviewLoading] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  async function handleShare() {
+    setReviewLoading(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) return;
+      const res = await fetch("/api/review/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
+        body: JSON.stringify({ campaignId: project.id }),
+      });
+      if (!res.ok) return;
+      const { token } = await res.json() as { token: string };
+      setReviewUrl(`${window.location.origin}/review/${token}`);
+    } finally {
+      setReviewLoading(false);
+    }
+  }
+
+  async function handleCopy() {
+    if (!reviewUrl) return;
+    await navigator.clipboard.writeText(reviewUrl);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+
   return (
     <aside className="w-72 border-l border-border bg-background flex flex-col shrink-0 overflow-hidden">
       <div className="flex-1 overflow-y-auto">
@@ -318,6 +349,32 @@ export function CampaignSidebar({
           className="w-full h-9 rounded-md bg-card border border-border hover:bg-secondary text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center justify-center gap-2">
           Open in Studio
         </button>
+
+        {/* Share for review */}
+        {!reviewUrl ? (
+          <button onClick={handleShare} disabled={reviewLoading}
+            className="w-full h-9 rounded-md bg-card border border-border hover:bg-secondary text-sm text-muted-foreground hover:text-foreground disabled:opacity-40 transition-colors flex items-center justify-center gap-2">
+            <Share2 className="size-3.5" strokeWidth={1.75} />
+            {reviewLoading ? "Creating link…" : "Share for review"}
+          </button>
+        ) : (
+          <div className="rounded-md border border-border bg-card p-2 space-y-1.5">
+            <p className="text-[10px] text-muted-foreground flex items-center gap-1">
+              <Share2 className="size-3" strokeWidth={1.75} /> Review link — anyone with this URL can view
+            </p>
+            <div className="flex gap-1.5">
+              <input
+                readOnly
+                value={reviewUrl}
+                className="flex-1 min-w-0 text-[10px] bg-background border border-border rounded px-2 py-1 text-muted-foreground truncate"
+              />
+              <button onClick={handleCopy}
+                className="shrink-0 px-2 py-1 rounded border border-border bg-background hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1 text-[10px]">
+                {copied ? <><CheckCheck className="size-3 text-emerald-500" /> Copied</> : <><Copy className="size-3" /> Copy</>}
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </aside>
   );
