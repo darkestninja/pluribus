@@ -30,7 +30,7 @@ const PAGE_TITLES: Record<ViewType, string> = {
   studio: "Studio",
   projects: "Campaigns",
   athletes: "Athletes",
-  workflows: "Styles",
+  workflows: "Recipes",
   queue: "Queue",
   archive: "Archive",
   settings: "Settings",
@@ -156,7 +156,7 @@ export default function App() {
     { view: "home" as const,      label: "Home",      icon: Home },
     { view: "projects" as const,  label: "Campaigns", icon: Folder },
     { view: "athletes" as const,  label: "Athletes",  icon: Users },
-    { view: "workflows" as const, label: "Styles",    icon: LayoutGrid },
+    { view: "workflows" as const, label: "Recipes",   icon: LayoutGrid },
   ], []);
 
   const renderNavItem = (

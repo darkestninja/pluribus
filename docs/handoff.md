@@ -1,85 +1,97 @@
 # Handoff
 
-## Handoff — 2025-05-07
+## Handoff — 2025-05-07 (Sprint 2)
 
 ### Completed This Session
-- Sprint 0: Full product audit (architecture, capabilities, 6-moat gap analysis, UX audit, technical risks, sprint order)
-- Sprint 1: Identity Profiles — complete
+- Sprint 1: Identity Profiles (committed)
+- Sprint 2: Creative Recipes (complete)
 
-### Sprint 1 — What Was Built
+### Sprint 2 — What Was Built
 
-**New interfaces in `data/athletes.ts`:**
-- `AngleKey` (moved from component scope)
-- `CaptureAngle` (key, dataUrl, uploadedAt, notes)
-- `TattooMark` (id, description, location, visible)
-- `ApprovedLikeness` (imageUrl, context, approvedAt)
-- `AthleteProfile` (athleteId, version, updatedAt, captureAngles, tattoos, doNotChange, approvedLikeness, notes)
+**`data/recipes.ts`** (new file):
+- `Recipe` interface: id, name, description, thumbnail, useCase, prompt, negativePrompt, aspectRatio, aspectRatioLocked, defaultLook, styleRules[], lightingRules[], compositionRules[], qualityChecklist[], tags[], isSystemRecipe, createdAt, updatedAt
+- 6 seed recipes with full prompts, negative prompts, checklists:
+  - Classic Noir (wf-noir-studio) — B&W studio portrait
+  - Daylight Action (wf-daylight-action) — golden hour sports
+  - Victory Podium (wf-victory-podium) — celebration coverage
+  - Editorial Portrait (recipe-editorial-portrait) — press kit headshot
+  - Social Vertical (recipe-social-vertical) — 9:16 social content
+  - Athlete Announcement (recipe-announcement) — broadcast-ready portrait
 
-**New store functions in `app/lib/store.ts`:**
-- `getAthleteProfile(athleteId)` → `AthleteProfile | null`
-- `saveAthleteProfile(profile)` → void
-- `deleteAthleteProfile(athleteId)` → void
-- Key: `plb_{userId}_athleteProfile_{athleteId}`
+**`app/lib/store.ts`** additions:
+- `seedRecipes` imported from data/recipes.ts
+- All users get recipes seeded on first login (not just demo account)
+- `getRecipes()`, `addRecipe()`, `updateRecipe()`, `deleteRecipe()` — full CRUD
 
-**`app/components/AthleteLibrary.tsx` — complete rewrite:**
-- Removed `captureImages` and `tattoos` component state
-- Added `profile: AthleteProfile | null` state
-- Loads profile on athlete selection via `getAthleteProfile`
-- Saves profile immediately on every change via `saveAthleteProfile`
-- `compressToDataUrl()` helper: resizes to 800px JPEG, safe for localStorage
-- AngleSlot now reads from `profile.captureAngles`, falls back to `athlete.image` (blob URL guard added)
-- Do-not-change section: add/remove constraints, saved to profile
-- Identity notes: textarea in Identity tab, saves on blur
-- Tattoos now have `visible` toggle (controls whether they appear in prompts)
-- Approved likeness gallery in Identity tab
-- Profile version increments on each save
+**`app/lib/generate.ts`**:
+- `negativePrompt?: string` added to `GenerateImageParams`
+- Passed to fal.ai as `negative_prompt` field in request input
 
-**`app/components/AddAthleteModal.tsx`:**
-- Photo upload now converts to base64 DataURL (not blob URL)
-- Uses same `compressToDataUrl` pattern — photo persists after refresh
+**`app/components/WorkflowLibrary.tsx`** (complete rewrite):
+- Loads recipes from `getRecipes()` (not static import)
+- Browse with category filter and search
+- Recipe cards: thumbnail, name, useCase, tags, neg/checklist badge indicators
+- Expandable checklist preview per card
+- Clone button (all recipes) → opens create modal pre-filled
+- Edit button (user recipes only)
+- Delete button with confirmation (user recipes only)
+- System recipes marked with shield icon, cannot be deleted
+- Create/edit modal with 3 tabs: Basic (name, prompt, negative, tags), Creative Direction (style/lighting/composition rules), Checklist (quality checklist items)
+- All recipes persist to localStorage
 
-**`app/lib/promptEnhancer.ts`:**
-- `EnhanceOptions` now accepts `doNotChange?: string[]`
-- If present, appended as "Identity constraints: ..." to prompt
-- `buildCampaignPrompt` accepts and passes `doNotChange`
+**`app/components/NewCampaignModal.tsx`**:
+- Removed `workflowTemplates` import
+- "Recipe" section now calls `getRecipes()` to show all recipes
 
-**`app/components/CampaignWorkspace.tsx`:**
-- Imports `getAthleteProfile`, `saveAthleteProfile`, `ApprovedLikeness`
-- `runBatch` now loads athlete profile and passes `doNotChange` to `buildCampaignPrompt`
-- `markAsLikeness(output)` function: saves approved output to athlete's `approvedLikeness[]`
-- Bookmark icon button added to output hover overlay (saves as likeness reference)
+**`app/components/CampaignWorkspace.tsx`**:
+- Imports `getRecipes`, `CheckSquare`
+- `wf = getRecipes().find(r => r.id === project.workflowId)` (was workflowTemplates.find)
+- `runBatch` passes `negativePrompt: wf?.negativePrompt`
+- `regenerateOutput` passes `negativePrompt: wf?.negativePrompt`
+- Right sidebar: "Recipe" section (was "Style")
+- Right sidebar: "Review checklist" section shows qualityChecklist items as visual checkboxes
+
+**`app/components/Workspace.tsx`**:
+- Removed `workflowTemplates` import
+- All 4 usages replaced with `getRecipes()` / `.find(r => r.id === ...)`
+- `generateImage` call now passes `negativePrompt: preset?.negativePrompt`
+
+**`app/App.tsx`**:
+- Nav label "Styles" → "Recipes"
+- PAGE_TITLES "Styles" → "Recipes"
 
 ### In Progress
 
-Nothing — Sprint 1 complete and build verified clean.
+Nothing — Sprint 2 complete and build verified clean.
 
 ### Immediate Next Action
 
-Begin Sprint 2: Creative Recipes.
+Begin Sprint 3: Generation Run Records.
 
-1. Create `data/recipes.ts` with `Recipe` interface (extends current Workflow with negativePrompt, qualityChecklist, styleRules, aspectRatioLocked, etc.)
-2. Add `getRecipes` / `saveRecipe` / `deleteRecipe` to `store.ts`
-3. Seed 4-6 recipe examples
-4. Build recipe create/edit modal in WorkflowLibrary
-5. Wire recipe into NewCampaignModal
-6. Surface quality checklist in CampaignWorkspace sidebar
+1. Create `Run` interface in `data/runs.ts` (or `app/lib/store.ts`)
+2. Add `getRuns`, `addRun`, `updateRun` to store.ts
+3. In `generate.ts` / `CampaignWorkspace.tsx`: create run record before generation, update on completion
+4. In `CampaignWorkspace.tsx`: run history panel (timeline/list)
+5. Add `runId` field to `CampaignOutput`
+6. Asset detail view: show run ID, prompt, seed, model, resemblance score
 
-### Modified Files
+### Modified Files (Sprint 2)
 
-- `data/athletes.ts` — added AthleteProfile and related interfaces
-- `app/lib/store.ts` — added profile storage functions
-- `app/components/AthleteLibrary.tsx` — full rewrite with persistent profile
-- `app/components/AddAthleteModal.tsx` — base64 upload fix
-- `app/lib/promptEnhancer.ts` — doNotChange injection
-- `app/components/CampaignWorkspace.tsx` — profile integration + mark as likeness
+- `data/recipes.ts` — new file
+- `app/lib/store.ts` — recipe CRUD + seeding
+- `app/lib/generate.ts` — negativePrompt param
+- `app/components/WorkflowLibrary.tsx` — complete rewrite
+- `app/components/NewCampaignModal.tsx` — use getRecipes()
+- `app/components/CampaignWorkspace.tsx` — recipe lookup, checklist, negative prompt
+- `app/components/Workspace.tsx` — recipe source swap + negativePrompt
+- `app/App.tsx` — nav label rename
 
 ### Important Notes
 
-- **localStorage size:** base64 images at 800px JPEG ≈ 150-300KB each. 9 angles = ~2MB per athlete. Should be fine for 3-5 athletes but worth monitoring. Consider adding a storage warning in Sprint 3.
-- **Visible toggle on tattoos:** tattoos marked `visible: false` are excluded from prompt injection. UI shows "hidden" badge. This is important for subjects who want tattoos documented but not always shown.
-- **Profile version:** increments on every save. Used to detect staleness in future sync logic.
-- **Demo account:** seed athletes use `/athletes/james-magnussen.jpg` (static paths, not base64) — these will continue to work as-is. No regression.
-- **Blob URL guard:** `athlete.image.startsWith("blob:")` check prevents broken images on athlete cards for pre-fix athletes.
+- Seed recipes use same IDs as old workflow templates (wf-noir-studio, etc.). Existing projects continue to resolve their workflowId correctly — no data migration needed.
+- `data/workflows.ts` is now superseded but left in place for safety. It is no longer imported by any component. Can be removed in Sprint 6 cleanup.
+- `negative_prompt` field is passed to fal.ai for all models. If a model doesn't support it, fal.ai ignores the field gracefully.
+- Recipe seeding for all users uses `plb_{userId}_recipes_seeded` flag to run only once per user.
 
 ### Active Blockers (User Action Required)
 
@@ -89,5 +101,4 @@ Begin Sprint 2: Creative Recipes.
 
 ### Risks Introduced
 
-- localStorage approaching limit if users upload many athletes with many angles. Low immediate risk. Monitor in Sprint 3.
-- No regression observed on demo account or generation flow (build clean).
+- None significant. Build passes clean. No generation flow changes other than adding optional negativePrompt.

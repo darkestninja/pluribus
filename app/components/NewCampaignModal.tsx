@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { X, Check } from "lucide-react";
-import { workflowTemplates } from "../../data/workflows";
 import { Project } from "../../data/projects";
-import { getAthletes } from "../lib/store";
+import { getAthletes, getRecipes } from "../lib/store";
 
 export const CAMPAIGN_TEMPLATES = [
   { id: "olympic",  name: "Olympic announcement",  workflowId: "wf-noir-studio",     brief: "Official announcement portraiture for national committee media" },
@@ -148,24 +147,24 @@ export function NewCampaignModal({ onClose, onCreate }: NewCampaignModalProps) {
             )}
           </div>
 
-          {/* Style */}
+          {/* Recipe */}
           <div className="space-y-1.5">
-            <label className="text-xs text-muted-foreground">Style template</label>
+            <label className="text-xs text-muted-foreground">Recipe</label>
             <div className="space-y-1.5">
-              {workflowTemplates.map(wf => (
+              {getRecipes().map(recipe => (
                 <button
-                  key={wf.id}
-                  onClick={() => setWorkflowId(wf.id === workflowId ? "" : wf.id)}
-                  className={`w-full flex items-center gap-2.5 p-2.5 rounded-lg border transition-colors ${workflowId === wf.id ? "border-accent bg-accent/5" : "border-border hover:border-accent/40"}`}
+                  key={recipe.id}
+                  onClick={() => setWorkflowId(recipe.id === workflowId ? "" : recipe.id)}
+                  className={`w-full flex items-center gap-2.5 p-2.5 rounded-lg border transition-colors ${workflowId === recipe.id ? "border-accent bg-accent/5" : "border-border hover:border-accent/40"}`}
                 >
                   <div className="size-10 rounded-md overflow-hidden shrink-0">
-                    <img src={wf.thumbnail} alt={wf.name} className="w-full h-full object-cover" />
+                    <img src={recipe.thumbnail} alt={recipe.name} className="w-full h-full object-cover" />
                   </div>
                   <div className="flex-1 text-left min-w-0">
-                    <p className="text-sm font-medium truncate">{wf.name}</p>
-                    {wf.description && <p className="text-xs text-muted-foreground truncate">{wf.description}</p>}
+                    <p className="text-sm font-medium truncate">{recipe.name}</p>
+                    {recipe.description && <p className="text-xs text-muted-foreground truncate">{recipe.description}</p>}
                   </div>
-                  {workflowId === wf.id && <Check className="size-3.5 text-accent shrink-0" strokeWidth={2.5} />}
+                  {workflowId === recipe.id && <Check className="size-3.5 text-accent shrink-0" strokeWidth={2.5} />}
                 </button>
               ))}
             </div>

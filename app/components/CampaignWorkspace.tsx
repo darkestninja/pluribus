@@ -1,10 +1,9 @@
 import { useState, useEffect, useCallback } from "react";
 import {
   ArrowLeft, Share2, Download, MoreHorizontal, Sparkles,
-  Check, X, RefreshCw, Bookmark,
+  Check, X, RefreshCw, Bookmark, CheckSquare,
 } from "lucide-react";
 import { Project } from "../../data/projects";
-import { workflowTemplates } from "../../data/workflows";
 import { generateImage } from "../lib/generate";
 import { toast } from "../lib/notifications";
 import { computeResemblanceScore } from "../lib/faceScore";
@@ -12,6 +11,7 @@ import { buildCampaignPrompt } from "../lib/promptEnhancer";
 import {
   getAthletes, getCampaignOutputs, addCampaignOutput, updateCampaignOutput,
   getAthleteProfile, saveAthleteProfile, createEmptyProfile, getProfilePromptConstraints,
+  getRecipes,
   type CampaignOutput,
 } from "../lib/store";
 import type { ApprovedLikeness } from "../../data/athletes";
@@ -47,7 +47,7 @@ export function CampaignWorkspace({ project, onBack, onLaunchStudio }: CampaignW
   const [batchProgress, setBatchProgress] = useState(0);
 
   const projAthletes = getProjectAthletes(project);
-  const wf = workflowTemplates.find(w => w.id === project.workflowId);
+  const wf = getRecipes().find(r => r.id === project.workflowId);
 
   const refreshOutputs = useCallback(() => {
     setOutputs(getCampaignOutputs(project.id));
@@ -86,6 +86,7 @@ export function CampaignWorkspace({ project, onBack, onLaunchStudio }: CampaignW
         : basePrompt;
       const result = await generateImage({
         prompt,
+        negativePrompt: wf?.negativePrompt || undefined,
         aspectRatio: wf?.aspectRatio ?? "9:16",
       });
       updateCampaignOutput(output.id, { url: result[0].url, status: "pending" });
@@ -110,6 +111,7 @@ export function CampaignWorkspace({ project, onBack, onLaunchStudio }: CampaignW
 
         const result = await generateImage({
           prompt: enrichedPrompt,
+          negativePrompt: wf?.negativePrompt || undefined,
           aspectRatio: wf?.aspectRatio ?? "9:16",
         });
 
@@ -413,9 +415,9 @@ export function CampaignWorkspace({ project, onBack, onLaunchStudio }: CampaignW
                 )}
               </div>
 
-              {/* Style section */}
+              {/* Recipe section */}
               <div className="space-y-2">
-                <p className="text-xs text-muted-foreground uppercase tracking-wider">Style</p>
+                <p className="text-xs text-muted-foreground uppercase tracking-wider">Recipe</p>
                 {wf ? (
                   <div className="flex items-center gap-3 p-2.5 bg-card border border-border rounded-lg">
                     <div className="size-10 rounded-md overflow-hidden shrink-0">
@@ -427,9 +429,27 @@ export function CampaignWorkspace({ project, onBack, onLaunchStudio }: CampaignW
                     </div>
                   </div>
                 ) : (
-                  <p className="text-xs text-muted-foreground">No style selected.</p>
+                  <p className="text-xs text-muted-foreground">No recipe selected.</p>
                 )}
               </div>
+
+              {/* Quality checklist */}
+              {wf && wf.qualityChecklist && wf.qualityChecklist.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-xs text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                    <CheckSquare className="size-3" strokeWidth={1.75} />
+                    Review checklist
+                  </p>
+                  <div className="space-y-1.5">
+                    {wf.qualityChecklist.map((item, i) => (
+                      <div key={i} className="flex items-start gap-2 px-2.5 py-1.5 bg-card border border-border rounded-md">
+                        <div className="size-3.5 rounded border border-border shrink-0 mt-0.5" />
+                        <p className="text-xs text-muted-foreground leading-tight">{item}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Stats grid */}
               <div className="space-y-2">

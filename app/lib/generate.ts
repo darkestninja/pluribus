@@ -121,6 +121,7 @@ export interface LoraWeight {
 
 export interface GenerateImageParams {
   prompt: string;
+  negativePrompt?: string;
   modelId?: string;
   aspectRatio?: string;
   numImages?: number;
@@ -154,6 +155,7 @@ export interface GeneratedVideo {
 export async function generateImage(params: GenerateImageParams): Promise<GeneratedImage[]> {
   const {
     prompt,
+    negativePrompt,
     modelId = DEFAULT_IMAGE_MODEL.id,
     aspectRatio = "16:9",
     numImages = 1,
@@ -180,6 +182,7 @@ export async function generateImage(params: GenerateImageParams): Promise<Genera
     input.loras = loras.map(l => ({ path: l.url, scale: l.scale ?? 1.0 }));
   }
 
+  if (negativePrompt) input.negative_prompt = negativePrompt;
   if (guidanceScale !== undefined) input.guidance_scale = guidanceScale;
   if (numInferenceSteps !== undefined) input.num_inference_steps = numInferenceSteps;
   if (seed !== undefined) input.seed = seed;

@@ -1,5 +1,6 @@
 import { athletes as seedAthletes, Athlete, AthleteProfile } from "../../data/athletes";
 import { projects as seedProjects, archivedProjects as seedArchived, Project } from "../../data/projects";
+import { seedRecipes, Recipe } from "../../data/recipes";
 
 export const DEMO_EMAIL = "daniel@pluribus.ai";
 
@@ -39,6 +40,12 @@ export function initStore(userId: string, userEmail: string) {
     save("archived", seedArchived);
     save("credits", 500);
     localStorage.setItem(_prefix + "seeded", "1");
+  }
+
+  // Seed system recipes for ALL users on first login
+  if (!localStorage.getItem(_prefix + "recipes_seeded")) {
+    save("recipes", seedRecipes);
+    localStorage.setItem(_prefix + "recipes_seeded", "1");
   }
 }
 
@@ -108,6 +115,23 @@ export function saveAthleteProfile(profile: AthleteProfile): void {
 }
 export function deleteAthleteProfile(athleteId: string): void {
   try { localStorage.removeItem(key(`athleteProfile_${athleteId}`)); } catch {}
+}
+
+// ---------- recipes ----------
+export function getRecipes(): Recipe[] {
+  return load<Recipe[]>("recipes", seedRecipes);
+}
+export function saveRecipes(recipes: Recipe[]): void {
+  save("recipes", recipes);
+}
+export function addRecipe(recipe: Recipe): void {
+  saveRecipes([...getRecipes(), recipe]);
+}
+export function updateRecipe(id: string, patch: Partial<Recipe>): void {
+  saveRecipes(getRecipes().map(r => r.id === id ? { ...r, ...patch, updatedAt: new Date().toISOString() } : r));
+}
+export function deleteRecipe(id: string): void {
+  saveRecipes(getRecipes().filter(r => r.id !== id || r.isSystemRecipe));
 }
 
 // ---------- credits ----------

@@ -4,9 +4,8 @@ import {
   Download, Copy, Check, Zap, AlertCircle, X, ChevronDown, Search, Users, Plus,
   SlidersHorizontal, Loader2,
 } from "lucide-react";
-import { workflowTemplates } from "../../data/workflows";
 import { generateImage, generateVideo, IMAGE_MODELS, DEFAULT_IMAGE_MODEL, type LoraWeight } from "../lib/generate";
-import { getAthletes, pushQueueItem, updateQueueItem, getCredits, deductCredits, getStudioMode, setStudioMode } from "../lib/store";
+import { getAthletes, pushQueueItem, updateQueueItem, getCredits, deductCredits, getStudioMode, setStudioMode, getRecipes } from "../lib/store";
 import { computeResemblanceScore } from "../lib/faceScore";
 import { enhancePrompt } from "../lib/promptEnhancer";
 import { toast } from "../lib/notifications";
@@ -73,7 +72,7 @@ export function Workspace({ workspaceId: _id, prefill, onBack }: WorkspaceProps)
 
   const initialPreset  = prefill?.workflowId ?? "";
   const initialAthlete = prefill?.athleteId  ?? athletes[0]?.id ?? "";
-  const initialWorkflow = workflowTemplates.find(w => w.id === initialPreset);
+  const initialWorkflow = getRecipes().find(r => r.id === initialPreset);
   const initialRatio = initialWorkflow?.aspectRatio ?? "9:16";
 
   // Mode
@@ -147,7 +146,7 @@ export function Workspace({ workspaceId: _id, prefill, onBack }: WorkspaceProps)
   const [showRail, setShowRail] = useState(false);
 
   const athlete = athletes.find(a => a.id === selectedAthleteId);
-  const preset  = workflowTemplates.find(p => p.id === selectedPreset);
+  const preset  = getRecipes().find(r => r.id === selectedPreset);
   const tier    = QUALITY_TIERS[qualityTier];
   const isTemplate = promptMode === "template" && !!preset;
   const selectedModel = IMAGE_MODELS.find(m => m.id === selectedModelId) ?? DEFAULT_IMAGE_MODEL;
@@ -202,7 +201,7 @@ export function Workspace({ workspaceId: _id, prefill, onBack }: WorkspaceProps)
   };
 
   const switchStyle = (id: string) => {
-    const wf = workflowTemplates.find(w => w.id === id);
+    const wf = getRecipes().find(r => r.id === id);
     if (!wf) return;
     setSelectedPreset(id);
     setPromptMode("template");
@@ -275,6 +274,7 @@ export function Workspace({ workspaceId: _id, prefill, onBack }: WorkspaceProps)
         if (mode === "image") {
           const images = await generateImage({
             prompt: enrichedPrompt,
+            negativePrompt: preset?.negativePrompt || undefined,
             modelId: selectedModelId,
             aspectRatio: selectedRatio,
             numImages: 1,
@@ -1117,28 +1117,28 @@ export function Workspace({ workspaceId: _id, prefill, onBack }: WorkspaceProps)
               </button>
             </div>
             <div className="p-4 space-y-2">
-              {workflowTemplates.map(wf => (
+              {getRecipes().map(recipe => (
                 <button
-                  key={wf.id}
-                  onClick={() => switchStyle(wf.id)}
+                  key={recipe.id}
+                  onClick={() => switchStyle(recipe.id)}
                   className={`w-full flex items-center gap-3 p-3 rounded-lg border-2 transition-all text-left ${
-                    selectedPreset === wf.id
+                    selectedPreset === recipe.id
                       ? "border-accent bg-accent/5"
                       : "border-border hover:border-accent/40 hover:bg-card"
                   }`}
                 >
                   <div className="size-16 rounded-md overflow-hidden shrink-0">
-                    <img src={wf.thumbnail} alt={wf.name} className="w-full h-full object-cover" />
+                    <img src={recipe.thumbnail} alt={recipe.name} className="w-full h-full object-cover" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <p className="text-sm font-medium text-foreground">{wf.name}</p>
-                      {selectedPreset === wf.id && <Check className="size-3.5 text-accent shrink-0" strokeWidth={2.5} />}
+                      <p className="text-sm font-medium text-foreground">{recipe.name}</p>
+                      {selectedPreset === recipe.id && <Check className="size-3.5 text-accent shrink-0" strokeWidth={2.5} />}
                     </div>
-                    {wf.description && <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed line-clamp-2">{wf.description}</p>}
+                    {recipe.description && <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed line-clamp-2">{recipe.description}</p>}
                     <div className="flex items-center gap-2 mt-1.5">
-                      {wf.defaultLook && <span className="text-xs text-muted-foreground bg-secondary px-1.5 py-0.5 rounded">{wf.defaultLook}</span>}
-                      {wf.aspectRatio && <span className="text-xs text-muted-foreground bg-secondary px-1.5 py-0.5 rounded">{wf.aspectRatio}</span>}
+                      {recipe.defaultLook && <span className="text-xs text-muted-foreground bg-secondary px-1.5 py-0.5 rounded">{recipe.defaultLook}</span>}
+                      {recipe.aspectRatio && <span className="text-xs text-muted-foreground bg-secondary px-1.5 py-0.5 rounded">{recipe.aspectRatio}</span>}
                     </div>
                   </div>
                 </button>
