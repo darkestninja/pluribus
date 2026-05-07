@@ -1,6 +1,67 @@
 # Handoff
 
-## Handoff — 2026-05-07 (Post-Audit) ← CURRENT
+## Handoff — 2026-05-07 (Post-Sprint 8 Audit + Bug Fix) ← CURRENT
+
+### Completed This Session
+- Bug fix: `LibraryPage` now passes `onMarkRejectedLikeness` to `AssetDetailPanel` — the Reject button in the Library view is now functional
+- Build clean, deployed
+
+### Bug: LibraryPage onMarkRejectedLikeness not wired
+
+**Root cause:** `LibraryPage` had `handleMarkLikeness` for approved likeness but no equivalent for rejected likeness. `onMarkRejectedLikeness` was never passed to `<AssetDetailPanel>`, so the ThumbsDown "Reject" button rendered (because `output.athleteId` was set) but calling it did nothing.
+
+**Fix:** Added `handleMarkRejectedLikeness` handler in `LibraryPage.tsx` (mirrors `handleMarkLikeness`, calls `addRejectedLikeness` from store). Added `addRejectedLikeness` import. Passed `onMarkRejectedLikeness={handleMarkRejectedLikeness}` to `<AssetDetailPanel>`.
+
+**Files changed:** `app/components/LibraryPage.tsx` only.
+
+### Next Recommended Action
+```
+Read docs/prompts/02-plan-sprint.md and plan Sprint 9. Priority items: ComparePanel, multi-select + batch status actions, rejection reason tags, profile completeness %.
+```
+
+---
+
+## Handoff — 2026-05-07 (Post-Sprint 8 Audit)
+
+### Completed This Session
+- Sprint 8 fully shipped: downloadUrl/downloadZip, per-asset download button, ZIP export, rejected likeness (data model + store + UI), review history timeline, Dashboard activity feed fix from getQueue → getCampaignOutputs
+- Full product + technical re-audit (Post-Sprint 8)
+- docs/current-state.md, docs/tasks.md, docs/handoff.md updated
+
+### Audit Findings Summary
+
+**Architecture unchanged:** React 18 SPA + Bun proxy + Supabase Auth only. All product data in localStorage. No cloud persistence.
+
+**Sprint 8 closed 5 of the 5 Stage 1 audit gaps.** One bug introduced: `LibraryPage` does not pass `onMarkRejectedLikeness` to `AssetDetailPanel` — the Reject button is visible but non-functional in the Library view.
+
+**New gaps identified:**
+1. `LibraryPage` `onMarkRejectedLikeness` not wired — concrete bug, 1-line fix
+2. No side-by-side comparison — still the single biggest reviewer UX gap
+3. No batch multi-select / bulk status actions in the gallery
+4. No rejection reason structured tags — "Reject" records no failure category
+5. No profile completeness signal — users don't know how complete an identity profile is
+6. Campaign state machine doesn't exist — status is cosmetic, never transitions
+7. Recipe visual language tokens (Creative Constitution §14) not in the product
+8. QueuePage/RenderQueue are legacy Studio features — create confusing dual-generation paradigm
+
+**Top recommended Sprint 9 actions (in order):**
+1. Fix LibraryPage onMarkRejectedLikeness (immediate bug)
+2. ComparePanel — side-by-side asset comparison
+3. Multi-select + batch status actions in gallery
+4. Rejection reason dropdown on Reject path
+5. Profile completeness % signal
+
+**Monolith warning:** App.tsx (491), CampaignWorkspace.tsx (884), AthleteLibrary.tsx (928) — all three will cross 1000 lines within 2 sprints. Split before Sprint 11.
+
+### Next Recommended Action
+
+```
+Read docs/prompts/02-plan-sprint.md and plan Sprint 9. Start with the LibraryPage bug fix, then ComparePanel + multi-select + rejection reason.
+```
+
+---
+
+## Handoff — 2026-05-07 (Post-Audit) ← PREVIOUS
 
 ### Completed This Session
 - Full product + technical audit against docs/prompts/01-audit.md

@@ -3,7 +3,7 @@ import { Search, Filter } from "lucide-react";
 import {
   getCampaignOutputs, getAthletes, getRuns, getProjects, getArchivedProjects,
   setOutputStatus, addOutputComment, addOutputTag, removeOutputTag,
-  getAthleteProfile, saveAthleteProfile, createEmptyProfile,
+  getAthleteProfile, saveAthleteProfile, createEmptyProfile, addRejectedLikeness,
   type CampaignOutput, type OutputStatus, type OutputComment, type Run,
 } from "../lib/store";
 import type { Athlete, ApprovedLikeness } from "../../data/athletes";
@@ -119,6 +119,17 @@ export function LibraryPage({ reviewerEmail }: LibraryPageProps) {
       updatedAt: new Date().toISOString(),
     });
     toast({ type: "success", title: "Likeness reference saved", body: `Added to ${athlete.name}'s identity profile` });
+  };
+
+  const handleMarkRejectedLikeness = (output: CampaignOutput) => {
+    const athlete = athleteMap.get(output.athleteId ?? "");
+    if (!athlete) return;
+    addRejectedLikeness(athlete.id, {
+      imageUrl: output.url,
+      context: `Library · ${new Date().toLocaleDateString()}`,
+      rejectedAt: new Date().toISOString(),
+    });
+    toast({ type: "success", title: "Rejected likeness saved", body: `Added to ${athlete.name}'s profile as what to avoid` });
   };
 
   const detailAthlete = detailOutput?.athleteId ? athleteMap.get(detailOutput.athleteId) : undefined;
@@ -242,6 +253,7 @@ export function LibraryPage({ reviewerEmail }: LibraryPageProps) {
             toast({ type: "info", title: "Open the campaign to regenerate", body: "Regeneration is available in the campaign workspace." });
           }}
           onMarkLikeness={handleMarkLikeness}
+          onMarkRejectedLikeness={handleMarkRejectedLikeness}
           onCommentAdded={handleCommentAdded}
           onTagAdded={handleTagAdded}
           onTagRemoved={handleTagRemoved}
