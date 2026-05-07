@@ -4,7 +4,7 @@ import {
   Check, X, RefreshCw, Bookmark, CheckSquare, Clock, RotateCcw, Info,
 } from "lucide-react";
 import { Project } from "../../data/projects";
-import { generateImage } from "../lib/generate";
+import { generateImage, DEFAULT_IMAGE_MODEL } from "../lib/generate";
 import { toast } from "../lib/notifications";
 import { computeResemblanceScore } from "../lib/faceScore";
 import { buildCampaignPrompt } from "../lib/promptEnhancer";
@@ -58,6 +58,7 @@ export function CampaignWorkspace({ project, onBack, onLaunchStudio }: CampaignW
   const [batchRunning, setBatchRunning] = useState(false);
   const [batchProgress, setBatchProgress] = useState(0);
   const [detailOutput, setDetailOutput] = useState<CampaignOutput | null>(null);
+  const [showAllRuns, setShowAllRuns] = useState(false);
 
   const projAthletes = getProjectAthletes(project);
   const wf = getRecipes().find(r => r.id === project.workflowId);
@@ -117,7 +118,7 @@ export function CampaignWorkspace({ project, onBack, onLaunchStudio }: CampaignW
       recipeName: wf?.name,
       prompt,
       negativePrompt: wf?.negativePrompt || undefined,
-      model: "regenerate",
+      model: DEFAULT_IMAGE_MODEL.id,
       aspectRatio: wf?.aspectRatio ?? "9:16",
       status: "running",
       startedAt: new Date().toISOString(),
@@ -173,7 +174,7 @@ export function CampaignWorkspace({ project, onBack, onLaunchStudio }: CampaignW
         recipeName: wf?.name,
         prompt: enrichedPrompt,
         negativePrompt: wf?.negativePrompt || undefined,
-        model: "batch",
+        model: DEFAULT_IMAGE_MODEL.id,
         aspectRatio: wf?.aspectRatio ?? "9:16",
         status: "running",
         startedAt: new Date().toISOString(),
@@ -240,8 +241,10 @@ export function CampaignWorkspace({ project, onBack, onLaunchStudio }: CampaignW
 
   const rerunFromRun = async (run: Run) => {
     if (batchRunning) return;
+    setBatchRunning(true);
     const athlete = run.athleteId ? getAthletes().find(a => a.id === run.athleteId) : undefined;
     if (!athlete) {
+      setBatchRunning(false);
       toast({ type: "error", title: "Cannot re-run", body: "Athlete no longer found." });
       return;
     }
@@ -296,6 +299,8 @@ export function CampaignWorkspace({ project, onBack, onLaunchStudio }: CampaignW
     } catch (err: any) {
       updateRun(project.id, newRunId, { status: "failed", errorMessage: err?.message, completedAt: new Date().toISOString() });
       toast({ type: "error", title: "Re-run failed", body: err?.message });
+    } finally {
+      setBatchRunning(false);
     }
     refreshRuns();
   };
@@ -489,7 +494,8 @@ export function CampaignWorkspace({ project, onBack, onLaunchStudio }: CampaignW
                             <X className="size-3.5" strokeWidth={2.5} />
                           </button>
                           <button onClick={e => { e.stopPropagation(); regenerateOutput(output); }} title="Regenerate"
-                            className="size-8 rounded-full bg-black/60 hover:bg-black/80 text-white flex items-center justify-center transition-colors">
+                            disabled={batchRunning}
+                            className="size-8 rounded-full bg-black/60 hover:bg-black/80 disabled:opacity-40 text-white flex items-center justify-center transition-colors">
                             <RefreshCw className="size-3.5" strokeWidth={1.75} />
                           </button>
                           {output.athleteId && (
@@ -603,7 +609,7 @@ export function CampaignWorkspace({ project, onBack, onLaunchStudio }: CampaignW
                   <p className="text-xs text-muted-foreground">No runs yet — generate to start tracking.</p>
                 ) : (
                   <div className="space-y-1.5">
-                    {runs.slice(0, 10).map(run => (
+                    {(showAllRuns ? runs : runs.slice(0, 10)).map(run => (
                       <div key={run.id}
                         className={`p-2.5 bg-card border rounded-lg transition-colors cursor-pointer ${
                           activeRunFilter === run.id ? "border-accent bg-accent/5" : "border-border hover:border-accent/40"
@@ -639,7 +645,11 @@ export function CampaignWorkspace({ project, onBack, onLaunchStudio }: CampaignW
                       </div>
                     ))}
                     {runs.length > 10 && (
-                      <p className="text-[10px] text-muted-foreground text-center">+{runs.length - 10} older runs</p>
+                      <button
+                        onClick={() => setShowAllRuns(v => !v)}
+                        className="w-full text-[10px] text-muted-foreground hover:text-foreground text-center transition-colors py-1">
+                        {showAllRuns ? "Show less" : `+${runs.length - 10} older runs`}
+                      </button>
                     )}
                   </div>
                 )}
