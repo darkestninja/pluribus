@@ -4,7 +4,7 @@ import {
   Check, X, RefreshCw, Bookmark, CheckSquare, Clock, RotateCcw, Flag, PenLine,
   ChevronDown, FileText,
 } from "lucide-react";
-import { Project } from "../../data/projects";
+import { Project, type CampaignStatus } from "../../data/projects";
 import { generateImage, DEFAULT_IMAGE_MODEL } from "../lib/generate";
 import { supabase } from "../lib/supabase";
 import { toast } from "../lib/notifications";
@@ -13,9 +13,9 @@ import { buildCampaignPrompt } from "../lib/promptEnhancer";
 import {
   getAthletes, getCampaignOutputs, addCampaignOutput, updateCampaignOutput,
   getAthleteProfile, saveAthleteProfile, createEmptyProfile, getProfilePromptConstraints,
-  getProjects, getRecipes, getRuns, addRun, updateRun, updateProject,
+  getProjects, getRecipes, getRuns, addRun, updateRun, updateProject, appendExportLog,
   setOutputStatus, addOutputComment, addOutputTag, removeOutputTag, addRejectedLikeness,
-  type CampaignOutput, type Run, type OutputStatus, type OutputComment,
+  type CampaignOutput, type Run, type OutputStatus, type OutputComment, type ExportLogEntry,
 } from "../lib/store";
 import { relativeTime, downloadZip } from "../lib/utils";
 import type { ApprovedLikeness } from "../../data/athletes";
@@ -38,11 +38,12 @@ const TAB_LABELS: Record<OutputTab, string> = {
   rejected:       "Rejected",
 };
 
-const STATUS_COLOR: Record<string, string> = {
-  "In Progress": "bg-muted-foreground/40",
-  Review:        "bg-accent",
-  Complete:      "bg-emerald-500",
-};
+const CAMPAIGN_STATUSES: { value: CampaignStatus; label: string; dot: string }[] = [
+  { value: "draft",     label: "Draft",      dot: "bg-muted-foreground/40" },
+  { value: "in_review", label: "In Review",  dot: "bg-accent" },
+  { value: "approved",  label: "Approved",   dot: "bg-emerald-500" },
+  { value: "delivered", label: "Delivered",  dot: "bg-purple-500" },
+];
 
 function getProjectAthletes(p: Project) {
   const athletes = getAthletes();
@@ -81,6 +82,12 @@ export function CampaignWorkspace({ project, onBack, onLaunchStudio }: CampaignW
   const briefSavedTimerRef              = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [directionOpen, setDirectionOpen] = useState(false);
   const [checkedItems, setCheckedItems] = useState<Set<number>>(new Set());
+  const [campaignStatus, setCampaignStatus] = useState<CampaignStatus>(
+    () => (getProjects().find(p => p.id === project.id)?.status as CampaignStatus) ?? "draft"
+  );
+  const [exportLog, setExportLog] = useState<ExportLogEntry[]>(
+    () => getProjects().find(p => p.id === project.id)?.exportLog ?? []
+  );
 
   const projAthletes = getProjectAthletes(project);
   const wf = getRecipes().find(r => r.id === project.workflowId);
@@ -405,6 +412,13 @@ export function CampaignWorkspace({ project, onBack, onLaunchStudio }: CampaignW
         })),
         `${project.name.replace(/\s+/g, "-").toLowerCase()}-approved.zip`,
       );
+      const entry: ExportLogEntry = {
+        exportedAt: new Date().toISOString(),
+        exportedBy: reviewerEmail,
+        assetCount: approved.length,
+      };
+      appendExportLog(project.id, entry);
+      setExportLog(prev => [entry, ...prev]);
     } finally {
       setIsExporting(false);
     }
@@ -437,10 +451,23 @@ export function CampaignWorkspace({ project, onBack, onLaunchStudio }: CampaignW
           </button>
           <span className="text-muted-foreground/40">/</span>
           <div className="flex items-center gap-2 min-w-0">
-            {project.status && (
-              <span className={`size-2 rounded-full shrink-0 ${STATUS_COLOR[project.status] ?? "bg-muted-foreground/40"}`} />
-            )}
             <h1 className="text-sm font-semibold truncate">{project.name}</h1>
+            <select
+              value={campaignStatus}
+              onChange={e => {
+                const s = e.target.value as CampaignStatus;
+                setCampaignStatus(s);
+                updateProject(project.id, { status: s });
+              }}
+              className="h-6 pl-2 pr-6 rounded-md text-[11px] font-medium border border-border bg-card text-muted-foreground hover:text-foreground focus:outline-none focus:border-accent cursor-pointer appearance-none"
+              style={{ backgroundImage: "none" }}
+              title="Campaign status"
+            >
+              {CAMPAIGN_STATUSES.map(s => (
+                <option key={s.value} value={s.value}>{s.label}</option>
+              ))}
+            </select>
+            <span className={`size-2 rounded-full shrink-0 ${CAMPAIGN_STATUSES.find(s => s.value === campaignStatus)?.dot ?? "bg-muted-foreground/40"}`} />
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
@@ -786,6 +813,32 @@ export function CampaignWorkspace({ project, onBack, onLaunchStudio }: CampaignW
                     </div>
                   ))}
                 </div>
+              </div>
+
+              {/* Export log */}
+              <div className="space-y-2">
+                <p className="text-xs text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                  <Download className="size-3" strokeWidth={1.75} />
+                  Export log
+                  {exportLog.length > 0 && <span className="ml-auto">{exportLog.length}</span>}
+                </p>
+                {exportLog.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">No exports yet — approve and export assets to log deliveries.</p>
+                ) : (
+                  <div className="space-y-1.5">
+                    {exportLog.slice(0, 5).map((entry, i) => (
+                      <div key={i} className="flex items-center gap-2 p-2 bg-card border border-border rounded-md text-xs">
+                        <span className="shrink-0 h-4 px-1.5 rounded bg-emerald-500/10 text-emerald-400 text-[10px] font-medium flex items-center">
+                          {entry.assetCount} asset{entry.assetCount !== 1 ? "s" : ""}
+                        </span>
+                        <span className="text-muted-foreground truncate">
+                          {entry.exportedBy ? entry.exportedBy.split("@")[0] : "—"}
+                        </span>
+                        <span className="text-muted-foreground/50 shrink-0 ml-auto">{relativeTime(entry.exportedAt)}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Run History */}

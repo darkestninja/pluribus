@@ -1,6 +1,7 @@
 import { athletes as seedAthletes, Athlete, AthleteProfile, RejectedLikeness } from "../../data/athletes";
 export type { RejectedLikeness };
-import { projects as seedProjects, archivedProjects as seedArchived, Project } from "../../data/projects";
+import { projects as seedProjects, archivedProjects as seedArchived, Project, CampaignStatus, ExportLogEntry } from "../../data/projects";
+export type { CampaignStatus, ExportLogEntry };
 import { seedRecipes, Recipe } from "../../data/recipes";
 
 export const DEMO_EMAIL = "daniel@pluribus.ai";
@@ -80,6 +81,11 @@ export function addProject(project: Project): Project[] {
 }
 export function updateProject(id: string, patch: Partial<Project>): void {
   saveProjects(getProjects().map(p => p.id === id ? { ...p, ...patch } : p));
+}
+export function appendExportLog(id: string, entry: ExportLogEntry): void {
+  saveProjects(getProjects().map(p =>
+    p.id === id ? { ...p, exportLog: [entry, ...(p.exportLog ?? [])] } : p
+  ));
 }
 
 // ---------- athlete profiles ----------

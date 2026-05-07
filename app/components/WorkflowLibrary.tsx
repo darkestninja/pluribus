@@ -28,6 +28,19 @@ const RECIPE_THUMBNAILS = [
 
 type ListField = "styleRules" | "lightingRules" | "compositionRules" | "qualityChecklist" | "tags";
 
+const MOOD_TOKENS = [
+  "", "Controlled Intensity", "Editorial Restraint", "Pre-Action Focus",
+  "Broadcast Authority", "Luxury Performance", "Raw Training Realism",
+];
+const CAMERA_TOKENS = [
+  "", "85mm Portrait", "50mm Environmental", "Wide Heroic Low Angle",
+  "Tight Editorial Crop", "Broadcast Still Frame",
+];
+const TONE_TOKENS = [
+  "", "Neutral Monochrome", "Warm Editorial", "Cool Technical",
+  "High Contrast Black", "Muted Premium Colour", "Clean Daylight",
+];
+
 function emptyForm() {
   return {
     name: "", description: "", useCase: "", prompt: "", negativePrompt: "",
@@ -35,6 +48,7 @@ function emptyForm() {
     thumbnail: RECIPE_THUMBNAILS[0],
     styleRules: [] as string[], lightingRules: [] as string[],
     compositionRules: [] as string[], qualityChecklist: [] as string[], tags: [] as string[],
+    mood: "", cameraStyle: "", toneStyle: "",
   };
 }
 
@@ -49,7 +63,7 @@ export function WorkflowLibrary({ onSelectWorkflow }: WorkflowLibraryProps) {
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [form, setForm] = useState<FormData>(emptyForm());
-  const [modalTab, setModalTab] = useState<"basic" | "creative" | "checklist">("basic");
+  const [modalTab, setModalTab] = useState<"basic" | "creative" | "checklist" | "visual">("basic");
   const [newItem, setNewItem] = useState<Record<ListField, string>>({
     styleRules: "", lightingRules: "", compositionRules: "", qualityChecklist: "", tags: "",
   });
@@ -79,7 +93,8 @@ export function WorkflowLibrary({ onSelectWorkflow }: WorkflowLibraryProps) {
       negativePrompt: r.negativePrompt, aspectRatio: r.aspectRatio, aspectRatioLocked: r.aspectRatioLocked,
       thumbnail: r.thumbnail,
       styleRules: [...r.styleRules], lightingRules: [...r.lightingRules],
-      compositionRules: [...r.compositionRules], qualityChecklist: [...r.qualityChecklist], tags: [...r.tags] });
+      compositionRules: [...r.compositionRules], qualityChecklist: [...r.qualityChecklist], tags: [...r.tags],
+      mood: r.mood ?? "", cameraStyle: r.cameraStyle ?? "", toneStyle: r.toneStyle ?? "" });
     setModalTab("basic"); setShowModal(true);
   };
 
@@ -89,7 +104,8 @@ export function WorkflowLibrary({ onSelectWorkflow }: WorkflowLibraryProps) {
       negativePrompt: r.negativePrompt, aspectRatio: r.aspectRatio, aspectRatioLocked: r.aspectRatioLocked,
       thumbnail: r.thumbnail,
       styleRules: [...r.styleRules], lightingRules: [...r.lightingRules],
-      compositionRules: [...r.compositionRules], qualityChecklist: [...r.qualityChecklist], tags: [...r.tags] });
+      compositionRules: [...r.compositionRules], qualityChecklist: [...r.qualityChecklist], tags: [...r.tags],
+      mood: r.mood ?? "", cameraStyle: r.cameraStyle ?? "", toneStyle: r.toneStyle ?? "" });
     setModalTab("basic"); setShowModal(true);
   };
 
@@ -100,11 +116,16 @@ export function WorkflowLibrary({ onSelectWorkflow }: WorkflowLibraryProps) {
 
   const handleSave = () => {
     if (!form.name.trim() || !form.prompt.trim()) return;
+    const vl = {
+      mood: form.mood || undefined,
+      cameraStyle: form.cameraStyle || undefined,
+      toneStyle: form.toneStyle || undefined,
+    };
     if (editingId) {
-      updateRecipe(editingId, { ...form });
+      updateRecipe(editingId, { ...form, ...vl });
     } else {
       const now = new Date().toISOString();
-      addRecipe({ id: `recipe-${Date.now()}`, ...form,
+      addRecipe({ id: `recipe-${Date.now()}`, ...form, ...vl,
         isSystemRecipe: false, createdAt: now, updatedAt: now });
     }
     refresh(); closeModal();
@@ -219,6 +240,19 @@ export function WorkflowLibrary({ onSelectWorkflow }: WorkflowLibraryProps) {
                       ))}
                     </div>
                   )}
+                  {(recipe.mood || recipe.cameraStyle || recipe.toneStyle) && (
+                    <div className="flex flex-wrap gap-1">
+                      {recipe.mood && (
+                        <span className="text-[10px] bg-accent/10 text-accent border border-accent/20 px-1.5 py-0.5 rounded">{recipe.mood}</span>
+                      )}
+                      {recipe.cameraStyle && (
+                        <span className="text-[10px] bg-accent/10 text-accent border border-accent/20 px-1.5 py-0.5 rounded">{recipe.cameraStyle}</span>
+                      )}
+                      {recipe.toneStyle && (
+                        <span className="text-[10px] bg-accent/10 text-accent border border-accent/20 px-1.5 py-0.5 rounded">{recipe.toneStyle}</span>
+                      )}
+                    </div>
+                  )}
 
                   {/* Checklist preview */}
                   {recipe.qualityChecklist.length > 0 && (
@@ -302,10 +336,10 @@ export function WorkflowLibrary({ onSelectWorkflow }: WorkflowLibraryProps) {
 
             {/* Modal tabs */}
             <div className="px-5 flex gap-5 border-b border-border shrink-0">
-              {(["basic", "creative", "checklist"] as const).map(tab => (
+              {(["basic", "creative", "checklist", "visual"] as const).map(tab => (
                 <button key={tab} onClick={() => setModalTab(tab)}
                   className={`py-3 border-b-2 transition-colors text-sm font-medium ${modalTab === tab ? "border-accent text-foreground" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
-                  {tab === "basic" ? "Basic" : tab === "creative" ? "Creative Direction" : "Checklist"}
+                  {tab === "basic" ? "Basic" : tab === "creative" ? "Creative Direction" : tab === "checklist" ? "Checklist" : "Visual Language"}
                 </button>
               ))}
             </div>
@@ -404,6 +438,32 @@ export function WorkflowLibrary({ onSelectWorkflow }: WorkflowLibraryProps) {
                   <p className="text-xs text-muted-foreground/60 mt-1">Appears in the campaign review sidebar. Reviewers check these before approving each asset.</p>
                 </div>
                 <ListEditor field="qualityChecklist" placeholder="e.g. Face is sharp — eyes in critical focus" />
+              </div>}
+
+              {/* VISUAL LANGUAGE */}
+              {modalTab === "visual" && <div className="space-y-5">
+                <div>
+                  <h4 className="text-sm font-medium">Visual language profile</h4>
+                  <p className="text-xs text-muted-foreground/60 mt-1">Structured tokens that define this recipe's visual identity. Displayed on the recipe card for quick identification.</p>
+                </div>
+                {([
+                  { field: "mood" as const, label: "Mood", tokens: MOOD_TOKENS, placeholder: "— not set —" },
+                  { field: "cameraStyle" as const, label: "Camera", tokens: CAMERA_TOKENS, placeholder: "— not set —" },
+                  { field: "toneStyle" as const, label: "Tone", tokens: TONE_TOKENS, placeholder: "— not set —" },
+                ] as const).map(({ field, label, tokens }) => (
+                  <div key={field} className="space-y-1.5">
+                    <label className="text-xs text-muted-foreground">{label}</label>
+                    <select
+                      value={form[field]}
+                      onChange={e => setForm(f => ({ ...f, [field]: e.target.value }))}
+                      className="w-full h-9 px-3 bg-card border border-border rounded-md text-sm focus:outline-none focus:border-accent"
+                    >
+                      {tokens.map(t => (
+                        <option key={t} value={t}>{t === "" ? "— not set —" : t}</option>
+                      ))}
+                    </select>
+                  </div>
+                ))}
               </div>}
             </div>
 

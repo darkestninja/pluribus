@@ -19,6 +19,11 @@ export interface Recipe {
   lightingRules: string[];
   compositionRules: string[];
 
+  // Visual language tokens (Creative Constitution §14)
+  mood?: string;
+  cameraStyle?: string;
+  toneStyle?: string;
+
   // Review
   qualityChecklist: string[];
 

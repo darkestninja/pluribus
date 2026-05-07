@@ -1,3 +1,11 @@
+export type CampaignStatus = "draft" | "in_review" | "approved" | "delivered";
+
+export interface ExportLogEntry {
+  exportedAt: string;
+  exportedBy: string;
+  assetCount: number;
+}
+
 export interface Project {
   id: string;
   name: string;
@@ -8,9 +16,10 @@ export interface Project {
   athleteName?: string;
   athleteIds?: string[];
   workflowId?: string;
-  status?: string;
+  status?: CampaignStatus;
   assetCount?: number;
   brief?: string;
+  exportLog?: ExportLogEntry[];
 }
 
 export const projects: Project[] = [
@@ -23,7 +32,7 @@ export const projects: Project[] = [
     type: "active",
     athleteIds: ["1"],
     workflowId: "wf-noir-studio",
-    status: "In Progress",
+    status: "in_review",
     assetCount: 8,
   },
   {
@@ -35,7 +44,7 @@ export const projects: Project[] = [
     type: "active",
     athleteIds: ["2"],
     workflowId: "wf-daylight-action",
-    status: "In Progress",
+    status: "in_review",
     assetCount: 4,
   },
   {
@@ -47,7 +56,7 @@ export const projects: Project[] = [
     type: "active",
     athleteIds: ["3"],
     workflowId: "wf-noir-studio",
-    status: "Review",
+    status: "approved",
     assetCount: 12,
   },
   {
@@ -59,7 +68,7 @@ export const projects: Project[] = [
     type: "active",
     athleteIds: ["4"],
     workflowId: "wf-victory-podium",
-    status: "In Progress",
+    status: "in_review",
     assetCount: 6,
   },
   {
@@ -71,7 +80,7 @@ export const projects: Project[] = [
     type: "active",
     athleteIds: ["5"],
     workflowId: "wf-daylight-action",
-    status: "Complete",
+    status: "delivered",
     assetCount: 16,
   },
   {
@@ -83,7 +92,7 @@ export const projects: Project[] = [
     type: "active",
     athleteIds: ["1", "2", "3"],
     workflowId: "wf-victory-podium",
-    status: "Complete",
+    status: "delivered",
     assetCount: 24,
   },
 ];
@@ -96,7 +105,6 @@ export const archivedProjects: Project[] = [
     lastEdited: "2 months ago",
     type: "archived",
     athleteName: "Kristian Gkolomeev",
-    status: "Archived",
   },
   {
     id: "archive-2",
@@ -105,7 +113,6 @@ export const archivedProjects: Project[] = [
     lastEdited: "3 months ago",
     type: "archived",
     athleteName: "Felipe Lima",
-    status: "Archived",
   },
   {
     id: "archive-3",
@@ -114,7 +121,6 @@ export const archivedProjects: Project[] = [
     lastEdited: "4 months ago",
     type: "archived",
     athleteName: "Reece Prescod",
-    status: "Archived",
   },
   {
     id: "archive-4",
@@ -123,7 +129,6 @@ export const archivedProjects: Project[] = [
     lastEdited: "5 months ago",
     type: "archived",
     athleteName: "Isabella Arcila",
-    status: "Archived",
   },
   {
     id: "archive-5",
@@ -132,7 +137,6 @@ export const archivedProjects: Project[] = [
     lastEdited: "6 months ago",
     type: "archived",
     athleteName: "Natalia Fryckowska",
-    status: "Archived",
   },
   {
     id: "archive-6",
@@ -141,6 +145,5 @@ export const archivedProjects: Project[] = [
     lastEdited: "7 months ago",
     type: "archived",
     athleteName: "Max Mccusker",
-    status: "Archived",
   },
 ];
