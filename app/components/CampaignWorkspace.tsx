@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import {
-  ArrowLeft, Download, MoreHorizontal, Sparkles,
+  ArrowLeft, Download, Sparkles,
   Check, X, RefreshCw, Bookmark, CheckSquare, Clock, RotateCcw, Flag, PenLine,
   ChevronDown, FileText,
 } from "lucide-react";
@@ -422,9 +422,6 @@ export function CampaignWorkspace({ project, onBack, onLaunchStudio }: CampaignW
             className="h-8 px-3 rounded-md bg-card border border-border hover:bg-secondary text-xs text-muted-foreground hover:text-foreground disabled:opacity-40 transition-colors flex items-center gap-1.5">
             <Download className="size-3.5" strokeWidth={1.75} />
             Export {approvedCount > 0 ? approvedCount : ""}
-          </button>
-          <button className="size-8 rounded-md bg-card border border-border hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors flex items-center justify-center">
-            <MoreHorizontal className="size-3.5" strokeWidth={1.75} />
           </button>
         </div>
       </header>

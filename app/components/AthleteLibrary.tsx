@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Search, Plus, Clock, X, Upload, Download, Sparkles, Camera, ShieldCheck } from "lucide-react";
+import { Search, Plus, Clock, X, Upload, Download, Sparkles, Camera, ShieldCheck, Pencil, Trash2, Check } from "lucide-react";
 import type { Athlete, AngleKey, AthleteProfile, CaptureAngle, TattooMark } from "../../data/athletes";
-import { getAthletes, addAthlete, getQueue, type QueueItem, getAthleteProfile, saveAthleteProfile, createEmptyProfile } from "../lib/store";
+import { getAthletes, saveAthletes, addAthlete, getCampaignOutputs, getAthleteProfile, saveAthleteProfile, createEmptyProfile, type CampaignOutput } from "../lib/store";
 import { compressToDataUrl } from "../lib/imageUtils";
 import { toast } from "../lib/notifications";
 
@@ -41,7 +41,7 @@ export function AthleteLibrary({ preSelectedAthleteId, onAthleteDeselect, onGene
   const [sportFilter, setSportFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [showAddModal, setShowAddModal] = useState(false);
-  const [athleteHistory, setAthleteHistory] = useState<QueueItem[]>([]);
+  const [athleteHistory, setAthleteHistory] = useState<CampaignOutput[]>([]);
 
   // ── Profile state (persisted) ──────────────────────────────────────────────
   const [profile, setProfile] = useState<AthleteProfile | null>(null);
@@ -51,6 +51,11 @@ export function AthleteLibrary({ preSelectedAthleteId, onAthleteDeselect, onGene
   const [newMark, setNewMark] = useState({ description: "", location: "" });
   const [newConstraint, setNewConstraint] = useState("");
   const [addingConstraint, setAddingConstraint] = useState(false);
+
+  // ── Edit attributes / delete ──────────────────────────────────────────────
+  const [editingAttrs, setEditingAttrs] = useState(false);
+  const [attrForm, setAttrForm] = useState({ name: "", sport: "", event: "", height: "", weight: "", build: "", skinTone: "", hair: "", age: "", country: "" });
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const angleFileRef = useRef<HTMLInputElement>(null);
   const [pendingAngle, setPendingAngle] = useState<AngleKey | null>(null);
@@ -79,14 +84,12 @@ export function AthleteLibrary({ preSelectedAthleteId, onAthleteDeselect, onGene
 
   useEffect(() => {
     if (selectedAthlete) {
-      const ath = athleteList.find(a => a.id === selectedAthlete);
-      if (ath) {
-        setAthleteHistory(
-          getQueue().filter(q => q.athleteName === ath.name && q.status === "done")
-        );
-      }
+      setAthleteHistory(
+        getCampaignOutputs().filter(o => o.athleteId === selectedAthlete)
+          .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+      );
     }
-  }, [selectedAthlete, athleteList]);
+  }, [selectedAthlete]);
 
   useEffect(() => {
     if (!showAddModal) return;
@@ -213,6 +216,61 @@ export function AthleteLibrary({ preSelectedAthleteId, onAthleteDeselect, onGene
     persistProfile({ doNotChange: profile.doNotChange.filter((_, i) => i !== idx) }, profile);
   };
 
+  // ── Edit physical attributes ───────────────────────────────────────────────
+  const openEditAttrs = (ath: Athlete) => {
+    setAttrForm({
+      name: ath.name,
+      sport: ath.sport,
+      event: ath.event,
+      height: ath.height ?? "",
+      weight: ath.weight ?? "",
+      build: ath.build ?? "",
+      skinTone: ath.skinTone ?? "",
+      hair: ath.hair ?? "",
+      age: ath.age?.toString() ?? "",
+      country: ath.country ?? "",
+    });
+    setEditingAttrs(true);
+  };
+
+  const saveAttrs = () => {
+    if (!athlete) return;
+    const updated: Athlete = {
+      ...athlete,
+      name: attrForm.name.trim() || athlete.name,
+      sport: attrForm.sport,
+      event: attrForm.event,
+      height: attrForm.height || undefined,
+      weight: attrForm.weight || undefined,
+      build: attrForm.build || undefined,
+      skinTone: attrForm.skinTone || undefined,
+      hair: attrForm.hair || undefined,
+      age: attrForm.age ? parseInt(attrForm.age) : undefined,
+      country: attrForm.country || undefined,
+    };
+    const next = athleteList.map(a => a.id === updated.id ? updated : a);
+    saveAthletes(next);
+    setAthleteList(next);
+    setEditingAttrs(false);
+  };
+
+  // ── Delete subject ─────────────────────────────────────────────────────────
+  const handleDeleteAthlete = () => {
+    if (!athlete) return;
+    const next = athleteList.filter(a => a.id !== athlete.id);
+    saveAthletes(next);
+    setAthleteList(next);
+    setSelectedAthlete(null);
+    setConfirmDelete(false);
+    onAthleteDeselect?.();
+  };
+
+  // ── Remove approved likeness ───────────────────────────────────────────────
+  const handleRemoveLikeness = (idx: number) => {
+    if (!profile) return;
+    persistProfile({ approvedLikeness: profile.approvedLikeness.filter((_, i) => i !== idx) }, profile);
+  };
+
   // ── Identity notes (debounced save — 600ms after last keystroke) ───────────
   const handleNotesChange = (notes: string) => {
     if (!profile) return;
@@ -240,6 +298,11 @@ export function AthleteLibrary({ preSelectedAthleteId, onAthleteDeselect, onGene
   };
 
   const athlete = athleteList.find((a) => a.id === selectedAthlete);
+
+  useEffect(() => {
+    setEditingAttrs(false);
+    setConfirmDelete(false);
+  }, [selectedAthlete]);
 
   // ── AngleSlot sub-component ────────────────────────────────────────────────
   const AngleSlot = ({ angleKey, label, aspectRatio }: { angleKey: AngleKey; label: string; aspectRatio: string }) => {
@@ -367,9 +430,32 @@ export function AthleteLibrary({ preSelectedAthleteId, onAthleteDeselect, onGene
                 <h2 className="text-lg font-semibold text-foreground tracking-tight">{athlete.name}</h2>
                 <p className="text-sm text-muted-foreground mt-1">{athlete.sport} · {athlete.event}</p>
               </div>
-              <button onClick={handleCloseAthlete} className="p-1.5 hover:bg-secondary rounded transition-colors">
-                <X className="size-3.5 text-muted-foreground" />
-              </button>
+              <div className="flex items-center gap-1">
+                <button onClick={() => openEditAttrs(athlete)} title="Edit details"
+                  className="p-1.5 hover:bg-secondary rounded transition-colors">
+                  <Pencil className="size-3.5 text-muted-foreground" />
+                </button>
+                {confirmDelete ? (
+                  <div className="flex items-center gap-1">
+                    <button onClick={handleDeleteAthlete}
+                      className="h-6 px-2 rounded bg-red-500 hover:bg-red-600 text-white text-xs font-medium transition-colors">
+                      Delete
+                    </button>
+                    <button onClick={() => setConfirmDelete(false)}
+                      className="h-6 px-2 rounded bg-secondary text-muted-foreground hover:text-foreground text-xs transition-colors">
+                      Cancel
+                    </button>
+                  </div>
+                ) : (
+                  <button onClick={() => setConfirmDelete(true)} title="Delete subject"
+                    className="p-1.5 hover:bg-secondary rounded transition-colors">
+                    <Trash2 className="size-3.5 text-muted-foreground hover:text-red-400" />
+                  </button>
+                )}
+                <button onClick={handleCloseAthlete} className="p-1.5 hover:bg-secondary rounded transition-colors">
+                  <X className="size-3.5 text-muted-foreground" />
+                </button>
+              </div>
             </div>
             <div className="px-5 flex gap-5">
               {(["capture", "identity", "brand", "history"] as const).map((tab) => (
@@ -555,23 +641,75 @@ export function AthleteLibrary({ preSelectedAthleteId, onAthleteDeselect, onGene
             {activeTab === "identity" && (
               <div className="space-y-5">
                 <div>
-                  <h4 className="text-sm font-semibold text-foreground mb-3">Physical features</h4>
-                  <div className="bg-card border border-border rounded-md overflow-hidden text-sm">
-                    {[
-                      { label: "Height", value: athlete.height },
-                      { label: "Weight", value: athlete.weight },
-                      { label: "Build", value: athlete.build },
-                      { label: "Skin tone", value: athlete.skinTone },
-                      { label: "Hair", value: athlete.hair },
-                      { label: "Age", value: athlete.age?.toString() },
-                      { label: "Country", value: athlete.country },
-                    ].filter(r => r.value).map((row, i, arr) => (
-                      <div key={row.label} className={`flex justify-between px-3 py-2 ${i < arr.length - 1 ? "border-b border-border" : ""}`}>
-                        <span className="text-muted-foreground">{row.label}</span>
-                        <span className="font-medium text-foreground">{row.value}</span>
-                      </div>
-                    ))}
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="text-sm font-semibold text-foreground">Physical features</h4>
+                    {!editingAttrs && (
+                      <button onClick={() => openEditAttrs(athlete)}
+                        className="h-6 px-2 rounded text-xs text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors flex items-center gap-1">
+                        <Pencil className="size-3" strokeWidth={1.75} /> Edit
+                      </button>
+                    )}
                   </div>
+
+                  {editingAttrs ? (
+                    <div className="space-y-3">
+                      <div className="grid grid-cols-2 gap-2">
+                        {([
+                          { label: "Name", key: "name" },
+                          { label: "Sport", key: "sport" },
+                          { label: "Event", key: "event" },
+                          { label: "Height", key: "height", placeholder: "5'8\"" },
+                          { label: "Weight", key: "weight", placeholder: "145 lbs" },
+                          { label: "Build", key: "build", placeholder: "Athletic" },
+                          { label: "Skin tone", key: "skinTone", placeholder: "Medium brown" },
+                          { label: "Hair", key: "hair", placeholder: "Long braids" },
+                          { label: "Age", key: "age", type: "number" },
+                          { label: "Country", key: "country", placeholder: "USA" },
+                        ] as { label: string; key: keyof typeof attrForm; placeholder?: string; type?: string }[]).map(({ label, key, placeholder, type }) => (
+                          <div key={key}>
+                            <p className="text-[10px] text-muted-foreground mb-1">{label}</p>
+                            <input
+                              type={type ?? "text"}
+                              placeholder={placeholder}
+                              value={attrForm[key]}
+                              onChange={e => setAttrForm(f => ({ ...f, [key]: e.target.value }))}
+                              className="w-full h-8 px-2.5 bg-secondary border border-border rounded text-xs focus:outline-none focus:border-accent placeholder:text-muted-foreground/50"
+                            />
+                          </div>
+                        ))}
+                      </div>
+                      <div className="flex gap-2">
+                        <button onClick={saveAttrs}
+                          className="flex-1 h-8 rounded bg-foreground text-background text-xs font-medium hover:bg-foreground/90 transition-colors flex items-center justify-center gap-1.5">
+                          <Check className="size-3" strokeWidth={2.5} /> Save
+                        </button>
+                        <button onClick={() => setEditingAttrs(false)}
+                          className="h-8 px-3 rounded bg-secondary text-muted-foreground hover:text-foreground text-xs transition-colors">
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="bg-card border border-border rounded-md overflow-hidden text-sm">
+                      {[
+                        { label: "Height", value: athlete.height },
+                        { label: "Weight", value: athlete.weight },
+                        { label: "Build", value: athlete.build },
+                        { label: "Skin tone", value: athlete.skinTone },
+                        { label: "Hair", value: athlete.hair },
+                        { label: "Age", value: athlete.age?.toString() },
+                        { label: "Country", value: athlete.country },
+                      ].filter(r => r.value).map((row, i, arr) => (
+                        <div key={row.label} className={`flex justify-between px-3 py-2 ${i < arr.length - 1 ? "border-b border-border" : ""}`}>
+                          <span className="text-muted-foreground">{row.label}</span>
+                          <span className="font-medium text-foreground">{row.value}</span>
+                        </div>
+                      ))}
+                      {![athlete.height, athlete.weight, athlete.build, athlete.skinTone, athlete.hair, athlete.age, athlete.country].some(Boolean) && (
+                        <p className="text-xs text-muted-foreground px-3 py-2">No physical attributes set</p>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {/* Identity notes */}
@@ -595,8 +733,15 @@ export function AthleteLibrary({ preSelectedAthleteId, onAthleteDeselect, onGene
                     <div className="grid grid-cols-2 gap-2">
                       {(profile?.approvedLikeness ?? []).map((item, idx) => (
                         <div key={idx} className="rounded-md overflow-hidden border border-border bg-card group relative">
-                          <div className="aspect-[3/4] overflow-hidden">
+                          <div className="aspect-[3/4] overflow-hidden relative">
                             <img src={item.imageUrl} alt="Approved likeness" className="w-full h-full object-cover" />
+                            <button
+                              onClick={() => handleRemoveLikeness(idx)}
+                              title="Remove reference"
+                              className="absolute top-1.5 right-1.5 size-5 rounded-full bg-black/60 hover:bg-red-500/90 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all"
+                            >
+                              <X className="size-2.5 text-white" strokeWidth={2.5} />
+                            </button>
                           </div>
                           <p className="text-[10px] text-muted-foreground p-2 truncate">{item.context || "Approved reference"}</p>
                         </div>
@@ -609,17 +754,13 @@ export function AthleteLibrary({ preSelectedAthleteId, onAthleteDeselect, onGene
 
             {/* ── BRAND TAB ── */}
             {activeTab === "brand" && (
-              <div className="space-y-4">
-                <h4 className="text-sm font-semibold text-foreground">Uniform variants</h4>
-                <div className="grid grid-cols-2 gap-2">
-                  {["Team Official", "Competition Gear", "Podium Ceremony", "Training Gear"].map((kit) => (
-                    <div key={kit} className="bg-card border border-border rounded-md overflow-hidden text-center">
-                      <div className="aspect-square overflow-hidden">
-                        <img src={athlete.image.startsWith("blob:") ? "/athletes/placeholder.jpg" : athlete.image} alt={kit} className="w-full h-full object-cover opacity-40 grayscale" />
-                      </div>
-                      <p className="text-xs text-muted-foreground p-2">{kit}</p>
-                    </div>
-                  ))}
+              <div className="flex flex-col items-center justify-center py-16 text-center gap-3">
+                <div className="size-10 rounded-full bg-secondary flex items-center justify-center">
+                  <Sparkles className="size-4 text-muted-foreground" strokeWidth={1.5} />
+                </div>
+                <div>
+                  <p className="text-sm font-medium">Brand kit — coming soon</p>
+                  <p className="text-xs text-muted-foreground mt-1">Upload uniform variants, brand colours, and kit guidelines.</p>
                 </div>
               </div>
             )}
@@ -633,25 +774,23 @@ export function AthleteLibrary({ preSelectedAthleteId, onAthleteDeselect, onGene
                 </div>
                 {athleteHistory.length === 0 ? (
                   <div className="text-center py-10 text-muted-foreground">
-                    <p className="text-sm">No renders yet</p>
-                    <p className="text-xs mt-1">Generate from Studio to see results here</p>
+                    <p className="text-sm">No assets yet</p>
+                    <p className="text-xs mt-1">Generate from a campaign to see results here</p>
                   </div>
                 ) : (
                   <div className="grid grid-cols-2 gap-2">
                     {athleteHistory.map((item) => (
-                      <div key={item.id} className="aspect-square bg-black rounded-md overflow-hidden relative group cursor-pointer">
-                        {item.resultUrl && (
-                          item.type === "video"
-                            ? <video src={item.resultUrl} className="w-full h-full object-cover" muted />
-                            : <img src={item.resultUrl} alt={item.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
-                        )}
+                      <div key={item.id} className="aspect-[3/4] bg-black rounded-md overflow-hidden relative group cursor-pointer">
+                        <img src={item.url} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-between p-2">
-                          <p className="text-white text-xs truncate">{item.name}</p>
-                          {item.resultUrl && (
-                            <a href={item.resultUrl} download target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()} className="p-1 bg-white/20 hover:bg-white/40 rounded transition-colors">
-                              <Download className="size-3 text-white" />
-                            </a>
-                          )}
+                          <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
+                            item.status === "approved" ? "bg-emerald-500/80 text-white"
+                            : item.status === "rejected" ? "bg-red-500/80 text-white"
+                            : "bg-black/60 text-white/80"
+                          }`}>{item.status}</span>
+                          <a href={item.url} download target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()} className="p-1 bg-white/20 hover:bg-white/40 rounded transition-colors">
+                            <Download className="size-3 text-white" />
+                          </a>
                         </div>
                       </div>
                     ))}
@@ -728,16 +867,9 @@ export function AthleteLibrary({ preSelectedAthleteId, onAthleteDeselect, onGene
                 ].map(({ label, key, placeholder, type, col }) => (
                   <div key={key} className={col ?? ""}>
                     <p className="text-xs text-muted-foreground mb-1.5">{label}</p>
-                    {type === "select" ? (
-                      <select value={(form as any)[key]} onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))}
-                        className="w-full h-9 px-3 bg-secondary border border-border rounded-md text-sm focus-visible:border-accent">
-                        {SPORTS.map(s => <option key={s} value={s}>{s}</option>)}
-                      </select>
-                    ) : (
                       <input type={type ?? "text"} placeholder={placeholder} value={(form as any)[key]}
                         onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))}
                         className="w-full h-9 px-3 bg-secondary border border-border rounded-md text-sm focus-visible:border-accent placeholder:text-muted-foreground" />
-                    )}
                   </div>
                 ))}
               </div>
