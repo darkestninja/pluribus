@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { X, Check, RefreshCw, Bookmark, Info, PenLine, Flag, MessageSquare } from "lucide-react";
+import { X, RefreshCw, Bookmark, Info, PenLine, Flag, MessageSquare } from "lucide-react";
 import type { Athlete } from "../../data/athletes";
 import type { Run } from "../lib/store";
 import { type CampaignOutput, type OutputStatus, type OutputComment } from "../lib/store";

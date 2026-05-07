@@ -10,7 +10,7 @@ import { toast } from "../lib/notifications";
 import { computeResemblanceScore } from "../lib/faceScore";
 import { buildCampaignPrompt } from "../lib/promptEnhancer";
 import {
-  getAthletes, getCampaignOutputs, addCampaignOutput,
+  getAthletes, getCampaignOutputs, addCampaignOutput, updateCampaignOutput,
   getAthleteProfile, saveAthleteProfile, createEmptyProfile, getProfilePromptConstraints,
   getRecipes, getRuns, addRun, updateRun,
   setOutputStatus, addOutputComment,
@@ -177,6 +177,7 @@ export function CampaignWorkspace({ project, onBack, onLaunchStudio }: CampaignW
         onSeed: s => { capturedSeed = s; },
       });
       const patch = { url: result[0].url, status: "pending" as OutputStatus, runId };
+      updateCampaignOutput(output.id, patch);
       setOutputs(prev => prev.map(o => o.id === output.id ? { ...o, ...patch } : o));
       if (detailOutput?.id === output.id) setDetailOutput(prev => prev ? { ...prev, ...patch } : null);
       updateRun(project.id, runId, {
