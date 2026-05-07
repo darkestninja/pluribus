@@ -1,5 +1,4 @@
 import { Sparkles, ArrowRight, Plus, Users } from "lucide-react";
-import { workflowTemplates } from "../../data/workflows";
 import { getAthletes, getProjects, getQueue } from "../lib/store";
 import type { Athlete } from "../../data/athletes";
 

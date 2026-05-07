@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { Dashboard } from "./components/Dashboard";
 import { AthleteLibrary } from "./components/AthleteLibrary";
+import { LibraryPage } from "./components/LibraryPage";
 import { Workspace } from "./components/Workspace";
 import { Settings } from "./components/Settings";
 import { WorkflowLibrary } from "./components/WorkflowLibrary";
@@ -14,7 +15,7 @@ import { NewCampaignModal } from "./components/NewCampaignModal";
 import { AddAthleteModal } from "./components/AddAthleteModal";
 import {
   Search, Moon, Sun, Plus, Settings as SettingsIcon,
-  Home, Folder, Users, LayoutGrid, PanelLeft, Menu, X, Bell,
+  Home, Folder, Users, LayoutGrid, Images, PanelLeft, Menu, X, Bell,
   CheckCircle, AlertCircle, Info, LogOut,
 } from "lucide-react";
 import { getQueue, isOnboarded, setOnboarded, initStore } from "./lib/store";
@@ -23,14 +24,15 @@ import { supabase, toAppUser, signOut } from "./lib/auth";
 import type { AppUser } from "./lib/auth";
 import type { Project } from "../data/projects";
 
-type ViewType = "home" | "studio" | "projects" | "athletes" | "workflows" | "queue" | "archive" | "settings";
+type ViewType = "home" | "studio" | "projects" | "subjects" | "workflows" | "library" | "queue" | "archive" | "settings";
 
 const PAGE_TITLES: Record<ViewType, string> = {
   home: "Home",
   studio: "Studio",
   projects: "Campaigns",
-  athletes: "Athletes",
+  subjects: "Subjects",
   workflows: "Recipes",
+  library: "Library",
   queue: "Queue",
   archive: "Archive",
   settings: "Settings",
@@ -155,8 +157,9 @@ export default function App() {
   const navItems = useMemo(() => [
     { view: "home" as const,      label: "Home",      icon: Home },
     { view: "projects" as const,  label: "Campaigns", icon: Folder },
-    { view: "athletes" as const,  label: "Athletes",  icon: Users },
+    { view: "subjects" as const,  label: "Subjects",  icon: Users },
     { view: "workflows" as const, label: "Recipes",   icon: LayoutGrid },
+    { view: "library" as const,   label: "Library",   icon: Images },
   ], []);
 
   const renderNavItem = (
@@ -400,7 +403,7 @@ export default function App() {
               onNewCampaign={() => setShowNewCampaignModal(true)}
               onQuickGenerate={() => goToStudio()}
               onAddAthlete={() => setShowAddAthleteModal(true)}
-              onAthleteClick={(id) => { if (id) setSelectedAthleteId(id); setCurrentView("athletes"); }}
+              onAthleteClick={(id) => { if (id) setSelectedAthleteId(id); setCurrentView("subjects"); }}
               onAthleteGenerate={(id) => goToStudio({ athleteId: id })}
               onViewAllWorkflows={() => setCurrentView("workflows")}
               onWorkflowClick={(id) => goToStudio({ workflowId: id })}
@@ -412,12 +415,15 @@ export default function App() {
               extraProjects={extraProjects}
             />
           )}
-          {currentView === "athletes" && (
+          {currentView === "subjects" && (
             <AthleteLibrary
               preSelectedAthleteId={selectedAthleteId}
               onAthleteDeselect={() => setSelectedAthleteId(null)}
               onGenerate={(id) => goToStudio({ athleteId: id })}
             />
+          )}
+          {currentView === "library" && (
+            <LibraryPage reviewerEmail={appUser?.email ?? ""} />
           )}
           {currentView === "workflows" && (
             <WorkflowLibrary onSelectWorkflow={(id) => goToStudio({ workflowId: id })} />
@@ -447,7 +453,7 @@ export default function App() {
         open={paletteOpen}
         onClose={() => setPaletteOpen(false)}
         onNavigate={(v) => { setCurrentView(v); setPaletteOpen(false); }}
-        onAthlete={(id) => { setSelectedAthleteId(id); setCurrentView("athletes"); setPaletteOpen(false); }}
+        onAthlete={(id) => { setSelectedAthleteId(id); setCurrentView("subjects"); setPaletteOpen(false); }}
         onGenerate={(id) => { goToStudio({ athleteId: id }); setPaletteOpen(false); }}
       />
 

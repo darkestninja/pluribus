@@ -10,18 +10,10 @@ interface AddAthleteModalProps {
   onAdded?: (athlete: Athlete) => void;
 }
 
-const SPORTS = ["Swimming", "Track", "Weightlifting"] as const;
-
-const EVENTS: Record<string, string[]> = {
-  Swimming: ["100m Freestyle", "200m Freestyle", "100m Backstroke", "100m Butterfly", "200m IM"],
-  Track: ["100m Sprint", "200m Sprint", "400m", "110m Hurdles", "Long Jump"],
-  Weightlifting: ["Clean & Jerk", "Snatch", "Total"],
-};
-
 export function AddAthleteModal({ onClose, onAdded }: AddAthleteModalProps) {
   const [name, setName] = useState("");
-  const [sport, setSport] = useState<typeof SPORTS[number]>("Swimming");
-  const [event, setEvent] = useState(EVENTS.Swimming[0]);
+  const [sport, setSport] = useState("");
+  const [event, setEvent] = useState("");
   const [country, setCountry] = useState("");
   const [age, setAge] = useState("");
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -31,11 +23,6 @@ export function AddAthleteModal({ onClose, onAdded }: AddAthleteModalProps) {
     const file = e.target.files?.[0];
     if (!file) return;
     compressToDataUrl(file).then(setPreviewUrl);
-  };
-
-  const handleSportChange = (s: typeof SPORTS[number]) => {
-    setSport(s);
-    setEvent(EVENTS[s][0]);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -58,8 +45,8 @@ export function AddAthleteModal({ onClose, onAdded }: AddAthleteModalProps) {
     addAthlete(newAthlete);
     toast({
       type: "success",
-      title: "Athlete added",
-      body: `${newAthlete.name} has been added to your roster. Upload reference photos to complete their profile.`,
+      title: "Subject added",
+      body: `${newAthlete.name} has been added. Upload reference photos to complete their profile.`,
     });
     onAdded?.(newAthlete);
     onClose();
@@ -75,7 +62,7 @@ export function AddAthleteModal({ onClose, onAdded }: AddAthleteModalProps) {
         className="bg-popover border border-border rounded-xl w-full max-w-md overflow-hidden max-h-[90vh] flex flex-col"
       >
         <div className="px-5 py-3.5 flex items-center justify-between border-b border-border shrink-0">
-          <h2 className="text-base font-semibold">Add athlete</h2>
+          <h2 className="text-base font-semibold">Add subject</h2>
           <button onClick={onClose} className="size-7 rounded-md flex items-center justify-center hover:bg-secondary">
             <X className="size-3.5" strokeWidth={1.75} />
           </button>
@@ -116,35 +103,28 @@ export function AddAthleteModal({ onClose, onAdded }: AddAthleteModalProps) {
             </div>
           </div>
 
-          {/* Sport */}
-          <div className="space-y-1.5">
-            <label className="text-xs text-muted-foreground">Sport</label>
-            <div className="flex gap-1.5">
-              {SPORTS.map(s => (
-                <button
-                  key={s}
-                  type="button"
-                  onClick={() => handleSportChange(s)}
-                  className={`flex-1 h-8 rounded-md text-xs font-medium transition-colors ${sport === s ? "bg-accent text-accent-foreground" : "bg-card border border-border text-muted-foreground hover:text-foreground hover:border-accent/40"}`}
-                >
-                  {s}
-                </button>
-              ))}
+          {/* Sport + Event */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <label className="text-xs text-muted-foreground">Sport</label>
+              <input
+                type="text"
+                value={sport}
+                onChange={e => setSport(e.target.value)}
+                placeholder="e.g. Swimming"
+                className="w-full h-9 px-3 bg-card border border-border rounded-md text-sm focus:outline-none focus:border-accent placeholder:text-muted-foreground/50"
+              />
             </div>
-          </div>
-
-          {/* Event */}
-          <div className="space-y-1.5">
-            <label className="text-xs text-muted-foreground">Event</label>
-            <select
-              value={event}
-              onChange={e => setEvent(e.target.value)}
-              className="w-full h-9 px-3 bg-card border border-border rounded-md text-sm focus:outline-none focus:border-accent"
-            >
-              {EVENTS[sport].map(ev => (
-                <option key={ev} value={ev}>{ev}</option>
-              ))}
-            </select>
+            <div className="space-y-1.5">
+              <label className="text-xs text-muted-foreground">Event</label>
+              <input
+                type="text"
+                value={event}
+                onChange={e => setEvent(e.target.value)}
+                placeholder="e.g. 100m Freestyle"
+                className="w-full h-9 px-3 bg-card border border-border rounded-md text-sm focus:outline-none focus:border-accent placeholder:text-muted-foreground/50"
+              />
+            </div>
           </div>
 
           {/* Country + Age row */}
@@ -183,7 +163,7 @@ export function AddAthleteModal({ onClose, onAdded }: AddAthleteModalProps) {
               disabled={!name.trim()}
               className="flex-1 h-9 rounded-md bg-accent hover:bg-accent/90 disabled:opacity-40 text-accent-foreground text-sm font-medium transition-colors"
             >
-              Add athlete
+              Add subject
             </button>
             <button
               type="button"

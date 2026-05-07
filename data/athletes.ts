@@ -36,7 +36,7 @@ export interface AthleteProfile {
 export interface Athlete {
   id: string;
   name: string;
-  sport: "Swimming" | "Track" | "Weightlifting";
+  sport: string;
   event: string;
   status: "complete" | "pending" | "review";
   image: string;

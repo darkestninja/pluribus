@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { X, RefreshCw, Bookmark, Info, PenLine, Flag, MessageSquare } from "lucide-react";
+import { X, RefreshCw, Bookmark, Info, PenLine, Flag, MessageSquare, Tag, Plus } from "lucide-react";
 import type { Athlete } from "../../data/athletes";
 import type { Run } from "../lib/store";
 import { type CampaignOutput, type OutputStatus, type OutputComment } from "../lib/store";
+import { relativeTime } from "../lib/utils";
 
 interface AssetDetailPanelProps {
   output: CampaignOutput;
@@ -14,17 +15,10 @@ interface AssetDetailPanelProps {
   onRegenerate: (output: CampaignOutput) => void;
   onMarkLikeness: (output: CampaignOutput) => void;
   onCommentAdded: (outputId: string, comment: OutputComment) => void;
+  onTagAdded?: (outputId: string, tag: string) => void;
+  onTagRemoved?: (outputId: string, tag: string) => void;
 }
 
-function relativeTime(iso: string): string {
-  const diff = Date.now() - new Date(iso).getTime();
-  const mins = Math.floor(diff / 60000);
-  if (mins < 1) return "just now";
-  if (mins < 60) return `${mins}m ago`;
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}h ago`;
-  return `${Math.floor(hrs / 24)}d ago`;
-}
 
 const STATUS_OPTIONS: { status: OutputStatus; label: string; active: string; inactive: string }[] = [
   {
@@ -78,8 +72,10 @@ const STATUS_LABEL: Record<OutputStatus, string> = {
 export function AssetDetailPanel({
   output, run, athlete, reviewerEmail,
   onClose, onStatusChange, onRegenerate, onMarkLikeness, onCommentAdded,
+  onTagAdded, onTagRemoved,
 }: AssetDetailPanelProps) {
   const [commentText, setCommentText] = useState("");
+  const [tagInput, setTagInput] = useState("");
 
   const handlePost = () => {
     const text = commentText.trim();
@@ -93,7 +89,15 @@ export function AssetDetailPanel({
     setCommentText("");
   };
 
+  const handleAddTag = () => {
+    const tag = tagInput.trim().toLowerCase();
+    if (!tag) return;
+    onTagAdded?.(output.id, tag);
+    setTagInput("");
+  };
+
   const comments = output.comments ?? [];
+  const tags = output.tags ?? [];
 
   return (
     <div
@@ -161,6 +165,51 @@ export function AssetDetailPanel({
                 </div>
               </div>
             )}
+
+            {/* Tags */}
+            <div className="space-y-2">
+              <p className="text-xs text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                <Tag className="size-3" strokeWidth={1.75} />
+                Tags
+              </p>
+              <div className="flex flex-wrap gap-1.5">
+                {tags.map(tag => (
+                  <span
+                    key={tag}
+                    className="flex items-center gap-1 h-6 px-2 rounded-full bg-secondary border border-border text-xs text-muted-foreground group"
+                  >
+                    {tag}
+                    {onTagRemoved && (
+                      <button
+                        onClick={() => onTagRemoved(output.id, tag)}
+                        className="size-3 flex items-center justify-center rounded-full hover:bg-card hover:text-foreground transition-colors opacity-60 group-hover:opacity-100"
+                      >
+                        <X className="size-2.5" strokeWidth={2} />
+                      </button>
+                    )}
+                  </span>
+                ))}
+                {onTagAdded && (
+                  <div className="flex items-center gap-1">
+                    <input
+                      type="text"
+                      value={tagInput}
+                      onChange={e => setTagInput(e.target.value)}
+                      onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); handleAddTag(); } }}
+                      placeholder="Add tag…"
+                      className="h-6 w-24 px-2 bg-card border border-border rounded-full text-xs focus:outline-none focus:border-accent placeholder:text-muted-foreground/50"
+                    />
+                    <button
+                      onClick={handleAddTag}
+                      disabled={!tagInput.trim()}
+                      className="size-6 rounded-full bg-card border border-border hover:bg-secondary disabled:opacity-40 flex items-center justify-center transition-colors"
+                    >
+                      <Plus className="size-3" strokeWidth={2} />
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
 
             {/* Generation lineage */}
             {run ? (

@@ -1,7 +1,6 @@
 import { useState, useRef } from "react";
 import { X, Plus, Check } from "lucide-react";
-import { getAthletes } from "../lib/store";
-import { workflowTemplates } from "../../data/workflows";
+import { getAthletes, getRecipes } from "../lib/store";
 
 interface OnboardingProps {
   onComplete: (athleteId: string, workflowId: string) => void;
@@ -21,7 +20,7 @@ export function Onboarding({ onComplete, onSkip }: OnboardingProps) {
   const fileRef = useRef<HTMLInputElement>(null);
 
   const selectedAthlete = athletes.find(a => a.id === selectedAthleteId);
-  const selectedWorkflow = workflowTemplates.find(w => w.id === selectedWorkflowId);
+  const selectedWorkflow = getRecipes().find(r => r.id === selectedWorkflowId);
 
   const canGoToStep2 = !!selectedAthleteId;
   const canGoToStep3 = !!selectedWorkflowId;
@@ -155,7 +154,7 @@ export function Onboarding({ onComplete, onSkip }: OnboardingProps) {
               </div>
 
               <div className="grid grid-cols-3 gap-3">
-                {workflowTemplates.map(wf => {
+                {getRecipes().map(wf => {
                   const sel = selectedWorkflowId === wf.id;
                   return (
                     <button

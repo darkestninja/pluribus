@@ -4,8 +4,7 @@ import {
   Image as ImageIcon, Users, Layers,
 } from "lucide-react";
 import { Project } from "../../data/projects";
-import { workflowTemplates } from "../../data/workflows";
-import { getAthletes, getProjects, getArchivedProjects } from "../lib/store";
+import { getAthletes, getProjects, getArchivedProjects, getRecipes } from "../lib/store";
 import { CampaignWorkspace } from "./CampaignWorkspace";
 import { NewCampaignModal } from "./NewCampaignModal";
 
@@ -34,7 +33,7 @@ function getProjectAthletes(p: Project) {
 }
 
 function getWorkflow(p: Project) {
-  return workflowTemplates.find(w => w.id === p.workflowId);
+  return getRecipes().find(r => r.id === p.workflowId);
 }
 
 export function Projects({ onLaunchStudio, extraProjects = [] }: ProjectsProps) {

@@ -2,7 +2,7 @@
 
 ## Status
 
-Pre-launch. Sprint 3 complete. Sprint 4 (Approval System expansion) next.
+Pre-launch. Sprints 1–6 complete. Sprint 7 (Creative Constitution UX) next.
 
 ## Completed
 
@@ -58,28 +58,57 @@ Pre-launch. Sprint 3 complete. Sprint 4 (Approval System expansion) next.
 - [x] Approval actions available in asset detail panel
 - [x] Graceful handling of pre-Sprint-3 outputs (no run record → info message)
 
+### Sprint 5 — Asset Tagging + Cross-Campaign Search ✓
+- [x] `tags?: string[]` on `CampaignOutput` + `addOutputTag`/`removeOutputTag` store helpers
+- [x] Tag chip UI in `AssetDetailPanel` (add/remove)
+- [x] `relativeTime()` extracted to `app/lib/utils.ts`, duplicates removed
+- [x] Run records capped at 50 per campaign (`addRun` slices to 50)
+- [x] `LibraryPage` — global asset grid with subject/status/text-search filters
+- [x] Library nav entry (Images icon, 5th nav item)
+
+### Sprint 6 — Organization Layer ✓
+- [x] `Athlete.sport` widened from `"Swimming" | "Track" | "Weightlifting"` → `string`
+- [x] `AddAthleteModal` — free-text sport + event (removed SPORTS enum + EVENTS map)
+- [x] `AthleteLibrary` — sport filter is now a text input (partial match); "Athletes" → "Subjects" labels
+- [x] `Projects.tsx` — `getWorkflow()` uses `getRecipes()` instead of `workflowTemplates`
+- [x] `Onboarding.tsx` — recipe grid uses `getRecipes()` instead of `workflowTemplates`
+- [x] `data/workflows.ts` deleted
+- [x] `CommandPalette` — Athletes group → Subjects, Library nav item added, ViewType updated
+- [x] `App.tsx` — ViewType `athletes` → `subjects`, `library` added; nav + routing updated
+
+### Sprint 4 — Approval System Expansion ✓
+- [x] `OutputStatus` type: `pending | approved | needs_revision | rejected | flagged`
+- [x] `OutputComment` interface: `{ id, text, author, createdAt }`
+- [x] `CampaignOutput` extended with `comments[]`, `reviewedBy`, `reviewedAt` (all optional)
+- [x] `setOutputStatus` + `addOutputComment` store helpers
+- [x] `AssetDetailPanel` extracted as standalone component
+- [x] 5-state status selector in asset detail panel
+- [x] Comment thread + input with reviewer attribution
+- [x] 6 filter tabs: All | Approved | Pending | Revision | Flagged | Rejected
+- [x] Gallery card rings + badges for all 5 states
+- [x] Comment count badge on card thumbnails
+- [x] Hover overlay: 6 quick-action buttons
+- [x] Reviewer email from Supabase session
+- [x] Share button removed
+- [x] `regenerateOutput` concurrency fixed + URL persistence fix
+
 ## In Progress
 
-Nothing — Sprint 3 complete.
+Nothing — ready for Sprint 7.
 
 ## Next Sprint
 
-**Sprint 4: Approval System Expansion**
-- Expand CampaignOutput approval states: `pending | approved | rejected | flagged | needs_revision`
-- Add comments/feedback field to CampaignOutput
-- Reviewer name (from session)
-- Review history log per asset
-- Filter gallery by approval state (already exists — expand states)
-- Remove fake "Share" link or implement real review URL
+**Sprint 7: Creative Constitution UX**
+- Quality checklist surfaced in campaign review sidebar (from recipe)
+- Creative direction fields editable per campaign
+- Constitution/brief panel in campaign workspace
 
 ## Known Issues / Debt
 
 - Resemblance scoring still uses histogram (Phase 2: ML classifier)
 - localStorage limit: base64 images ~2MB per athlete for full angle set
-- Sport enum hard-coded in Athlete: `"Swimming" | "Track" | "Weightlifting"` — Sprint 6
-- Fake "Share" link in CampaignWorkspace — Sprint 4
-- `buildCampaignPrompt` param named `doNotChange` but receives full constraints — minor
-- `data/workflows.ts` superseded but not removed — Sprint 6 cleanup
+- `buildCampaignPrompt` param named `doNotChange` but receives full constraints — minor rename
+- Hover overlay 6 icons may clip on 2-column grid at narrow viewports
 
 ## Blockers (User Action Required)
 

@@ -13,9 +13,10 @@ import {
   getAthletes, getCampaignOutputs, addCampaignOutput, updateCampaignOutput,
   getAthleteProfile, saveAthleteProfile, createEmptyProfile, getProfilePromptConstraints,
   getRecipes, getRuns, addRun, updateRun,
-  setOutputStatus, addOutputComment,
+  setOutputStatus, addOutputComment, addOutputTag, removeOutputTag,
   type CampaignOutput, type Run, type OutputStatus, type OutputComment,
 } from "../lib/store";
+import { relativeTime } from "../lib/utils";
 import type { ApprovedLikeness } from "../../data/athletes";
 import { AssetDetailPanel } from "./AssetDetailPanel";
 
@@ -52,15 +53,6 @@ function getProjectAthletes(p: Project) {
   return [];
 }
 
-function relativeTime(iso: string): string {
-  const diff = Date.now() - new Date(iso).getTime();
-  const mins = Math.floor(diff / 60000);
-  if (mins < 1) return "just now";
-  if (mins < 60) return `${mins}m ago`;
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}h ago`;
-  return `${Math.floor(hrs / 24)}d ago`;
-}
 
 function cardBorderClass(status: OutputStatus): string {
   switch (status) {
@@ -140,6 +132,24 @@ export function CampaignWorkspace({ project, onBack, onLaunchStudio }: CampaignW
         : null
       );
     }
+  };
+
+  const handleTagAdded = (outputId: string, tag: string) => {
+    addOutputTag(outputId, tag);
+    const patch = (o: CampaignOutput) => o.id === outputId
+      ? { ...o, tags: [...(o.tags ?? []).filter(t => t !== tag), tag] }
+      : o;
+    setOutputs(prev => prev.map(patch));
+    if (detailOutput?.id === outputId) setDetailOutput(prev => prev ? patch(prev) : null);
+  };
+
+  const handleTagRemoved = (outputId: string, tag: string) => {
+    removeOutputTag(outputId, tag);
+    const patch = (o: CampaignOutput) => o.id === outputId
+      ? { ...o, tags: (o.tags ?? []).filter(t => t !== tag) }
+      : o;
+    setOutputs(prev => prev.map(patch));
+    if (detailOutput?.id === outputId) setDetailOutput(prev => prev ? patch(prev) : null);
   };
 
   const regenerateOutput = async (output: CampaignOutput) => {
@@ -729,6 +739,8 @@ export function CampaignWorkspace({ project, onBack, onLaunchStudio }: CampaignW
           onRegenerate={regenerateOutput}
           onMarkLikeness={markAsLikeness}
           onCommentAdded={handleCommentAdded}
+          onTagAdded={handleTagAdded}
+          onTagRemoved={handleTagRemoved}
         />
       )}
     </div>

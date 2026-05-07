@@ -207,7 +207,7 @@ export function getRuns(campaignId: string): Run[] {
   return load<Run[]>(`runs_${campaignId}`, []);
 }
 export function addRun(run: Run): void {
-  const list = [run, ...getRuns(run.campaignId)];
+  const list = [run, ...getRuns(run.campaignId)].slice(0, 50);
   save(`runs_${run.campaignId}`, list);
 }
 export function updateRun(campaignId: string, id: string, patch: Partial<Run>): void {
@@ -237,6 +237,7 @@ export interface CampaignOutput {
   comments?: OutputComment[];
   reviewedBy?: string;
   reviewedAt?: string;
+  tags?: string[];
 }
 
 export function getCampaignOutputs(campaignId?: string): CampaignOutput[] {
@@ -259,6 +260,22 @@ export function addOutputComment(outputId: string, comment: OutputComment): void
   saveCampaignOutputs(
     getCampaignOutputs().map(o =>
       o.id === outputId ? { ...o, comments: [...(o.comments ?? []), comment] } : o
+    )
+  );
+}
+export function addOutputTag(outputId: string, tag: string): void {
+  saveCampaignOutputs(
+    getCampaignOutputs().map(o => {
+      if (o.id !== outputId) return o;
+      const tags = o.tags ?? [];
+      return tags.includes(tag) ? o : { ...o, tags: [...tags, tag] };
+    })
+  );
+}
+export function removeOutputTag(outputId: string, tag: string): void {
+  saveCampaignOutputs(
+    getCampaignOutputs().map(o =>
+      o.id === outputId ? { ...o, tags: (o.tags ?? []).filter(t => t !== tag) } : o
     )
   );
 }

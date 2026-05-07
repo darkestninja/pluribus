@@ -11,8 +11,6 @@ interface AthleteLibraryProps {
   onGenerate?: (id: string) => void;
 }
 
-const SPORTS = ["Track", "Swimming", "Weightlifting"] as const;
-
 function athleteReadiness(a: Athlete): { pct: number; color: string; label: string } {
   if (a.status === "complete") return { pct: 100, color: "#10b981", label: "Ready" };
   if (a.status === "review")   return { pct: 60,  color: "#f59e0b", label: "Review" };
@@ -60,7 +58,7 @@ export function AthleteLibrary({ preSelectedAthleteId, onAthleteDeselect, onGene
 
   // Add-athlete form
   const [form, setForm] = useState({
-    name: "", sport: "Track" as typeof SPORTS[number], event: "",
+    name: "", sport: "", event: "",
     height: "", weight: "", build: "", skinTone: "", hair: "",
     age: "", country: "",
   });
@@ -120,7 +118,7 @@ export function AthleteLibrary({ preSelectedAthleteId, onAthleteDeselect, onGene
       ath.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       ath.sport.toLowerCase().includes(searchQuery.toLowerCase()) ||
       ath.event.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesSport = sportFilter === "all" || ath.sport === sportFilter;
+    const matchesSport = sportFilter === "all" || ath.sport.toLowerCase().includes(sportFilter.toLowerCase());
     const matchesStatus = statusFilter === "all" || ath.status === statusFilter;
     return matchesSearch && matchesSport && matchesStatus;
   });
@@ -152,7 +150,7 @@ export function AthleteLibrary({ preSelectedAthleteId, onAthleteDeselect, onGene
     const updated = addAthlete(newAthlete);
     setAthleteList(updated);
     setShowAddModal(false);
-    setForm({ name: "", sport: "Track", event: "", height: "", weight: "", build: "", skinTone: "", hair: "", age: "", country: "" });
+    setForm({ name: "", sport: "", event: "", height: "", weight: "", build: "", skinTone: "", hair: "", age: "", country: "" });
     setPhotoPreview(null);
     setPhotoDataUrl(null);
     setSelectedAthlete(newAthlete.id);
@@ -278,13 +276,13 @@ export function AthleteLibrary({ preSelectedAthleteId, onAthleteDeselect, onGene
         <div className="max-w-[1400px] mx-auto px-6 py-8 space-y-6">
 
           <div className="flex items-center justify-between gap-3">
-            <p className="text-sm text-muted-foreground">{athleteList.length} athletes · {athleteList.filter(a => a.status === "complete").length} captured</p>
+            <p className="text-sm text-muted-foreground">{athleteList.length} subjects · {athleteList.filter(a => a.status === "complete").length} captured</p>
             <div className="flex items-center gap-2">
               <div className="relative">
                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" strokeWidth={1.75} />
                 <input
                   type="text"
-                  placeholder="Search athletes…"
+                  placeholder="Search subjects…"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-56 h-8 pl-8 pr-3 bg-card border border-border rounded-md text-sm focus-visible:border-accent placeholder:text-muted-foreground"
@@ -301,11 +299,13 @@ export function AthleteLibrary({ preSelectedAthleteId, onAthleteDeselect, onGene
           </div>
 
           <div className="flex gap-2 items-center">
-            <select value={sportFilter} onChange={(e) => setSportFilter(e.target.value)}
-              className="h-8 px-3 bg-card border border-border rounded-md text-sm focus-visible:border-accent">
-              <option value="all">All sports</option>
-              {SPORTS.map(s => <option key={s} value={s}>{s}</option>)}
-            </select>
+            <input
+              type="text"
+              value={sportFilter === "all" ? "" : sportFilter}
+              onChange={e => setSportFilter(e.target.value || "all")}
+              placeholder="Filter by sport…"
+              className="h-8 px-3 bg-card border border-border rounded-md text-sm focus-visible:border-accent placeholder:text-muted-foreground/50 w-36"
+            />
             <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}
               className="h-8 px-3 bg-card border border-border rounded-md text-sm focus-visible:border-accent">
               <option value="all">All statuses</option>
@@ -682,7 +682,7 @@ export function AthleteLibrary({ preSelectedAthleteId, onAthleteDeselect, onGene
         <div onClick={() => setShowAddModal(false)} className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-6">
           <div onClick={e => e.stopPropagation()} className="bg-card border border-border rounded-lg w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <div className="px-5 pt-5 pb-4 flex items-center justify-between border-b border-border sticky top-0 bg-card z-10">
-              <h2 className="text-sm font-semibold text-foreground">Add athlete</h2>
+              <h2 className="text-sm font-semibold text-foreground">Add subject</h2>
               <button onClick={() => setShowAddModal(false)} className="p-1 hover:bg-secondary rounded transition-colors">
                 <X className="size-3.5 text-muted-foreground" />
               </button>
@@ -716,7 +716,7 @@ export function AthleteLibrary({ preSelectedAthleteId, onAthleteDeselect, onGene
               <div className="grid grid-cols-2 gap-3">
                 {[
                   { label: "Full name *", key: "name", placeholder: "Alicia Monroe", col: "col-span-2" },
-                  { label: "Sport *", key: "sport", type: "select" },
+                  { label: "Sport", key: "sport", placeholder: "e.g. Swimming" },
                   { label: "Event *", key: "event", placeholder: "100m Freestyle" },
                   { label: "Height", key: "height", placeholder: "5'8\" (173cm)" },
                   { label: "Weight", key: "weight", placeholder: "145 lbs (66kg)" },
@@ -746,7 +746,7 @@ export function AthleteLibrary({ preSelectedAthleteId, onAthleteDeselect, onGene
             <div className="px-5 pb-5 flex gap-2">
               <button onClick={handleAddAthlete} disabled={!form.name.trim() || !form.event.trim()}
                 className="flex-1 h-9 rounded-md bg-accent hover:bg-accent/90 disabled:opacity-40 disabled:cursor-not-allowed text-accent-foreground text-sm font-medium transition-colors">
-                Add athlete
+                Add subject
               </button>
               <button onClick={() => setShowAddModal(false)}
                 className="h-9 px-4 rounded-md bg-secondary border border-border hover:bg-secondary/60 text-muted-foreground hover:text-foreground text-sm transition-colors">
