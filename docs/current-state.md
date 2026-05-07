@@ -2,7 +2,7 @@
 
 ## Status
 
-Pre-launch. Sprints 1–7 complete. Sprint 8 next (TBD).
+Pre-launch. Sprints 1–8 complete. Sprint 9 next.
 
 ## Completed
 
@@ -11,7 +11,7 @@ Pre-launch. Sprints 1–7 complete. Sprint 8 next (TBD).
 - [x] Per-user localStorage namespacing (`plb_{userId}_*`)
 - [x] Demo account seeding (daniel@pluribus.ai gets athletes + projects)
 - [x] Bun proxy at 127.0.0.1:3333 (auth signup + fal.ai forwarding)
-- [x] nginx reverse proxy at :80 with CSP headers
+- [x] nginx reverse proxy at :80 with CSP headers + correct Cache-Control (index.html no-cache, assets immutable)
 - [x] Settings page (profile, password, theme, notifications)
 
 ### Generation
@@ -22,14 +22,14 @@ Pre-launch. Sprints 1–7 complete. Sprint 8 next (TBD).
 - [x] Resemblance scoring (OpenCV.js histogram, 0-100 score)
 - [x] Batch generation per campaign
 - [x] Studio with full controls
-- [x] **Seed capture from fal.ai via `onSeed` callback**
+- [x] Seed capture from fal.ai via `onSeed` callback
 
 ### Campaigns & Assets
 - [x] Campaign creation (recipe selection, athlete assignment)
 - [x] Campaign output storage (CampaignOutput + runId persisted)
 - [x] Approve / reject outputs (persists to localStorage)
-- [x] Filter outputs by approval state
-- [x] Export approved (opens URLs in tabs)
+- [x] Filter outputs by approval state (6 tabs: All/Approved/Pending/Revision/Flagged/Rejected)
+- [x] Export approved as ZIP with metadata.json (jszip, Sprint 8)
 
 ### Sprint 1 — Identity Profiles ✓
 - [x] AthleteProfile schema (capture angles, tattoos, do-not-change, approved likeness, notes)
@@ -43,7 +43,6 @@ Pre-launch. Sprints 1–7 complete. Sprint 8 next (TBD).
 - [x] Recipe library (browse, create, edit, clone, delete)
 - [x] Negative prompt injected in all generation paths
 - [x] Quality checklist visible in campaign review sidebar
-- [x] Nav renamed "Styles" → "Recipes"
 
 ### Sprint 3 — Generation Run Records ✓
 - [x] `Run` interface: id, campaignId, athleteId/Name, recipeId/Name, prompt, negativePrompt, seed, model, aspectRatio, status, startedAt, completedAt, assetIds, errorMessage
@@ -55,8 +54,6 @@ Pre-launch. Sprints 1–7 complete. Sprint 8 next (TBD).
 - [x] Run history section in CampaignWorkspace right sidebar (newest first, click to filter gallery)
 - [x] Re-run button on each run record (regenerates with same prompt + seed)
 - [x] Asset detail panel (click image → modal with full lineage: recipe, model, seed, prompt, negative prompt)
-- [x] Approval actions available in asset detail panel
-- [x] Graceful handling of pre-Sprint-3 outputs (no run record → info message)
 
 ### Sprint 4 — Approval System Expansion ✓
 - [x] `OutputStatus` type: `pending | approved | needs_revision | rejected | flagged`
@@ -70,77 +67,76 @@ Pre-launch. Sprints 1–7 complete. Sprint 8 next (TBD).
 - [x] Gallery card rings + badges for all 5 states
 - [x] Comment count badge on card thumbnails
 - [x] Hover overlay: 6 quick-action buttons
-- [x] Reviewer email from Supabase session
-- [x] Share button removed
-- [x] `regenerateOutput` concurrency fixed + URL persistence fix
 
 ### Sprint 5 — Asset Tagging + Cross-Campaign Search ✓
 - [x] `tags?: string[]` on `CampaignOutput` + `addOutputTag`/`removeOutputTag` store helpers
 - [x] Tag chip UI in `AssetDetailPanel` (add/remove, idempotent)
-- [x] `relativeTime()` extracted to `app/lib/utils.ts`, duplicates removed from AssetDetailPanel + CampaignWorkspace
-- [x] Run records capped at 50 per campaign (`addRun` slices to 50, oldest trimmed)
-- [x] `LibraryPage` — global asset grid, filters by subject/status/text (subject name, campaign name, tags)
-- [x] Library nav entry (Images icon, 5th nav item)
-
-### Sprint 7 — Creative Constitution UX ✓
-- [x] Quality checklist items are interactive (toggle, checked state, progress counter "N / M")
-- [x] `brief?: string` on `Project`; `updateProject(id, patch)` store helper added
-- [x] Creative brief textarea in `CampaignWorkspace` sidebar — auto-saves on blur, "saved" indicator
-- [x] Brief injected into `enhancePrompt` as "Campaign brief: …" after identity constraints
-- [x] `buildCampaignPrompt` accepts optional `brief` 4th param
-- [x] Recipe card is now collapsible — expands to show styleRules, lightingRules, compositionRules, negativePrompt
-- [x] Stale-prop fix: brief textarea reads from localStorage directly, not from stale parent state
-- [x] setTimeout cleanup: briefSavedTimerRef prevents setState on unmounted component
-- [x] Sidebar "Athletes" → "Subjects" label (Sprint 6 rename missed this location)
+- [x] `relativeTime()` extracted to `app/lib/utils.ts`
+- [x] Run records capped at 50 per campaign
+- [x] `LibraryPage` — global asset grid, filters by subject/status/text
 
 ### Sprint 6 — Organization Layer ✓
-- [x] `Athlete.sport` widened from enum → `string` (backward compatible)
-- [x] `AddAthleteModal` — free-text sport + event inputs (removed SPORTS enum + EVENTS map)
-- [x] `AthleteLibrary` — sport filter is text input (partial match); "Athletes" → "Subjects" labels throughout
-- [x] `Projects.tsx` / `Onboarding.tsx` — `getRecipes()` replaces `workflowTemplates` (IDs match)
+- [x] `Athlete.sport` widened from enum → `string`
+- [x] `AddAthleteModal` — free-text sport + event inputs
+- [x] `AthleteLibrary` — sport filter is text input; "Athletes" → "Subjects" labels
+- [x] `Projects.tsx` / `Onboarding.tsx` — `getRecipes()` replaces `workflowTemplates`
 - [x] `data/workflows.ts` deleted
-- [x] `CommandPalette` — Athletes group → Subjects, Library nav item, ViewType updated
+- [x] `CommandPalette` — Subjects rename, Library nav item, ViewType updated
 - [x] `App.tsx` — ViewType `athletes` → `subjects`, `library` added; nav + routing updated
+
+### Sprint 7 — Creative Constitution UX ✓
+- [x] Quality checklist items are interactive (toggle, checked state, progress counter)
+- [x] `brief?: string` on `Project`; `updateProject(id, patch)` store helper added
+- [x] Creative brief textarea in `CampaignWorkspace` sidebar — auto-saves on blur
+- [x] Brief injected into `enhancePrompt` as "Campaign brief: …"
+- [x] Recipe card is collapsible — expands to show style/lighting/composition/negative prompt
+
+### Sprint 8 — Asset Export + Identity Memory ✓
+- [x] `downloadUrl()` / `downloadZip()` utilities in `app/lib/utils.ts`
+- [x] jszip added as dependency
+- [x] Per-asset download button in `AssetDetailPanel` header
+- [x] Campaign "Export N" button builds ZIP (approved assets + metadata.json) via downloadZip
+- [x] `isExporting` loading state on export button
+- [x] `RejectedLikeness` interface added to `data/athletes.ts`
+- [x] `rejectedLikeness?: RejectedLikeness[]` on `AthleteProfile` (backward compatible)
+- [x] `addRejectedLikeness` / `removeRejectedLikeness` in `store.ts`
+- [x] "Reject" (ThumbsDown) button in `AssetDetailPanel` footer — calls `onMarkRejectedLikeness`
+- [x] `onMarkRejectedLikeness` wired in `CampaignWorkspace`
+- [x] Rejected likeness section in `AthleteLibrary` identity tab (red-tinted grid, × remove)
+- [x] `ReviewHistoryEntry { status, by, at }` on `CampaignOutput`
+- [x] `setOutputStatus` appends to `reviewHistory[]` (append-only audit trail)
+- [x] Collapsible review history timeline in `AssetDetailPanel`
+- [x] Dashboard activity feed now reads `getCampaignOutputs()` sorted by `createdAt` desc
 
 ## In Progress
 
-Nothing — ready for Sprint 8.
+Nothing — ready for Sprint 9.
 
-## Next Sprint — Sprint 8 (TBD)
+## Known Issues / Bugs
 
-Candidates (user to choose):
-- Side-by-side asset comparison
-- Export packs (ZIP with metadata)
-- Contact sheet view
-- Batch feedback / bulk status actions
-
-## Known Issues / Debt
-
-- Resemblance scoring still uses histogram (Phase 2: ML classifier)
-- localStorage limit: base64 images ~2MB per athlete for full angle set
-- `buildCampaignPrompt` param named `doNotChange` but receives full constraints — minor rename
-- Hover overlay 6 icons may clip on 2-column grid at narrow viewports
-- `CommandPalette` has its own local `ViewType` definition — must be kept in sync with `App.tsx` manually
-- Dashboard activity feed reads from Queue (Studio only), not CampaignOutputs — should show campaign generation activity
-- `App.tsx` (491 lines) is a monolith — auth, navigation, modals, toasts, all in one file
-- `CampaignWorkspace.tsx` (857 lines) handles generation, state, UI, runs, tags, brief, approval — needs splitting
-- fal.ai CDN URLs stored as-is — no download/cache — approved assets can silently 404
-- No HTTPS — credentials sent over plain HTTP
-- No cloud storage — all product data is localStorage-only; cleared on browser data wipe
-- `Project.workflowId` references a `Recipe` but field is named "workflowId" — confusing
-- Credits are localStorage-only and not enforced server-side
+- `LibraryPage` does not pass `onMarkRejectedLikeness` to `AssetDetailPanel` — "Reject" button visible but non-functional in the library view
+- `QueuePage` / `RenderQueue` are Studio-only and create a confusing parallel to Campaign generation — needs UX clarification
+- No URL routing — back button broken, links cannot be shared
+- `App.tsx` (491 lines), `CampaignWorkspace.tsx` (884 lines), `AthleteLibrary.tsx` (928 lines) — monolith threshold approaching
+- `CommandPalette` has its own local `ViewType` — must be kept in sync with App.tsx manually
+- `Project.workflowId` field is actually a `recipeId` — legacy name causing confusion
 
 ## Critical Pre-Launch Blockers (User Action Required)
 
+- [ ] Add HTTPS — certbot/Let's Encrypt on 185.158.132.125
 - [ ] Run Supabase schema migration in SQL editor
 - [ ] Create demo account: daniel@pluribus.ai / demo123 in Supabase Auth > Users
 - [ ] Set Site URL: http://185.158.132.125 in Supabase Auth > URL Configuration
-- [ ] Add HTTPS (SSL certificate via certbot or similar)
-- [ ] Implement asset download/caching to protect against fal.ai URL expiry
 
-## Blockers (User Action Required)
+## Technical Risks (Active)
 
-- [ ] Run Supabase schema migration in Supabase SQL editor
-- [ ] Create demo account (daniel@pluribus.ai / demo123) in Supabase Auth > Users
-- [ ] Set Site URL in Supabase Auth > URL Configuration
-- [ ] Add HTTPS (certbot / Let's Encrypt on 185.158.132.125)
+| Risk | Severity | Notes |
+|---|---|---|
+| No HTTPS — credentials over HTTP | Critical | certbot; user action |
+| All product data localStorage-only | Critical | Migrate to Supabase Phase 2 |
+| fal.ai CDN URL expiry → approved assets 404 | High | downloadZip mitigates but doesn't solve permanently |
+| localStorage quota (base64 images ~2MB per athlete) | High | Supabase Storage migration planned |
+| Supabase schema not migrated | High | Blocking for new signups |
+| App.tsx / CampaignWorkspace.tsx monolith size | Medium | Split before Sprint 11 |
+| No credits enforcement server-side | Medium | UI-only; easily bypassed |
+| Resemblance scorer accuracy (histogram) | Known | Phase 2: ML classifier |

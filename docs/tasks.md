@@ -2,48 +2,45 @@
 
 ## Immediate (P0 — User Action Required)
 
+- [ ] Add HTTPS — certbot/Let's Encrypt on the server (credentials currently sent over HTTP)
 - [ ] Run Supabase schema migration in SQL editor
 - [ ] Create demo account: daniel@pluribus.ai / demo123 in Supabase Auth > Users
 - [ ] Set Site URL: http://185.158.132.125 in Supabase Auth > URL Configuration
-- [ ] Add HTTPS — certbot/Let's Encrypt on the server (credentials currently sent over HTTP)
 
-## Current Sprint — Sprint 8: TBD
+## Current Sprint — Sprint 9
 
-Recommended candidates (audit-informed priority order):
+**Stage 1 — Immediate bugs + review UX gaps:**
+1. `LibraryPage.tsx`: wire `onMarkRejectedLikeness` (prop accepted by AssetDetailPanel but not passed in Library)
+2. `ComparePanel.tsx` (new): side-by-side comparison for 2–4 selected assets
+3. Multi-select in `CampaignWorkspace` gallery + batch status action bar (approve/reject/flag all selected)
+4. Rejection reason dropdown on Reject path in `AssetDetailPanel` (structured tags from Creative Constitution §20)
+5. Profile completeness % in `AthleteLibrary` athlete card + campaign sidebar subject panel
 
-**Stage 1 — Close acute data/security risks (highest leverage):**
-- Asset download / export packs — protect against fal.ai CDN URL expiry; ZIP approved assets
-- Rejected likeness examples on identity profile — complete the identity memory model
-- Review history / audit trail — `reviewHistory[]` on CampaignOutput; never lose past reviewer data
-- Dashboard activity feed — read from CampaignOutputs (not Queue); shows real campaign work
-
-**Stage 2 — Close UX gaps that block real workflows:**
-- Side-by-side asset comparison — single biggest review UX gap
-- Batch status actions — multi-select + bulk approve/reject/flag
-- Campaign status state machine — Draft → Review → Approved → Delivered transitions
-- Profile completeness score — real signal based on fields, angles, constraints count
-
-**Stage 3 — Sharpen the moat:**
-- Recipe mood board / visual references — upload 1-3 reference images per recipe
-- Project vs Campaign hierarchy — Project as parent container, Campaign as child
-- Contact sheet view
+**Stage 2 — Campaign workflow + art direction:**
+6. Campaign state machine: status dropdown in workspace header (Draft / In Review / Approved / Delivered); auto-set to "In Review" on first generation
+7. Recipe visual language profile: mood/lighting/camera dropdowns (Creative Constitution §14 tokens)
+8. Export log per campaign: record what was ZIP-exported and when
 
 ## Backlog (Phase 2+)
 
+- Keyboard navigation in gallery (arrow keys, J/K approve/reject)
+- Recipe mood board: 1-3 reference image uploads per recipe
+- "What worked" signal per recipe (approval rate, avg resemblance score)
 - External review links (shareable stakeholder token, no login required)
 - Supabase persistence (migrate CampaignOutput, Run, Athlete, AthleteProfile from localStorage)
-- Supabase Storage for reference images (remove base64-in-localStorage)
+- Supabase Storage for reference images (remove base64-in-localStorage) + auto-download approved assets
 - Version history on recipes and subjects
-- AI-assisted tagging
+- AI-assisted failure tagging
 - Identity confidence scoring (ML-based, not histogram)
 - Export presets (named output formats: Instagram story, press image, etc.)
-- Campaign boards / contact sheet
+- Campaign boards / contact sheet view
 - Smart model routing
 - Recipe performance analytics
+- App.tsx / CampaignWorkspace.tsx / AthleteLibrary.tsx refactor (split into feature modules)
 
 ## Deferred
 
-- HTTPS certificate ← **moved to P0 — must do before launch**
+- HTTPS certificate ← **moved to P0 — user action required**
 - Stripe billing
 - Analytics (Mixpanel/Sentry)
 - Mobile app
@@ -55,25 +52,26 @@ Recommended candidates (audit-informed priority order):
 ## Done
 
 - [x] Sprint 0: Full product + technical audit
-- [x] Sprint 1: Identity Profiles — AthleteProfile schema, capture angles, tattoos, do-not-change constraints, approved likeness, blob URL fix
+- [x] Sprint 1: Identity Profiles — AthleteProfile schema, capture angles, tattoos, do-not-change constraints, approved likeness
 - [x] Sprint 2: Creative Recipes — recipe schema + 6 seeds, library CRUD, negative prompt injection, quality checklist
 - [x] Sprint 3: Generation Run Records — Run interface, onSeed callback, run history sidebar, asset detail panel, seed replay
-- [x] Sprint 3 fixes: model field, concurrency lock, regen disable, expandable run list
-- [x] Sprint 4: Approval System Expansion — 5-state OutputStatus, comments, AssetDetailPanel extraction, 6 filter tabs, card badges, reviewer attribution, concurrency + URL persistence fixes
+- [x] Sprint 4: Approval System Expansion — 5-state OutputStatus, comments, AssetDetailPanel extraction, 6 filter tabs, card badges, reviewer attribution
 - [x] Sprint 5: Asset Tagging + Cross-Campaign Search — tags on CampaignOutput, tag chip UI, LibraryPage, relativeTime to utils, addRun capped at 50
-- [x] Sprint 7: Creative Constitution UX — interactive quality checklist, per-campaign creative brief (prompt-injected), recipe direction summary panel; post-review: stale-prop brief fix, setTimeout cleanup, "Subjects" label fix
-- [x] Sprint 6: Organization Layer — sport: string, free-text sport/event, Subjects rename, getRecipes() replaces workflowTemplates, data/workflows.ts deleted, Library nav
+- [x] Sprint 6: Organization Layer — sport: string, free-text sport/event, Subjects rename, getRecipes() replaces workflowTemplates, Library nav
+- [x] Sprint 7: Creative Constitution UX — interactive quality checklist, per-campaign creative brief (prompt-injected), recipe direction panel; stale-prop fix, setTimeout cleanup
+- [x] Sprint 8: Asset Export + Identity Memory — downloadUrl/downloadZip, per-asset download, ZIP export, rejected likeness (data model + store + UI), review history timeline, Dashboard activity feed fix
 
 ## Risks
 
 | Risk | Severity | Status | Mitigation |
-|------|----------|--------|-----------|
-| All product data is localStorage-only | Critical | Active | Migrate to Supabase (Phase 2); short term: warn on quota |
-| fal.ai CDN URLs expire → approved assets 404 | Critical | Active | Add asset download/ZIP export in Sprint 8 |
+|---|---|---|---|
+| All product data is localStorage-only | Critical | Active | Migrate to Supabase (Phase 2) |
+| fal.ai CDN URLs expire → approved assets 404 | High | Active | downloadZip mitigates; Supabase Storage is permanent fix |
 | No HTTPS — credentials over HTTP | Critical | Active | certbot on server; P0 user action |
-| localStorage size limit (base64 images) | High | Active | Compress to 800px JPEG; Supabase Storage migration planned |
+| localStorage size limit (base64 images) | High | Active | Supabase Storage migration planned |
 | Supabase schema not migrated | High | Blocking | Manual user action required |
+| LibraryPage onMarkRejectedLikeness not wired | Medium | Known bug | Sprint 9 fix |
+| App.tsx / CampaignWorkspace.tsx / AthleteLibrary.tsx monolith size | Medium | Active | Refactor before Sprint 11 |
+| CommandPalette ViewType manual sync | Low | Active | Keep in sync when adding views |
 | No server-side credit enforcement | Medium | Active | Credits are UI-only; bypass possible |
 | Resemblance scorer accuracy | Known | Active | Phase 2: replace histogram with ML classifier |
-| App.tsx / CampaignWorkspace.tsx monolith size | Medium | Active | Refactor as feature count grows |
-| CommandPalette ViewType manual sync | Low | Active | Keep in sync when adding views |
