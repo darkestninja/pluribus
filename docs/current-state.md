@@ -2,7 +2,7 @@
 
 ## Status
 
-Pre-launch. Sprints 1–6 complete. Sprint 7 (Creative Constitution UX) next.
+Pre-launch. Sprints 1–7 complete. Sprint 8 next (TBD).
 
 ## Completed
 
@@ -58,24 +58,6 @@ Pre-launch. Sprints 1–6 complete. Sprint 7 (Creative Constitution UX) next.
 - [x] Approval actions available in asset detail panel
 - [x] Graceful handling of pre-Sprint-3 outputs (no run record → info message)
 
-### Sprint 5 — Asset Tagging + Cross-Campaign Search ✓
-- [x] `tags?: string[]` on `CampaignOutput` + `addOutputTag`/`removeOutputTag` store helpers
-- [x] Tag chip UI in `AssetDetailPanel` (add/remove)
-- [x] `relativeTime()` extracted to `app/lib/utils.ts`, duplicates removed
-- [x] Run records capped at 50 per campaign (`addRun` slices to 50)
-- [x] `LibraryPage` — global asset grid with subject/status/text-search filters
-- [x] Library nav entry (Images icon, 5th nav item)
-
-### Sprint 6 — Organization Layer ✓
-- [x] `Athlete.sport` widened from `"Swimming" | "Track" | "Weightlifting"` → `string`
-- [x] `AddAthleteModal` — free-text sport + event (removed SPORTS enum + EVENTS map)
-- [x] `AthleteLibrary` — sport filter is now a text input (partial match); "Athletes" → "Subjects" labels
-- [x] `Projects.tsx` — `getWorkflow()` uses `getRecipes()` instead of `workflowTemplates`
-- [x] `Onboarding.tsx` — recipe grid uses `getRecipes()` instead of `workflowTemplates`
-- [x] `data/workflows.ts` deleted
-- [x] `CommandPalette` — Athletes group → Subjects, Library nav item added, ViewType updated
-- [x] `App.tsx` — ViewType `athletes` → `subjects`, `library` added; nav + routing updated
-
 ### Sprint 4 — Approval System Expansion ✓
 - [x] `OutputStatus` type: `pending | approved | needs_revision | rejected | flagged`
 - [x] `OutputComment` interface: `{ id, text, author, createdAt }`
@@ -92,16 +74,42 @@ Pre-launch. Sprints 1–6 complete. Sprint 7 (Creative Constitution UX) next.
 - [x] Share button removed
 - [x] `regenerateOutput` concurrency fixed + URL persistence fix
 
+### Sprint 5 — Asset Tagging + Cross-Campaign Search ✓
+- [x] `tags?: string[]` on `CampaignOutput` + `addOutputTag`/`removeOutputTag` store helpers
+- [x] Tag chip UI in `AssetDetailPanel` (add/remove, idempotent)
+- [x] `relativeTime()` extracted to `app/lib/utils.ts`, duplicates removed from AssetDetailPanel + CampaignWorkspace
+- [x] Run records capped at 50 per campaign (`addRun` slices to 50, oldest trimmed)
+- [x] `LibraryPage` — global asset grid, filters by subject/status/text (subject name, campaign name, tags)
+- [x] Library nav entry (Images icon, 5th nav item)
+
+### Sprint 7 — Creative Constitution UX ✓
+- [x] Quality checklist items are interactive (toggle, checked state, progress counter "N / M")
+- [x] `brief?: string` on `Project`; `updateProject(id, patch)` store helper added
+- [x] Creative brief textarea in `CampaignWorkspace` sidebar — auto-saves on blur, "saved" indicator
+- [x] Brief injected into `enhancePrompt` as "Campaign brief: …" after identity constraints
+- [x] `buildCampaignPrompt` accepts optional `brief` 4th param
+- [x] Recipe card is now collapsible — expands to show styleRules, lightingRules, compositionRules, negativePrompt
+
+### Sprint 6 — Organization Layer ✓
+- [x] `Athlete.sport` widened from enum → `string` (backward compatible)
+- [x] `AddAthleteModal` — free-text sport + event inputs (removed SPORTS enum + EVENTS map)
+- [x] `AthleteLibrary` — sport filter is text input (partial match); "Athletes" → "Subjects" labels throughout
+- [x] `Projects.tsx` / `Onboarding.tsx` — `getRecipes()` replaces `workflowTemplates` (IDs match)
+- [x] `data/workflows.ts` deleted
+- [x] `CommandPalette` — Athletes group → Subjects, Library nav item, ViewType updated
+- [x] `App.tsx` — ViewType `athletes` → `subjects`, `library` added; nav + routing updated
+
 ## In Progress
 
-Nothing — ready for Sprint 7.
+Nothing — ready for Sprint 8.
 
 ## Next Sprint
 
-**Sprint 7: Creative Constitution UX**
-- Quality checklist surfaced in campaign review sidebar (from recipe)
-- Creative direction fields editable per campaign
-- Constitution/brief panel in campaign workspace
+TBD — candidates:
+- Side-by-side asset comparison
+- Export packs (ZIP with metadata)
+- Contact sheet view
+- Batch feedback / bulk status actions
 
 ## Known Issues / Debt
 

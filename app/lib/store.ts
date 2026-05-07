@@ -77,6 +77,9 @@ export function addProject(project: Project): Project[] {
   saveProjects(list);
   return list;
 }
+export function updateProject(id: string, patch: Partial<Project>): void {
+  saveProjects(getProjects().map(p => p.id === id ? { ...p, ...patch } : p));
+}
 
 // ---------- athlete profiles ----------
 export function createEmptyProfile(athleteId: string): AthleteProfile {

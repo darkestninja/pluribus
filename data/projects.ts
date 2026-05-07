@@ -10,6 +10,7 @@ export interface Project {
   workflowId?: string;
   status?: string;
   assetCount?: number;
+  brief?: string;
 }
 
 export const projects: Project[] = [

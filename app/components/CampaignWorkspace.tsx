@@ -1,7 +1,8 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   ArrowLeft, Download, MoreHorizontal, Sparkles,
   Check, X, RefreshCw, Bookmark, CheckSquare, Clock, RotateCcw, Flag, PenLine,
+  ChevronDown, FileText,
 } from "lucide-react";
 import { Project } from "../../data/projects";
 import { generateImage, DEFAULT_IMAGE_MODEL } from "../lib/generate";
@@ -12,7 +13,7 @@ import { buildCampaignPrompt } from "../lib/promptEnhancer";
 import {
   getAthletes, getCampaignOutputs, addCampaignOutput, updateCampaignOutput,
   getAthleteProfile, saveAthleteProfile, createEmptyProfile, getProfilePromptConstraints,
-  getRecipes, getRuns, addRun, updateRun,
+  getProjects, getRecipes, getRuns, addRun, updateRun, updateProject,
   setOutputStatus, addOutputComment, addOutputTag, removeOutputTag,
   type CampaignOutput, type Run, type OutputStatus, type OutputComment,
 } from "../lib/store";
@@ -74,6 +75,11 @@ export function CampaignWorkspace({ project, onBack, onLaunchStudio }: CampaignW
   const [detailOutput, setDetailOutput]   = useState<CampaignOutput | null>(null);
   const [showAllRuns, setShowAllRuns]     = useState(false);
   const [reviewerEmail, setReviewerEmail] = useState("");
+  const [brief, setBrief]               = useState(() => getProjects().find(p => p.id === project.id)?.brief ?? project.brief ?? "");
+  const [briefSaved, setBriefSaved]     = useState(false);
+  const briefSavedTimerRef              = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [directionOpen, setDirectionOpen] = useState(false);
+  const [checkedItems, setCheckedItems] = useState<Set<number>>(new Set());
 
   const projAthletes = getProjectAthletes(project);
   const wf = getRecipes().find(r => r.id === project.workflowId);
@@ -152,6 +158,15 @@ export function CampaignWorkspace({ project, onBack, onLaunchStudio }: CampaignW
     if (detailOutput?.id === outputId) setDetailOutput(prev => prev ? patch(prev) : null);
   };
 
+  const handleBriefBlur = () => {
+    updateProject(project.id, { brief: brief.trim() || undefined });
+    setBriefSaved(true);
+    if (briefSavedTimerRef.current) clearTimeout(briefSavedTimerRef.current);
+    briefSavedTimerRef.current = setTimeout(() => setBriefSaved(false), 2000);
+  };
+
+  useEffect(() => () => { if (briefSavedTimerRef.current) clearTimeout(briefSavedTimerRef.current); }, []);
+
   const regenerateOutput = async (output: CampaignOutput) => {
     if (batchRunning) return;
     setBatchRunning(true);
@@ -159,7 +174,7 @@ export function CampaignWorkspace({ project, onBack, onLaunchStudio }: CampaignW
     const runId = `run-${Date.now()}-regen`;
     const basePrompt = wf?.prompt ?? `Professional sports portrait. Athlete: ${athlete?.name ?? "athlete"}`;
     const constraints = getProfilePromptConstraints(athlete ? getAthleteProfile(athlete.id) : null);
-    const prompt = athlete ? buildCampaignPrompt(basePrompt, athlete, constraints) : basePrompt;
+    const prompt = athlete ? buildCampaignPrompt(basePrompt, athlete, constraints, brief || undefined) : basePrompt;
 
     addRun({
       id: runId,
@@ -216,7 +231,7 @@ export function CampaignWorkspace({ project, onBack, onLaunchStudio }: CampaignW
       const runId = `run-${Date.now()}-${athlete.id}`;
       const basePrompt = wf?.prompt ?? `Professional sports portrait. Athlete: ${athlete.name}.`;
       const constraints = getProfilePromptConstraints(getAthleteProfile(athlete.id));
-      const enrichedPrompt = buildCampaignPrompt(basePrompt, athlete, constraints);
+      const enrichedPrompt = buildCampaignPrompt(basePrompt, athlete, constraints, brief || undefined);
 
       addRun({
         id: runId,
@@ -574,9 +589,9 @@ export function CampaignWorkspace({ project, onBack, onLaunchStudio }: CampaignW
           <div className="flex-1 overflow-y-auto">
             <div className="p-4 space-y-6">
 
-              {/* Athletes */}
+              {/* Subjects */}
               <div className="space-y-2">
-                <p className="text-xs text-muted-foreground uppercase tracking-wider">Athletes</p>
+                <p className="text-xs text-muted-foreground uppercase tracking-wider">Subjects</p>
                 {projAthletes.length > 0 ? (
                   <div className="space-y-1.5">
                     {projAthletes.map(a => (
@@ -595,42 +610,139 @@ export function CampaignWorkspace({ project, onBack, onLaunchStudio }: CampaignW
                     ))}
                   </div>
                 ) : (
-                  <p className="text-xs text-muted-foreground">No athletes assigned.</p>
+                  <p className="text-xs text-muted-foreground">No subjects assigned.</p>
                 )}
               </div>
 
-              {/* Recipe */}
+              {/* Creative brief */}
+              <div className="space-y-2">
+                <p className="text-xs text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                  <FileText className="size-3" strokeWidth={1.75} />
+                  Creative brief
+                  {briefSaved && <span className="ml-auto text-[10px] text-emerald-400">saved</span>}
+                </p>
+                <textarea
+                  value={brief}
+                  onChange={e => { setBrief(e.target.value); setBriefSaved(false); }}
+                  onBlur={handleBriefBlur}
+                  placeholder="Add campaign-specific direction…"
+                  rows={3}
+                  maxLength={280}
+                  className="w-full px-3 py-2 bg-card border border-border rounded-md text-xs focus:outline-none focus:border-accent placeholder:text-muted-foreground/50 resize-none leading-relaxed"
+                />
+                <p className="text-[10px] text-muted-foreground/40 text-right -mt-1">{brief.length}/280</p>
+              </div>
+
+              {/* Recipe + direction */}
               <div className="space-y-2">
                 <p className="text-xs text-muted-foreground uppercase tracking-wider">Recipe</p>
                 {wf ? (
-                  <div className="flex items-center gap-3 p-2.5 bg-card border border-border rounded-lg">
-                    <div className="size-10 rounded-md overflow-hidden shrink-0">
-                      <img src={wf.thumbnail} alt={wf.name} className="w-full h-full object-cover" />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-xs font-medium truncate">{wf.name}</p>
-                      {wf.description && <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{wf.description}</p>}
-                    </div>
+                  <div>
+                    <button
+                      onClick={() => setDirectionOpen(v => !v)}
+                      className="w-full flex items-center gap-3 p-2.5 bg-card border border-border rounded-lg hover:border-accent/40 transition-colors text-left"
+                    >
+                      <div className="size-10 rounded-md overflow-hidden shrink-0">
+                        <img src={wf.thumbnail} alt={wf.name} className="w-full h-full object-cover" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs font-medium truncate">{wf.name}</p>
+                        {wf.description && <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{wf.description}</p>}
+                      </div>
+                      <ChevronDown className={`size-3 text-muted-foreground shrink-0 transition-transform duration-150 ${directionOpen ? "rotate-180" : ""}`} strokeWidth={1.75} />
+                    </button>
+
+                    {directionOpen && (
+                      <div className="mt-2 space-y-3 px-0.5">
+                        {wf.styleRules.length > 0 && (
+                          <div>
+                            <p className="text-[10px] text-muted-foreground/60 uppercase tracking-wider mb-1">Style</p>
+                            <ul className="space-y-0.5">
+                              {wf.styleRules.map((r, i) => (
+                                <li key={i} className="text-xs text-muted-foreground flex items-start gap-1.5">
+                                  <span className="shrink-0 mt-[5px] size-1 rounded-full bg-muted-foreground/30" />
+                                  {r}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                        {wf.lightingRules.length > 0 && (
+                          <div>
+                            <p className="text-[10px] text-muted-foreground/60 uppercase tracking-wider mb-1">Lighting</p>
+                            <ul className="space-y-0.5">
+                              {wf.lightingRules.map((r, i) => (
+                                <li key={i} className="text-xs text-muted-foreground flex items-start gap-1.5">
+                                  <span className="shrink-0 mt-[5px] size-1 rounded-full bg-muted-foreground/30" />
+                                  {r}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                        {wf.compositionRules.length > 0 && (
+                          <div>
+                            <p className="text-[10px] text-muted-foreground/60 uppercase tracking-wider mb-1">Composition</p>
+                            <ul className="space-y-0.5">
+                              {wf.compositionRules.map((r, i) => (
+                                <li key={i} className="text-xs text-muted-foreground flex items-start gap-1.5">
+                                  <span className="shrink-0 mt-[5px] size-1 rounded-full bg-muted-foreground/30" />
+                                  {r}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                        {wf.negativePrompt && (
+                          <div>
+                            <p className="text-[10px] text-muted-foreground/60 uppercase tracking-wider mb-1">Negative prompt</p>
+                            <p className="text-xs text-muted-foreground line-clamp-3 leading-relaxed">{wf.negativePrompt}</p>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <p className="text-xs text-muted-foreground">No recipe selected.</p>
                 )}
               </div>
 
-              {/* Checklist */}
+              {/* Quality checklist */}
               {wf && wf.qualityChecklist.length > 0 && (
                 <div className="space-y-2">
                   <p className="text-xs text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
                     <CheckSquare className="size-3" strokeWidth={1.75} />
                     Review checklist
+                    <span className="ml-auto text-[10px] tabular-nums">{checkedItems.size} / {wf.qualityChecklist.length}</span>
                   </p>
                   <div className="space-y-1.5">
-                    {wf.qualityChecklist.map((item, i) => (
-                      <div key={i} className="flex items-start gap-2 px-2.5 py-1.5 bg-card border border-border rounded-md">
-                        <div className="size-3.5 rounded border border-border shrink-0 mt-0.5" />
-                        <p className="text-xs text-muted-foreground leading-tight">{item}</p>
-                      </div>
-                    ))}
+                    {wf.qualityChecklist.map((item, i) => {
+                      const checked = checkedItems.has(i);
+                      return (
+                        <button
+                          key={i}
+                          onClick={() => setCheckedItems(prev => {
+                            const next = new Set(prev);
+                            checked ? next.delete(i) : next.add(i);
+                            return next;
+                          })}
+                          className={`w-full flex items-start gap-2 px-2.5 py-1.5 rounded-md text-left transition-colors border ${
+                            checked
+                              ? "bg-emerald-500/5 border-emerald-500/30"
+                              : "bg-card border-border hover:border-accent/40"
+                          }`}
+                        >
+                          <div className={`size-3.5 rounded shrink-0 mt-0.5 flex items-center justify-center border transition-colors ${
+                            checked ? "bg-emerald-500 border-emerald-500" : "border-border"
+                          }`}>
+                            {checked && <Check className="size-2.5 text-white" strokeWidth={3} />}
+                          </div>
+                          <p className={`text-xs leading-tight transition-colors ${
+                            checked ? "text-muted-foreground/40 line-through" : "text-muted-foreground"
+                          }`}>{item}</p>
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               )}

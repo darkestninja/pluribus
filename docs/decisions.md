@@ -13,6 +13,12 @@
 - Existing generation flow should be preserved unless explicitly changed.
 - New features should extend the current architecture where possible.
 - Destructive migrations should be avoided unless explicitly approved.
+- `data/workflows.ts` was a legacy file superseded by the recipe system — deleted in Sprint 6. All consumers now use `getRecipes()` from `store.ts`.
+- `Athlete.sport` is a free-form `string` — the original enum (`"Swimming" | "Track" | "Weightlifting"`) was too restrictive for a platform serving multiple sports verticals.
+- `app/lib/utils.ts` is the shared home for non-component utility functions (e.g. `relativeTime`).
+- All new fields added to `CampaignOutput` (`runId`, `comments`, `reviewedBy`, `reviewedAt`, `tags`) are optional — no data migration ever required.
+- `LibraryPage` reads from localStorage on mount and does not subscribe to store changes. Navigating away and back refreshes the list. This is acceptable given the single-user localStorage model.
+- Tag strings are stored lowercase and trimmed. `addOutputTag` is idempotent.
 
 ## UX Decisions
 

@@ -50,10 +50,12 @@ export interface EnhanceOptions {
   athleteDescriptor?: string;
   /** do-not-change constraints from AthleteProfile — injected as negative direction */
   doNotChange?: string[];
+  /** per-campaign creative brief — injected after identity constraints */
+  brief?: string;
 }
 
 export function enhancePrompt(opts: EnhanceOptions): string {
-  const { basePrompt, athlete, look, doNotChange } = opts;
+  const { basePrompt, athlete, look, doNotChange, brief } = opts;
   const parts: string[] = [basePrompt.trim()];
 
   // Subject injection
@@ -79,6 +81,11 @@ export function enhancePrompt(opts: EnhanceOptions): string {
     parts.push(`Identity constraints: ${doNotChange.join("; ")}`);
   }
 
+  // Campaign creative brief
+  if (brief && brief.trim()) {
+    parts.push(`Campaign brief: ${brief.trim()}`);
+  }
+
   parts.push(QUALITY_TAIL);
 
   return parts.join(". ");
@@ -89,10 +96,12 @@ export function buildCampaignPrompt(
   workflowPrompt: string,
   athlete: Athlete,
   doNotChange?: string[],
+  brief?: string,
 ): string {
   return enhancePrompt({
     basePrompt: workflowPrompt,
     athlete,
     doNotChange,
+    brief,
   });
 }

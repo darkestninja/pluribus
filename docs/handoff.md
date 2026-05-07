@@ -1,10 +1,11 @@
 # Handoff
 
-## Handoff — 2026-05-07 (Post-Sprint 6)
+## Handoff — 2026-05-07 (Post-Sprint 6) ← CURRENT
 
 ### Completed This Session
 - Sprint 5: Asset Tagging + Cross-Campaign Search ✓
 - Sprint 6: Organization Layer ✓
+- Post-review fixes ✓ (5 issues from review pass)
 
 ### Last Completed Work
 
@@ -83,12 +84,14 @@
 
 ### Next Sprint: Sprint 7 — Creative Constitution UX
 
-**Goal:** Bring quality guidance into the review loop. Reviewers should see the recipe's quality checklist inline while reviewing assets.
+**Goal:** Bring quality guidance and creative direction into the review loop. Reviewers should see the recipe's standard while evaluating outputs. Art directors should be able to leave per-campaign creative briefs that influence generation.
 
-Likely scope:
-- Quality checklist visible in campaign review sidebar (already in recipe schema — just surface it)
-- Creative direction summary panel in `CampaignWorkspace`
-- Per-campaign creative brief fields (override recipe defaults)
+Planned scope (acceptance criteria in `docs/tasks.md`):
+- **S7-1** Quality checklist from recipe visible in `CampaignWorkspace` right sidebar (read-only)
+- **S7-2** Per-campaign `brief?: string` field — text area, persists to localStorage, injected into prompt enhancement
+- **S7-3** Recipe direction summary card in sidebar (style, lighting, composition, negative prompt)
+
+Key file to understand before starting: `data/recipes.ts` — the `Recipe` interface already has `qualityChecklist?: string[]`, `lighting`, `composition`, `negativePrompt` fields. Sprint 7 is primarily a surfacing sprint, not a schema sprint.
 
 ### Next Recommended Action
 
@@ -112,14 +115,21 @@ Read docs/prompts/02-plan-sprint.md and plan Sprint 7: Creative Constitution UX.
 - `app/components/CommandPalette.tsx` — Subjects rename, Library nav
 - `data/workflows.ts` — deleted
 
+### Post-Review Fixes Applied
+1. `LibraryPage` — `projectMap` now includes `getArchivedProjects()` so archived campaign names resolve correctly.
+2. `LibraryPage` — `getAthletes()`/`getProjects()` moved into `useState` initializers (one read on mount, not every render).
+3. `AddAthleteModal` — toast ("Subject added"), modal title, and submit button updated from "athlete" → "subject".
+4. `AthleteLibrary` — inline add panel heading updated from "Add athlete" → "Add subject".
+5. `AthleteLibrary` — "Sport \*" asterisk removed from edit form (sport is optional, not enforced in submit condition).
+
 ### Important Implementation Notes
 - `tags` is optional on `CampaignOutput` — old data without tags renders an empty chip list.
-- `addOutputTag` is idempotent — calling it twice with the same tag has no effect.
-- `LibraryPage` re-reads from localStorage on mount. It does not subscribe to store changes — navigating away and back refreshes the list.
-- `onRegenerate` in LibraryPage shows a toast and closes the panel. Actual regen requires opening the campaign.
+- `addOutputTag` is idempotent — calling it twice with the same tag has no effect. Tags are stored lowercase/trimmed.
+- `LibraryPage` reads from localStorage on mount. It does not subscribe to store changes — navigating away and back refreshes the list. This is intentional given the single-user localStorage model.
+- `onRegenerate` in LibraryPage shows a toast and closes the panel. Actual regen requires opening the campaign workspace.
 - The sport field widening in `data/athletes.ts` is backward compatible — existing string values remain valid.
 - Recipe IDs (`wf-noir-studio` etc.) match the old workflow IDs, so existing `Project.workflowId` values resolve correctly against `getRecipes()`.
-- `CommandPalette` has its own local `ViewType` definition — kept in sync with App.tsx manually.
+- `CommandPalette` has its own local `ViewType` definition — must be kept in sync with `App.tsx` manually when new views are added.
 
 ### Active Blockers (User Action Required)
 - [ ] Run Supabase schema migration in SQL editor
