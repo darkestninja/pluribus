@@ -67,7 +67,10 @@
       "Bash(rsync -az --delete /Users/nomad/Pluribus/dist/ athena:/var/www/pluribus/)",
       "Bash(chmod +x /Users/nomad/Pluribus/deploy.sh)",
       "Bash(bash deploy.sh)",
-      "Bash(rsync -az --delete --exclude node_modules --exclude dist --exclude .git --exclude '*.zip' /Users/nomad/Pluribus/ athena:/opt/pluribus/)"
+      "Bash(rsync -az --delete --exclude node_modules --exclude dist --exclude .git --exclude '*.zip' /Users/nomad/Pluribus/ athena:/opt/pluribus/)",
+      "Bash(git add *)",
+      "Bash(git rm *)",
+      "Bash(git commit -m ' *)"
     ]
   }
 }

@@ -1,4 +1,5 @@
-import { athletes as seedAthletes, Athlete, AthleteProfile } from "../../data/athletes";
+import { athletes as seedAthletes, Athlete, AthleteProfile, RejectedLikeness } from "../../data/athletes";
+export type { RejectedLikeness };
 import { projects as seedProjects, archivedProjects as seedArchived, Project } from "../../data/projects";
 import { seedRecipes, Recipe } from "../../data/recipes";
 
@@ -119,6 +120,25 @@ export function saveAthleteProfile(profile: AthleteProfile): void {
 export function deleteAthleteProfile(athleteId: string): void {
   try { localStorage.removeItem(key(`athleteProfile_${athleteId}`)); } catch {}
 }
+export function addRejectedLikeness(athleteId: string, entry: RejectedLikeness): void {
+  const profile = getAthleteProfile(athleteId) ?? createEmptyProfile(athleteId);
+  saveAthleteProfile({
+    ...profile,
+    rejectedLikeness: [...(profile.rejectedLikeness ?? []), entry],
+    version: profile.version + 1,
+    updatedAt: new Date().toISOString(),
+  });
+}
+export function removeRejectedLikeness(athleteId: string, idx: number): void {
+  const profile = getAthleteProfile(athleteId);
+  if (!profile) return;
+  saveAthleteProfile({
+    ...profile,
+    rejectedLikeness: (profile.rejectedLikeness ?? []).filter((_, i) => i !== idx),
+    version: profile.version + 1,
+    updatedAt: new Date().toISOString(),
+  });
+}
 
 // ---------- recipes ----------
 export function getRecipes(): Recipe[] {
@@ -228,6 +248,12 @@ export interface OutputComment {
   createdAt: string;
 }
 
+export interface ReviewHistoryEntry {
+  status: OutputStatus;
+  by: string;
+  at: string;
+}
+
 export interface CampaignOutput {
   id: string;
   campaignId: string;
@@ -241,6 +267,7 @@ export interface CampaignOutput {
   reviewedBy?: string;
   reviewedAt?: string;
   tags?: string[];
+  reviewHistory?: ReviewHistoryEntry[];
 }
 
 export function getCampaignOutputs(campaignId?: string): CampaignOutput[] {
@@ -257,7 +284,11 @@ export function updateCampaignOutput(id: string, patch: Partial<CampaignOutput>)
   saveCampaignOutputs(getCampaignOutputs().map(o => o.id === id ? { ...o, ...patch } : o));
 }
 export function setOutputStatus(id: string, status: OutputStatus, reviewedBy: string): void {
-  updateCampaignOutput(id, { status, reviewedBy, reviewedAt: new Date().toISOString() });
+  const now = new Date().toISOString();
+  const existing = getCampaignOutputs().find(o => o.id === id);
+  const entry: ReviewHistoryEntry = { status, by: reviewedBy, at: now };
+  const history = [...(existing?.reviewHistory ?? []), entry];
+  updateCampaignOutput(id, { status, reviewedBy, reviewedAt: now, reviewHistory: history });
 }
 export function addOutputComment(outputId: string, comment: OutputComment): void {
   saveCampaignOutputs(

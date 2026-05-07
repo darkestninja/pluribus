@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Search, Plus, Clock, X, Upload, Download, Sparkles, Camera, ShieldCheck, Pencil, Trash2, Check } from "lucide-react";
 import type { Athlete, AngleKey, AthleteProfile, CaptureAngle, TattooMark } from "../../data/athletes";
-import { getAthletes, saveAthletes, addAthlete, getCampaignOutputs, getAthleteProfile, saveAthleteProfile, createEmptyProfile, type CampaignOutput } from "../lib/store";
+import { getAthletes, saveAthletes, addAthlete, getCampaignOutputs, getAthleteProfile, saveAthleteProfile, createEmptyProfile, removeRejectedLikeness, type CampaignOutput, type RejectedLikeness } from "../lib/store";
 import { compressToDataUrl } from "../lib/imageUtils";
 import { toast } from "../lib/notifications";
 
@@ -269,6 +269,16 @@ export function AthleteLibrary({ preSelectedAthleteId, onAthleteDeselect, onGene
   const handleRemoveLikeness = (idx: number) => {
     if (!profile) return;
     persistProfile({ approvedLikeness: profile.approvedLikeness.filter((_, i) => i !== idx) }, profile);
+  };
+
+  // ── Remove rejected likeness ───────────────────────────────────────────────
+  const handleRemoveRejectedLikeness = (idx: number) => {
+    if (!selectedAthlete || !profile) return;
+    removeRejectedLikeness(selectedAthlete, idx);
+    setProfile(prev => prev ? {
+      ...prev,
+      rejectedLikeness: (prev.rejectedLikeness ?? []).filter((_, i) => i !== idx),
+    } : prev);
   };
 
   // ── Identity notes (debounced save — 600ms after last keystroke) ───────────
@@ -744,6 +754,31 @@ export function AthleteLibrary({ preSelectedAthleteId, onAthleteDeselect, onGene
                             </button>
                           </div>
                           <p className="text-[10px] text-muted-foreground p-2 truncate">{item.context || "Approved reference"}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Rejected likeness */}
+                {(profile?.rejectedLikeness ?? []).length > 0 && (
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-semibold text-foreground">Rejected likeness</h4>
+                    <p className="text-xs text-muted-foreground/70">Outputs marked as identity mismatches — used to guide future generation.</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      {(profile?.rejectedLikeness as RejectedLikeness[] ?? []).map((item, idx) => (
+                        <div key={idx} className="rounded-md overflow-hidden border border-red-500/30 bg-red-500/5 group relative">
+                          <div className="aspect-[3/4] overflow-hidden relative">
+                            <img src={item.imageUrl} alt="Rejected likeness" className="w-full h-full object-cover opacity-70" />
+                            <button
+                              onClick={() => handleRemoveRejectedLikeness(idx)}
+                              title="Remove"
+                              className="absolute top-1.5 right-1.5 size-5 rounded-full bg-black/60 hover:bg-red-500/90 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all"
+                            >
+                              <X className="size-2.5 text-white" strokeWidth={2.5} />
+                            </button>
+                          </div>
+                          <p className="text-[10px] text-red-400/80 p-2 truncate">{item.context || "Rejected reference"}</p>
                         </div>
                       ))}
                     </div>

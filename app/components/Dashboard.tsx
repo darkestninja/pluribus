@@ -1,5 +1,6 @@
 import { Sparkles, ArrowRight, Plus, Users } from "lucide-react";
-import { getAthletes, getProjects, getQueue } from "../lib/store";
+import { getAthletes, getProjects, getCampaignOutputs } from "../lib/store";
+import { relativeTime } from "../lib/utils";
 import type { Athlete } from "../../data/athletes";
 
 interface DashboardProps {
@@ -31,8 +32,9 @@ export function Dashboard({ userName, onOpenCampaigns, onNewCampaign, onQuickGen
   const athletesReady = athletes.filter(a => a.status === "complete").length;
   const pendingCapture = athletes.filter(a => a.status === "pending").length;
 
-  const queue = getQueue();
-  const doneItems = queue.filter(q => q.status === "done").slice(0, 4);
+  const recentOutputs = getCampaignOutputs()
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+    .slice(0, 4);
   const pendingAthletes = athletes.filter(a => a.status === "pending").slice(0, 2);
 
   return (
@@ -231,26 +233,35 @@ export function Dashboard({ userName, onOpenCampaigns, onNewCampaign, onQuickGen
         <section className="space-y-4">
           <h3 className="text-base font-semibold">Activity</h3>
           <div className="space-y-1">
-            {doneItems.map(item => (
-              <div key={item.id} className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-card transition-colors">
-                <span className="size-2 rounded-full bg-emerald-500 shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm">
-                    <span className="font-medium">{item.athleteName}</span>
-                    <span className="text-muted-foreground"> · {item.name}</span>
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-0.5">{item.startedAt}</p>
-                </div>
-                <button
-                  onClick={() => onAthleteGenerate(
-                    getAthletes().find(a => a.name === item.athleteName)?.id ?? ""
+            {recentOutputs.map(item => {
+              const ath = athletes.find(a => a.id === item.athleteId);
+              const dotColor =
+                item.status === "approved" ? "bg-emerald-500"
+                : item.status === "rejected" ? "bg-red-500"
+                : item.status === "flagged" ? "bg-amber-400"
+                : item.status === "needs_revision" ? "bg-blue-400"
+                : "bg-muted-foreground/40";
+              return (
+                <div key={item.id} className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-card transition-colors">
+                  <span className={`size-2 rounded-full shrink-0 ${dotColor}`} />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm">
+                      {ath && <span className="font-medium">{ath.name}</span>}
+                      <span className="text-muted-foreground"> · {item.status.replace("_", " ")}</span>
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{relativeTime(item.createdAt)}</p>
+                  </div>
+                  {ath && (
+                    <button
+                      onClick={() => onAthleteGenerate(ath.id)}
+                      className="text-xs text-accent hover:underline shrink-0"
+                    >
+                      View →
+                    </button>
                   )}
-                  className="text-xs text-accent hover:underline shrink-0"
-                >
-                  View →
-                </button>
-              </div>
-            ))}
+                </div>
+              );
+            })}
             {pendingAthletes.map(athlete => (
               <div key={athlete.id} className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-card transition-colors">
                 <span className="size-2 rounded-full bg-amber-400 shrink-0" />
@@ -267,7 +278,7 @@ export function Dashboard({ userName, onOpenCampaigns, onNewCampaign, onQuickGen
                 </button>
               </div>
             ))}
-            {doneItems.length === 0 && pendingAthletes.length === 0 && (
+            {recentOutputs.length === 0 && pendingAthletes.length === 0 && (
               <p className="text-sm text-muted-foreground px-3 py-4">No recent activity.</p>
             )}
           </div>

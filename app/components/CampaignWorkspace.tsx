@@ -14,10 +14,10 @@ import {
   getAthletes, getCampaignOutputs, addCampaignOutput, updateCampaignOutput,
   getAthleteProfile, saveAthleteProfile, createEmptyProfile, getProfilePromptConstraints,
   getProjects, getRecipes, getRuns, addRun, updateRun, updateProject,
-  setOutputStatus, addOutputComment, addOutputTag, removeOutputTag,
+  setOutputStatus, addOutputComment, addOutputTag, removeOutputTag, addRejectedLikeness,
   type CampaignOutput, type Run, type OutputStatus, type OutputComment,
 } from "../lib/store";
-import { relativeTime } from "../lib/utils";
+import { relativeTime, downloadZip } from "../lib/utils";
 import type { ApprovedLikeness } from "../../data/athletes";
 import { AssetDetailPanel } from "./AssetDetailPanel";
 
@@ -72,6 +72,7 @@ export function CampaignWorkspace({ project, onBack, onLaunchStudio }: CampaignW
   const [activeRunFilter, setActiveRunFilter] = useState<string | null>(null);
   const [batchRunning, setBatchRunning]   = useState(false);
   const [batchProgress, setBatchProgress] = useState(0);
+  const [isExporting, setIsExporting]     = useState(false);
   const [detailOutput, setDetailOutput]   = useState<CampaignOutput | null>(null);
   const [showAllRuns, setShowAllRuns]     = useState(false);
   const [reviewerEmail, setReviewerEmail] = useState("");
@@ -391,8 +392,33 @@ export function CampaignWorkspace({ project, onBack, onLaunchStudio }: CampaignW
     toast({ type: "success", title: "Likeness reference saved", body: `Added to ${athlete.name}'s identity profile` });
   };
 
-  const handleExport = () => {
-    outputs.filter(o => o.status === "approved").forEach(o => window.open(o.url, "_blank"));
+  const handleExport = async () => {
+    const approved = outputs.filter(o => o.status === "approved");
+    if (approved.length === 0) return;
+    setIsExporting(true);
+    try {
+      await downloadZip(
+        approved.map((o, i) => ({
+          url: o.url,
+          filename: `${project.name.replace(/\s+/g, "-").toLowerCase()}-${i + 1}.jpg`,
+          meta: { id: o.id, status: o.status, athleteId: o.athleteId, createdAt: o.createdAt },
+        })),
+        `${project.name.replace(/\s+/g, "-").toLowerCase()}-approved.zip`,
+      );
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleMarkRejectedLikeness = (output: CampaignOutput) => {
+    if (!output.athleteId) return;
+    addRejectedLikeness(output.athleteId, {
+      imageUrl: output.url,
+      context: `${wf?.name ?? "Generated"} · ${new Date().toLocaleDateString()}`,
+      rejectedAt: new Date().toISOString(),
+    });
+    const athlete = getAthletes().find(a => a.id === output.athleteId);
+    toast({ type: "success", title: "Rejected likeness saved", body: `Added to ${athlete?.name ?? "athlete"}'s profile as what to avoid` });
   };
 
   const detailRun = detailOutput?.runId ? runs.find(r => r.id === detailOutput.runId) : undefined;
@@ -418,10 +444,10 @@ export function CampaignWorkspace({ project, onBack, onLaunchStudio }: CampaignW
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <button onClick={handleExport} disabled={approvedCount === 0}
+          <button onClick={handleExport} disabled={approvedCount === 0 || isExporting}
             className="h-8 px-3 rounded-md bg-card border border-border hover:bg-secondary text-xs text-muted-foreground hover:text-foreground disabled:opacity-40 transition-colors flex items-center gap-1.5">
             <Download className="size-3.5" strokeWidth={1.75} />
-            Export {approvedCount > 0 ? approvedCount : ""}
+            {isExporting ? "Exporting…" : `Export ${approvedCount > 0 ? approvedCount : ""}`}
           </button>
         </div>
       </header>
@@ -847,6 +873,7 @@ export function CampaignWorkspace({ project, onBack, onLaunchStudio }: CampaignW
           onStatusChange={changeStatus}
           onRegenerate={regenerateOutput}
           onMarkLikeness={markAsLikeness}
+          onMarkRejectedLikeness={handleMarkRejectedLikeness}
           onCommentAdded={handleCommentAdded}
           onTagAdded={handleTagAdded}
           onTagRemoved={handleTagRemoved}

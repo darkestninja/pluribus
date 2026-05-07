@@ -22,14 +22,22 @@ export interface ApprovedLikeness {
   approvedAt: string;
 }
 
+export interface RejectedLikeness {
+  imageUrl: string;
+  context: string;       // e.g. "Wrong hair colour, bad angle"
+  rejectedAt: string;
+  reason?: string;       // optional free-text reason
+}
+
 export interface AthleteProfile {
   athleteId: string;
   version: number;
   updatedAt: string;
   captureAngles: CaptureAngle[];
   tattoos: TattooMark[];
-  doNotChange: string[];          // e.g. ["never remove chest tattoo"]
+  doNotChange: string[];
   approvedLikeness: ApprovedLikeness[];
+  rejectedLikeness?: RejectedLikeness[];   // optional — backward compatible
   notes: string;
 }
 

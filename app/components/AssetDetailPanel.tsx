@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { X, RefreshCw, Bookmark, Info, PenLine, Flag, MessageSquare, Tag, Plus } from "lucide-react";
+import { X, RefreshCw, Bookmark, Info, PenLine, Flag, MessageSquare, Tag, Plus, Download, ThumbsDown, History, ChevronDown } from "lucide-react";
 import type { Athlete } from "../../data/athletes";
 import type { Run } from "../lib/store";
-import { type CampaignOutput, type OutputStatus, type OutputComment } from "../lib/store";
-import { relativeTime } from "../lib/utils";
+import { type CampaignOutput, type OutputStatus, type OutputComment, type ReviewHistoryEntry } from "../lib/store";
+import { relativeTime, downloadUrl } from "../lib/utils";
 
 interface AssetDetailPanelProps {
   output: CampaignOutput;
@@ -14,6 +14,7 @@ interface AssetDetailPanelProps {
   onStatusChange: (id: string, status: OutputStatus) => void;
   onRegenerate: (output: CampaignOutput) => void;
   onMarkLikeness: (output: CampaignOutput) => void;
+  onMarkRejectedLikeness?: (output: CampaignOutput) => void;
   onCommentAdded: (outputId: string, comment: OutputComment) => void;
   onTagAdded?: (outputId: string, tag: string) => void;
   onTagRemoved?: (outputId: string, tag: string) => void;
@@ -71,11 +72,12 @@ const STATUS_LABEL: Record<OutputStatus, string> = {
 
 export function AssetDetailPanel({
   output, run, athlete, reviewerEmail,
-  onClose, onStatusChange, onRegenerate, onMarkLikeness, onCommentAdded,
+  onClose, onStatusChange, onRegenerate, onMarkLikeness, onMarkRejectedLikeness, onCommentAdded,
   onTagAdded, onTagRemoved,
 }: AssetDetailPanelProps) {
   const [commentText, setCommentText] = useState("");
   const [tagInput, setTagInput] = useState("");
+  const [historyOpen, setHistoryOpen] = useState(false);
 
   const handlePost = () => {
     const text = commentText.trim();
@@ -137,12 +139,21 @@ export function AssetDetailPanel({
                 </span>
               )}
             </div>
-            <button
-              onClick={onClose}
-              className="size-7 rounded-md flex items-center justify-center hover:bg-secondary shrink-0"
-            >
-              <X className="size-3.5 text-muted-foreground" strokeWidth={1.75} />
-            </button>
+            <div className="flex items-center gap-1 shrink-0">
+              <button
+                onClick={() => downloadUrl(output.url, `asset-${output.id}.jpg`)}
+                title="Download image"
+                className="size-7 rounded-md flex items-center justify-center hover:bg-secondary"
+              >
+                <Download className="size-3.5 text-muted-foreground" strokeWidth={1.75} />
+              </button>
+              <button
+                onClick={onClose}
+                className="size-7 rounded-md flex items-center justify-center hover:bg-secondary"
+              >
+                <X className="size-3.5 text-muted-foreground" strokeWidth={1.75} />
+              </button>
+            </div>
           </div>
 
           {/* Scroll area */}
@@ -307,6 +318,33 @@ export function AssetDetailPanel({
                 </button>
               </div>
             </div>
+            {/* Review history */}
+            {(output.reviewHistory?.length ?? 0) > 0 && (
+              <div className="space-y-2">
+                <button
+                  onClick={() => setHistoryOpen(v => !v)}
+                  className="flex items-center gap-1.5 text-xs text-muted-foreground uppercase tracking-wider hover:text-foreground transition-colors w-full"
+                >
+                  <History className="size-3" strokeWidth={1.75} />
+                  Review history
+                  <span className="ml-auto text-muted-foreground/60">{output.reviewHistory!.length}</span>
+                  <ChevronDown className={`size-3 transition-transform duration-150 ${historyOpen ? "rotate-180" : ""}`} strokeWidth={1.75} />
+                </button>
+                {historyOpen && (
+                  <div className="space-y-1.5">
+                    {(output.reviewHistory as ReviewHistoryEntry[]).map((entry, i) => (
+                      <div key={i} className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <span className={`h-4 px-1.5 rounded text-[10px] font-medium shrink-0 ${STATUS_BADGE[entry.status]}`}>
+                          {entry.status.replace("_", " ")}
+                        </span>
+                        <span className="truncate">{entry.by.split("@")[0]}</span>
+                        <span className="shrink-0 text-muted-foreground/50">{relativeTime(entry.at)}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Footer */}
@@ -337,9 +375,19 @@ export function AssetDetailPanel({
               {output.athleteId && (
                 <button
                   onClick={() => onMarkLikeness(output)}
+                  title="Save as approved likeness reference"
                   className="h-8 px-3 rounded-md bg-card border border-border hover:bg-secondary text-muted-foreground hover:text-foreground text-xs transition-colors flex items-center justify-center gap-1.5"
                 >
-                  <Bookmark className="size-3" strokeWidth={1.75} /> Save likeness
+                  <Bookmark className="size-3" strokeWidth={1.75} /> Likeness ✓
+                </button>
+              )}
+              {output.athleteId && onMarkRejectedLikeness && (
+                <button
+                  onClick={() => onMarkRejectedLikeness(output)}
+                  title="Mark as rejected likeness — what to avoid"
+                  className="h-8 px-3 rounded-md bg-card border border-border hover:bg-red-500/10 hover:border-red-500/40 text-muted-foreground hover:text-red-400 text-xs transition-colors flex items-center justify-center gap-1.5"
+                >
+                  <ThumbsDown className="size-3" strokeWidth={1.75} /> Reject
                 </button>
               )}
             </div>
