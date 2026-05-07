@@ -1,6 +1,42 @@
 # Handoff
 
-## Handoff — 2026-05-07 (Post-Sprint 7) ← CURRENT
+## Handoff — 2026-05-07 (Post-Audit) ← CURRENT
+
+### Completed This Session
+- Full product + technical audit against docs/prompts/01-audit.md
+- 7 UI gap fixes (history tab, SPORTS ref, brand tab stub, dead button, edit attributes, delete subject, remove likeness)
+- docs/tasks.md, docs/current-state.md, docs/handoff.md updated with audit findings
+
+### Audit Summary
+
+**Architecture:** React 18 SPA + Bun proxy + Supabase Auth only. All product data is localStorage. No cloud persistence for subjects, campaigns, outputs, or profiles.
+
+**Critical risks identified:**
+1. **No HTTPS** — credentials over plain HTTP; must fix before any real users
+2. **fal.ai CDN URLs not downloaded** — approved assets can silently 404 when CDN expires
+3. **localStorage-only** — clearing browser data destroys everything permanently; no backup
+4. **Supabase schema not migrated** — auth flows may not work correctly
+
+**Product capability:** Sprints 1–7 are fully built and working. The approval, identity, recipe, run lineage, and tagging systems are solid foundations. The UX is production-grade for a single user in a single browser.
+
+**Biggest gap vs vision:** The product has no server-side memory. It cannot support teams, cannot recover from browser data loss, and cannot guarantee asset persistence. The vision ("system of record for synthetic identity media") requires Supabase persistence.
+
+**Top recommended Sprint 8 choices (in priority order):**
+1. Asset download / ZIP export — closes the CDN expiry risk immediately
+2. Rejected likeness on identity profile — completes the identity memory model
+3. Review history / audit trail — never lose reviewer attribution again
+4. Dashboard activity feed fix — reads CampaignOutputs not Queue
+5. Side-by-side comparison — biggest review UX gap
+
+### Next Recommended Action
+
+```
+Read docs/prompts/02-plan-sprint.md and plan Sprint 8. Choose from the Stage 1 candidates in tasks.md. Do not code yet.
+```
+
+---
+
+## Handoff — 2026-05-07 (Post-Sprint 7)
 
 ### Completed This Session
 - Sprint 7: Creative Constitution UX ✓

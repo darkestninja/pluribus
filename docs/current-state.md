@@ -121,9 +121,26 @@ Candidates (user to choose):
 - `buildCampaignPrompt` param named `doNotChange` but receives full constraints — minor rename
 - Hover overlay 6 icons may clip on 2-column grid at narrow viewports
 - `CommandPalette` has its own local `ViewType` definition — must be kept in sync with `App.tsx` manually
+- Dashboard activity feed reads from Queue (Studio only), not CampaignOutputs — should show campaign generation activity
+- `App.tsx` (491 lines) is a monolith — auth, navigation, modals, toasts, all in one file
+- `CampaignWorkspace.tsx` (857 lines) handles generation, state, UI, runs, tags, brief, approval — needs splitting
+- fal.ai CDN URLs stored as-is — no download/cache — approved assets can silently 404
+- No HTTPS — credentials sent over plain HTTP
+- No cloud storage — all product data is localStorage-only; cleared on browser data wipe
+- `Project.workflowId` references a `Recipe` but field is named "workflowId" — confusing
+- Credits are localStorage-only and not enforced server-side
+
+## Critical Pre-Launch Blockers (User Action Required)
+
+- [ ] Run Supabase schema migration in SQL editor
+- [ ] Create demo account: daniel@pluribus.ai / demo123 in Supabase Auth > Users
+- [ ] Set Site URL: http://185.158.132.125 in Supabase Auth > URL Configuration
+- [ ] Add HTTPS (SSL certificate via certbot or similar)
+- [ ] Implement asset download/caching to protect against fal.ai URL expiry
 
 ## Blockers (User Action Required)
 
 - [ ] Run Supabase schema migration in Supabase SQL editor
 - [ ] Create demo account (daniel@pluribus.ai / demo123) in Supabase Auth > Users
 - [ ] Set Site URL in Supabase Auth > URL Configuration
+- [ ] Add HTTPS (certbot / Let's Encrypt on 185.158.132.125)
