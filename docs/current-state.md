@@ -108,9 +108,21 @@ Pre-launch. Sprints 1–8 complete. Sprint 9 next.
 - [x] Collapsible review history timeline in `AssetDetailPanel`
 - [x] Dashboard activity feed now reads `getCampaignOutputs()` sorted by `createdAt` desc
 
+### Sprint 10 — Campaign State Machine + Visual Language Tokens + Export Log ✓
+- [x] `CampaignStatus` type: `draft | in_review | approved | delivered` on `Project`
+- [x] Status dropdown in `CampaignWorkspace` header — color-coded dot, persists via `updateProject`
+- [x] `ExportLogEntry { exportedAt, exportedBy, assetCount }` on `Project` (optional, backward compatible)
+- [x] `appendExportLog()` store helper
+- [x] Export log populated after every ZIP export; sidebar section shows newest 5 entries
+- [x] `mood?`, `cameraStyle?`, `toneStyle?` optional fields on `Recipe` (Creative Constitution §14)
+- [x] Visual Language tab in recipe editor modal (3 structured token dropdowns)
+- [x] Token chips on recipe cards (accent-tinted, below tags row)
+- [x] `openEdit` / `openClone` preserve all three visual language fields
+- [x] Seed project statuses migrated from free-text to `CampaignStatus`
+
 ## In Progress
 
-Nothing — ready for Sprint 9.
+Nothing — ready for Sprint 11.
 
 ## Known Issues / Bugs
 

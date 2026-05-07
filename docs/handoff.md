@@ -1,6 +1,52 @@
 # Handoff
 
-## Handoff — 2026-05-07 (Post-Sprint 8 Audit + Bug Fix) ← CURRENT
+## Handoff — 2026-05-07 (Post-Sprint 10) ← CURRENT
+
+### Completed This Session
+- Sprint 10: Campaign State Machine + Recipe Visual Language Tokens + Export Log
+- Build clean, deployed
+
+### What Was Built
+
+**Campaign state machine (`data/projects.ts`, `CampaignWorkspace.tsx`, `store.ts`):**
+- `CampaignStatus = "draft" | "in_review" | "approved" | "delivered"` replaces free-text `status?: string` on `Project`
+- Seed project statuses migrated to valid values (`"In Progress"` → `"in_review"`, `"Complete"` → `"delivered"`, etc.)
+- `<select>` dropdown in CampaignWorkspace header — shows current status with color-coded dot, persists immediately via `updateProject`
+
+**Export log (`data/projects.ts`, `store.ts`, `CampaignWorkspace.tsx`):**
+- `ExportLogEntry { exportedAt, exportedBy, assetCount }` added to `Project` (optional, backward compatible)
+- `appendExportLog(id, entry)` store helper — prepends newest entry first
+- `handleExport` now records an entry after every successful ZIP download
+- Export log sidebar section shows newest 5 entries with asset count chip, reviewer email prefix, relative time
+
+**Recipe visual language tokens (`data/recipes.ts`, `WorkflowLibrary.tsx`):**
+- `mood?`, `cameraStyle?`, `toneStyle?` optional fields on `Recipe`
+- "Visual Language" 4th tab in recipe editor modal — 3 structured `<select>` dropdowns from Creative Constitution §14 token sets (Mood: 6 options, Camera: 5 options, Tone: 6 options)
+- `handleSave` converts empty string → `undefined` so unset tokens are cleanly absent
+- `openEdit` and `openClone` both preserve all three fields
+- Token chips rendered on recipe cards (accent-tinted, below tags row)
+
+### Implementation Notes
+- The `STATUS_COLOR` map in CampaignWorkspace was replaced entirely by `CAMPAIGN_STATUSES` array — single source of truth for value/label/dot color
+- Visual language tokens store as readable strings (not slugs) — "Controlled Intensity" not "controlled_intensity" — so they display directly without transformation
+- `emptyForm()` initializes `mood/cameraStyle/toneStyle` as `""` (not undefined) so the select inputs are controlled
+
+### Next Recommended Action
+```
+Read docs/prompts/02-plan-sprint.md and plan Sprint 11.
+Top candidates: batch multi-select gallery, recipe mood board images, rejection reason tags, profile completeness %.
+```
+
+### Files Modified (Sprint 10)
+- `data/projects.ts` — CampaignStatus, ExportLogEntry, Project interface, seed status values
+- `data/recipes.ts` — mood?, cameraStyle?, toneStyle? on Recipe interface
+- `app/lib/store.ts` — export CampaignStatus + ExportLogEntry, appendExportLog helper
+- `app/components/CampaignWorkspace.tsx` — status dropdown, export log sidebar, appendExportLog call
+- `app/components/WorkflowLibrary.tsx` — Visual Language tab, token chips, openEdit/openClone/handleSave updated
+
+---
+
+## Handoff — 2026-05-07 (Post-Sprint 8 Audit + Bug Fix)
 
 ### Completed This Session
 - Bug fix: `LibraryPage` now passes `onMarkRejectedLikeness` to `AssetDetailPanel` — the Reject button in the Library view is now functional

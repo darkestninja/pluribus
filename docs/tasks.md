@@ -7,7 +7,16 @@
 - [ ] Create demo account: daniel@pluribus.ai / demo123 in Supabase Auth > Users
 - [ ] Set Site URL: http://185.158.132.125 in Supabase Auth > URL Configuration
 
-## Current Sprint — Sprint 9
+## Current Sprint — Sprint 11 (TBD)
+
+Candidates from backlog (choose next):
+- Keyboard navigation in gallery (arrow keys, J/K approve/reject)
+- Recipe mood board: 1-3 reference image uploads per recipe
+- Batch multi-select + bulk status actions in CampaignWorkspace gallery
+- Rejection reason structured tags on rejected outputs
+- Profile completeness % signal on athlete card
+
+## Done (Sprint 10)
 
 **Stage 1 — Immediate bugs + review UX gaps:**
 1. `LibraryPage.tsx`: wire `onMarkRejectedLikeness` (prop accepted by AssetDetailPanel but not passed in Library)
@@ -60,6 +69,8 @@
 - [x] Sprint 6: Organization Layer — sport: string, free-text sport/event, Subjects rename, getRecipes() replaces workflowTemplates, Library nav
 - [x] Sprint 7: Creative Constitution UX — interactive quality checklist, per-campaign creative brief (prompt-injected), recipe direction panel; stale-prop fix, setTimeout cleanup
 - [x] Sprint 8: Asset Export + Identity Memory — downloadUrl/downloadZip, per-asset download, ZIP export, rejected likeness (data model + store + UI), review history timeline, Dashboard activity feed fix
+- [x] Sprint 9 (bug fix): LibraryPage onMarkRejectedLikeness wired — Reject button now functional in Library view
+- [x] Sprint 10: Campaign State Machine + Visual Language Tokens + Export Log — CampaignStatus type, status dropdown in workspace header, ExportLogEntry + appendExportLog, export log sidebar, mood/cameraStyle/toneStyle on Recipe, Visual Language tab in editor, token chips on recipe cards
 
 ## Risks
 
