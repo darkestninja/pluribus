@@ -1,8 +1,10 @@
 import { useState } from "react";
+import { useRefreshableUrl } from "../lib/useRefreshableUrl";
+import { updateCampaignOutput } from "../lib/store";
 import { X, RefreshCw, Bookmark, Info, PenLine, Flag, MessageSquare, Tag, Plus, Download, ThumbsDown, History, ChevronDown } from "lucide-react";
 import type { Athlete } from "../../data/athletes";
 import type { Run } from "../lib/store";
-import { type CampaignOutput, type OutputStatus, type OutputComment, type ReviewHistoryEntry } from "../lib/store";
+import { type CampaignOutput, type OutputStatus, type OutputComment, type ReviewHistoryEntry, type RejectionReason, REJECTION_REASON_LABELS, getIdentityMatchTier, canExportOutput } from "../lib/store";
 import { relativeTime, downloadUrl } from "../lib/utils";
 
 interface AssetDetailPanelProps {
@@ -11,13 +13,14 @@ interface AssetDetailPanelProps {
   athlete?: Athlete;
   reviewerEmail: string;
   onClose: () => void;
-  onStatusChange: (id: string, status: OutputStatus) => void;
+  onStatusChange: (id: string, status: OutputStatus, rejectionReason?: RejectionReason) => void;
   onRegenerate: (output: CampaignOutput) => void;
   onMarkLikeness: (output: CampaignOutput) => void;
   onMarkRejectedLikeness?: (output: CampaignOutput) => void;
   onCommentAdded: (outputId: string, comment: OutputComment) => void;
   onTagAdded?: (outputId: string, tag: string) => void;
   onTagRemoved?: (outputId: string, tag: string) => void;
+  onRetryScoring?: (output: CampaignOutput) => void;
 }
 
 
@@ -73,7 +76,7 @@ const STATUS_LABEL: Record<OutputStatus, string> = {
 export function AssetDetailPanel({
   output, run, athlete, reviewerEmail,
   onClose, onStatusChange, onRegenerate, onMarkLikeness, onMarkRejectedLikeness, onCommentAdded,
-  onTagAdded, onTagRemoved,
+  onTagAdded, onTagRemoved, onRetryScoring,
 }: AssetDetailPanelProps) {
   const [commentText, setCommentText] = useState("");
   const [tagInput, setTagInput] = useState("");
@@ -98,6 +101,12 @@ export function AssetDetailPanel({
     setTagInput("");
   };
 
+  const { src: imgSrc, onError: imgOnError } = useRefreshableUrl(
+    output.url,
+    output.storagePath,
+    (newUrl) => updateCampaignOutput(output.id, { url: newUrl }),
+  );
+
   const comments = output.comments ?? [];
   const tags = output.tags ?? [];
 
@@ -112,7 +121,7 @@ export function AssetDetailPanel({
       >
         {/* Image */}
         <div className="w-64 shrink-0 bg-black">
-          <img src={output.url} alt="" className="w-full h-full object-contain" />
+          <img src={imgSrc} onError={imgOnError} alt="" className="w-full h-full object-contain" />
         </div>
 
         {/* Panel */}
@@ -124,15 +133,48 @@ export function AssetDetailPanel({
               <span className={`h-5 px-2 rounded-full text-xs font-medium flex items-center shrink-0 ${STATUS_BADGE[output.status]}`}>
                 {STATUS_LABEL[output.status]}
               </span>
-              {output.resemblanceScore !== undefined && (
-                <span className={`h-5 px-2 rounded-full text-xs font-medium flex items-center shrink-0 ${
-                  output.resemblanceScore >= 75 ? "bg-emerald-500/20 text-emerald-400"
-                    : output.resemblanceScore >= 55 ? "bg-amber-500/20 text-amber-400"
-                    : "bg-red-500/20 text-red-400"
-                }`}>
-                  {output.resemblanceScore}% match
-                </span>
-              )}
+              {(() => {
+                const score = output.resemblanceScore;
+                const effectiveStatus = output.identityScoringStatus
+                  ?? (score !== undefined ? "complete" : undefined);
+
+                if (effectiveStatus === "pending" || effectiveStatus === "scoring") {
+                  return (
+                    <span className="h-5 px-2 rounded-full text-xs font-medium flex items-center gap-1 shrink-0 bg-secondary text-muted-foreground">
+                      <RefreshCw className="size-2.5 animate-spin" strokeWidth={2} />
+                      Scoring…
+                    </span>
+                  );
+                }
+                if (effectiveStatus === "complete" && score !== undefined) {
+                  const tier = getIdentityMatchTier(score);
+                  return (
+                    <span
+                      className={`h-5 px-2 rounded-full text-xs font-medium flex items-center gap-1 shrink-0 border ${tier.bgClass} ${tier.textClass} ${tier.borderClass}`}
+                      title={tier.recommendedUse}
+                    >
+                      {score}% · {tier.label}
+                    </span>
+                  );
+                }
+                if (effectiveStatus === "failed") {
+                  return (
+                    <span className="h-5 px-2 rounded-full text-xs font-medium flex items-center gap-1 shrink-0 bg-red-500/20 text-red-400">
+                      Score failed
+                      {onRetryScoring && (
+                        <button
+                          onClick={() => onRetryScoring(output)}
+                          title="Retry identity score"
+                          className="ml-0.5 hover:text-red-300 transition-colors"
+                        >
+                          <RefreshCw className="size-2.5" strokeWidth={2} />
+                        </button>
+                      )}
+                    </span>
+                  );
+                }
+                return null;
+              })()}
               {output.reviewedBy && output.reviewedAt && (
                 <span className="text-[10px] text-muted-foreground truncate">
                   by {output.reviewedBy.split("@")[0]} · {relativeTime(output.reviewedAt)}
@@ -140,6 +182,9 @@ export function AssetDetailPanel({
               )}
             </div>
             <div className="flex items-center gap-1 shrink-0">
+              <span className="text-[10px] text-muted-foreground/40 mr-1 hidden sm:block">
+                ← → navigate · J approve · K reject · Esc close
+              </span>
               <button
                 onClick={() => downloadUrl(output.url, `asset-${output.id}.jpg`)}
                 title="Download image"
@@ -159,10 +204,10 @@ export function AssetDetailPanel({
           {/* Scroll area */}
           <div className="flex-1 overflow-y-auto p-5 space-y-5">
 
-            {/* Subject */}
+            {/* Talent */}
             {athlete && (
               <div className="space-y-1.5">
-                <p className="text-xs text-muted-foreground uppercase tracking-wider">Subject</p>
+                <p className="text-xs text-muted-foreground uppercase tracking-wider">Talent</p>
                 <div className="flex items-center gap-2.5">
                   <img
                     src={athlete.image.startsWith("blob:") ? "/athletes/placeholder.jpg" : athlete.image}
@@ -176,6 +221,41 @@ export function AssetDetailPanel({
                 </div>
               </div>
             )}
+
+            {/* Subject approval notice */}
+            {output.subjectApprovalStatus === "rejected" && (
+              <div className="rounded-md px-3 py-2.5 border text-xs space-y-0.5 bg-red-500/10 border-red-500/25">
+                <p className="font-medium text-red-400">Talent rejected — export blocked</p>
+                {output.subjectRejectionNote && (
+                  <p className="text-muted-foreground">"{output.subjectRejectionNote}"</p>
+                )}
+              </div>
+            )}
+            {output.subjectApprovalStatus === "pending" && (
+              <div className="rounded-md px-3 py-2.5 border text-xs space-y-0.5 bg-amber-500/10 border-amber-500/25">
+                <p className="font-medium text-amber-400">Awaiting talent approval</p>
+                <p className="text-muted-foreground">Export is blocked until the talent approves this likeness.</p>
+              </div>
+            )}
+            {output.subjectApprovalStatus === "approved" && (
+              <div className="rounded-md px-3 py-2.5 border text-xs space-y-0.5 bg-emerald-500/10 border-emerald-500/25">
+                <p className="font-medium text-emerald-400">Talent approved</p>
+                {output.subjectApprovalBy && (
+                  <p className="text-muted-foreground">Approved by {output.subjectApprovalBy}</p>
+                )}
+              </div>
+            )}
+
+            {/* Export restriction notice (score gate) */}
+            {output.resemblanceScore !== undefined && !canExportOutput(output) && output.subjectApprovalStatus !== "rejected" && output.subjectApprovalStatus !== "pending" && (() => {
+              const tier = getIdentityMatchTier(output.resemblanceScore);
+              return (
+                <div className={`rounded-md px-3 py-2.5 border text-xs space-y-0.5 ${tier.bgClass} ${tier.borderClass}`}>
+                  <p className={`font-medium ${tier.textClass}`}>{tier.label} — export restricted</p>
+                  <p className="text-muted-foreground">{tier.restrictionReason}</p>
+                </div>
+              );
+            })()}
 
             {/* Tags */}
             <div className="space-y-2">
@@ -327,12 +407,12 @@ export function AssetDetailPanel({
                 >
                   <History className="size-3" strokeWidth={1.75} />
                   Review history
-                  <span className="ml-auto text-muted-foreground/60">{output.reviewHistory!.length}</span>
+                  <span className="ml-auto text-muted-foreground/60">{output.reviewHistory?.length ?? 0}</span>
                   <ChevronDown className={`size-3 transition-transform duration-150 ${historyOpen ? "rotate-180" : ""}`} strokeWidth={1.75} />
                 </button>
                 {historyOpen && (
                   <div className="space-y-1.5">
-                    {(output.reviewHistory as ReviewHistoryEntry[]).map((entry, i) => (
+                    {output.reviewHistory?.map((entry, i) => (
                       <div key={i} className="flex items-center gap-2 text-xs text-muted-foreground">
                         <span className={`h-4 px-1.5 rounded text-[10px] font-medium shrink-0 ${STATUS_BADGE[entry.status]}`}>
                           {entry.status.replace("_", " ")}
@@ -363,6 +443,23 @@ export function AssetDetailPanel({
                 </button>
               ))}
             </div>
+
+            {/* Rejection reason — only shown when status is rejected */}
+            {output.status === "rejected" && (
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground shrink-0">Reason:</span>
+                <select
+                  value={output.rejectionReason ?? ""}
+                  onChange={e => onStatusChange(output.id, "rejected", (e.target.value as RejectionReason) || undefined)}
+                  className="flex-1 h-7 px-2 bg-card border border-border rounded-md text-xs text-foreground focus:outline-none focus:border-red-500/50 appearance-none"
+                >
+                  <option value="">— select reason —</option>
+                  {(Object.keys(REJECTION_REASON_LABELS) as RejectionReason[]).map(r => (
+                    <option key={r} value={r}>{REJECTION_REASON_LABELS[r]}</option>
+                  ))}
+                </select>
+              </div>
+            )}
 
             {/* Secondary actions */}
             <div className="flex gap-2">

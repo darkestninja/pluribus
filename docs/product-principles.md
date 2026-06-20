@@ -69,15 +69,52 @@ The product should encourage:
 
 Even if early usage is solo, architecture should be role-ready.
 
-Roles:
+8-role model live in `app/lib/permissions.ts` (as of Sprint 20):
 
-- Owner
-- Admin
-- Creative Director
-- Designer
-- Reviewer
-- External Reviewer
-- Viewer
+- `admin` — full workspace control
+- `editor` — create/generate/manage
+- `viewer` — read-only
+- `reviewer` — approve/reject/comment
+- `subject` — talent portal access
+- `subject_manager` — talent onboarding and consent management
+- `legal` — consent record access
+- `guest` — external review link, no login
+
+## 9. Every Output Is a Rights Object
+
+A generated image is not just a creative asset. It is a commercial rights object.
+
+It has an owner, a consent record, a set of permitted uses, and an audit trail.
+
+Pluribus must make it impossible to produce a commercially usable output without a corresponding rights record attached to it.
+
+Build toward: consent → approval → license issuance as a single unbroken chain.
+
+## 10. Build Infrastructure, Not Just Features
+
+The long-term play is not a better app. It is becoming the infrastructure layer.
+
+When Pluribus is working, other creative tools — Figma plugins, agency platforms, brand portals — should want to embed the consent and rights layer rather than rebuild it.
+
+Prioritize: standards, APIs, webhook events, portable consent records.
+
+Do not optimize for: proprietary lock-in through UX complexity, dashboard sprawl, features that are hard to package as API primitives.
+
+## 11. Talent Consent Is a Product Feature
+
+The approval flow is not a checkbox.
+
+It is the core trust transaction between the platform, the creative team, and the talent.
+
+Pluribus should:
+
+- make consent legible to talent (plain language, scope selection)
+- give talent control over their likeness approvals
+- create an auditable paper trail for every synthetic output
+- surface consent status throughout the creative workflow
+- block export on pending or rejected subject approval
+
+This is the primary moat. It is also the hardest thing to copy quickly.
 
 ## 7. Preserve Existing Generation
 

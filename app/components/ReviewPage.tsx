@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Download, Check, Clock, PenLine, Flag, X, ZoomIn, ChevronLeft, ChevronRight } from "lucide-react";
 import type { CampaignOutput, OutputStatus } from "../lib/store";
+import { getIdentityMatchTier } from "../lib/identityMatchTier";
 
 interface ReviewData {
   campaignName: string;
@@ -85,6 +86,17 @@ function Lightbox({ outputs, index, onClose, onPrev, onNext }: LightboxProps) {
           <span className={`inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full border font-medium ${classes}`}>
             {statusIcon(output.status)} {label}
           </span>
+          {output.resemblanceScore !== undefined && (() => {
+            const tier = getIdentityMatchTier(output.resemblanceScore);
+            return (
+              <span
+                className={`inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full border font-medium ${tier.bgClass} ${tier.textClass} ${tier.borderClass}`}
+                title={tier.recommendedUse}
+              >
+                {output.resemblanceScore}% · {tier.label}
+              </span>
+            );
+          })()}
           {output.status === "approved" && (
             <a href={output.url} download target="_blank" rel="noreferrer"
               className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full border border-zinc-600 text-zinc-400 hover:text-white hover:border-zinc-400 transition-colors">

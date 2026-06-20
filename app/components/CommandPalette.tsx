@@ -18,7 +18,7 @@ interface Item {
   hint?: string;
   icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
   action: () => void;
-  group: "Navigate" | "Subjects" | "Generate";
+  group: "Navigate" | "Talent" | "Generate";
 }
 
 export function CommandPalette({ open, onClose, onNavigate, onAthlete, onGenerate }: CommandPaletteProps) {
@@ -30,7 +30,7 @@ export function CommandPalette({ open, onClose, onNavigate, onAthlete, onGenerat
     const navs: Item[] = [
       { id: "nav:home",      label: "Home",      icon: Home,        action: () => onNavigate("home"),      group: "Navigate" },
       { id: "nav:projects",  label: "Campaigns", icon: Folder,      action: () => onNavigate("projects"),  group: "Navigate" },
-      { id: "nav:subjects",  label: "Subjects",  icon: Users,       action: () => onNavigate("subjects"),  group: "Navigate" },
+      { id: "nav:subjects",  label: "Talent",    icon: Users,       action: () => onNavigate("subjects"),  group: "Navigate" },
       { id: "nav:workflows", label: "Recipes",   icon: LayoutGrid,  action: () => onNavigate("workflows"), group: "Navigate" },
       { id: "nav:library",   label: "Library",   icon: Images,      action: () => onNavigate("library"),   group: "Navigate" },
       { id: "nav:queue",     label: "Queue",     icon: Activity,    action: () => onNavigate("queue"),     group: "Navigate" },
@@ -44,7 +44,7 @@ export function CommandPalette({ open, onClose, onNavigate, onAthlete, onGenerat
       hint: `${a.sport} · ${a.event}`,
       icon: Users,
       action: () => onAthlete(a.id),
-      group: "Subjects",
+      group: "Talent",
     }));
     const athleteGen: Item[] = ath.map(a => ({
       id: `gen:${a.id}`,

@@ -4,6 +4,6 @@ cd /opt/pluribus
 echo '→ building...'
 /root/.bun/bin/bun run build
 echo '→ publishing...'
-rm -rf /var/www/pluribus/*
+rm -rf /var/www/pluribus/assets /var/www/pluribus/index.html
 cp -r dist/* /var/www/pluribus/
-echo '✓ live at http://185.158.132.125'
+echo '✓ live at https://pluribus.danielasiegbunam.com'

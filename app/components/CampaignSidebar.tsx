@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { Download, Sparkles, FileText, ChevronDown, CheckSquare, Check, Clock, RotateCcw, Share2, Copy, CheckCheck } from "lucide-react";
+import { Download, Sparkles, FileText, Clock, RotateCcw, Share2, Copy, CheckCheck } from "lucide-react";
 import type { Project } from "../../data/projects";
 import type { Athlete } from "../../data/athletes";
-import type { Recipe } from "../../data/recipes";
 import { relativeTime } from "../lib/utils";
 import type { Run, ExportLogEntry } from "../lib/store";
+import { getAthleteProfile, getProfileCompleteness } from "../lib/store";
 import { supabase } from "../lib/supabase";
 
 interface StatsOutputCounts {
@@ -17,15 +17,10 @@ interface StatsOutputCounts {
 interface CampaignSidebarProps {
   project: Project;
   projAthletes: Athlete[];
-  wf: Recipe | undefined;
   brief: string;
   setBrief: (b: string) => void;
   briefSaved: boolean;
   onBriefBlur: () => void;
-  directionOpen: boolean;
-  setDirectionOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  checkedItems: Set<number>;
-  setCheckedItems: React.Dispatch<React.SetStateAction<Set<number>>>;
   statsOutputCounts: StatsOutputCounts;
   exportLog: ExportLogEntry[];
   runs: Run[];
@@ -36,12 +31,11 @@ interface CampaignSidebarProps {
   batchRunning: boolean;
   runBatch: () => void;
   rerunFromRun: (run: Run) => void;
-  onLaunchStudio: (opts: { workspaceId?: string; workflowId?: string; athleteId?: string }) => void;
+  onLaunchStudio: (opts: { workspaceId?: string; athleteId?: string }) => void;
 }
 
 export function CampaignSidebar({
-  project, projAthletes, wf, brief, setBrief, briefSaved, onBriefBlur,
-  directionOpen, setDirectionOpen, checkedItems, setCheckedItems,
+  project, projAthletes, brief, setBrief, briefSaved, onBriefBlur,
   statsOutputCounts, exportLog, runs, showAllRuns, setShowAllRuns,
   activeRunFilter, setActiveRunFilter, batchRunning, runBatch, rerunFromRun, onLaunchStudio,
 }: CampaignSidebarProps) {
@@ -79,9 +73,9 @@ export function CampaignSidebar({
       <div className="flex-1 overflow-y-auto">
         <div className="p-4 space-y-6">
 
-          {/* Subjects */}
+          {/* Talent */}
           <div className="space-y-2">
-            <p className="text-xs text-muted-foreground uppercase tracking-wider">Subjects</p>
+            <p className="text-xs text-muted-foreground uppercase tracking-wider">Talent</p>
             {projAthletes.length > 0 ? (
               <div className="space-y-1.5">
                 {projAthletes.map(a => (
@@ -90,9 +84,20 @@ export function CampaignSidebar({
                       alt={a.name} className="size-8 rounded-md object-cover shrink-0" />
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-medium truncate">{a.name}</p>
-                      <p className="text-xs text-muted-foreground truncate">{a.sport}</p>
+                      {(() => {
+                        const pct = getProfileCompleteness(getAthleteProfile(a.id));
+                        const color = pct === 100 ? "#10b981" : pct >= 50 ? "#f59e0b" : "#6b7280";
+                        return (
+                          <div className="flex items-center gap-1.5 mt-0.5">
+                            <div className="flex-1 h-0.5 bg-secondary rounded-full overflow-hidden">
+                              <div className="h-full rounded-full" style={{ width: pct + "%", backgroundColor: color }} />
+                            </div>
+                            <span className="text-[10px] shrink-0" style={{ color }}>{pct}%</span>
+                          </div>
+                        );
+                      })()}
                     </div>
-                    <button onClick={() => onLaunchStudio({ athleteId: a.id, workflowId: project.workflowId })}
+                    <button onClick={() => onLaunchStudio({ athleteId: a.id })}
                       className="text-xs text-muted-foreground hover:text-foreground transition-colors shrink-0 px-1.5 py-1 rounded hover:bg-secondary">
                       Studio →
                     </button>
@@ -123,117 +128,6 @@ export function CampaignSidebar({
             <p className="text-[10px] text-muted-foreground/40 text-right -mt-1">{brief.length}/280</p>
           </div>
 
-          {/* Recipe + direction */}
-          <div className="space-y-2">
-            <p className="text-xs text-muted-foreground uppercase tracking-wider">Recipe</p>
-            {wf ? (
-              <div>
-                <button
-                  onClick={() => setDirectionOpen(v => !v)}
-                  className="w-full flex items-center gap-3 p-2.5 bg-card border border-border rounded-lg hover:border-accent/40 transition-colors text-left"
-                >
-                  <div className="size-10 rounded-md overflow-hidden shrink-0">
-                    <img src={wf.thumbnail} alt={wf.name} className="w-full h-full object-cover" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-xs font-medium truncate">{wf.name}</p>
-                    {wf.description && <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{wf.description}</p>}
-                  </div>
-                  <ChevronDown className={`size-3 text-muted-foreground shrink-0 transition-transform duration-150 ${directionOpen ? "rotate-180" : ""}`} strokeWidth={1.75} />
-                </button>
-
-                {directionOpen && (
-                  <div className="mt-2 space-y-3 px-0.5">
-                    {wf.styleRules.length > 0 && (
-                      <div>
-                        <p className="text-[10px] text-muted-foreground/60 uppercase tracking-wider mb-1">Style</p>
-                        <ul className="space-y-0.5">
-                          {wf.styleRules.map((r, i) => (
-                            <li key={i} className="text-xs text-muted-foreground flex items-start gap-1.5">
-                              <span className="shrink-0 mt-[5px] size-1 rounded-full bg-muted-foreground/30" />
-                              {r}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                    {wf.lightingRules.length > 0 && (
-                      <div>
-                        <p className="text-[10px] text-muted-foreground/60 uppercase tracking-wider mb-1">Lighting</p>
-                        <ul className="space-y-0.5">
-                          {wf.lightingRules.map((r, i) => (
-                            <li key={i} className="text-xs text-muted-foreground flex items-start gap-1.5">
-                              <span className="shrink-0 mt-[5px] size-1 rounded-full bg-muted-foreground/30" />
-                              {r}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                    {wf.compositionRules.length > 0 && (
-                      <div>
-                        <p className="text-[10px] text-muted-foreground/60 uppercase tracking-wider mb-1">Composition</p>
-                        <ul className="space-y-0.5">
-                          {wf.compositionRules.map((r, i) => (
-                            <li key={i} className="text-xs text-muted-foreground flex items-start gap-1.5">
-                              <span className="shrink-0 mt-[5px] size-1 rounded-full bg-muted-foreground/30" />
-                              {r}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                    {wf.negativePrompt && (
-                      <div>
-                        <p className="text-[10px] text-muted-foreground/60 uppercase tracking-wider mb-1">Negative prompt</p>
-                        <p className="text-xs text-muted-foreground line-clamp-3 leading-relaxed">{wf.negativePrompt}</p>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            ) : (
-              <p className="text-xs text-muted-foreground">No recipe selected.</p>
-            )}
-          </div>
-
-          {/* Quality checklist */}
-          {wf && wf.qualityChecklist.length > 0 && (
-            <div className="space-y-2">
-              <p className="text-xs text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-                <CheckSquare className="size-3" strokeWidth={1.75} />
-                Review checklist
-                <span className="ml-auto text-[10px] tabular-nums">{checkedItems.size} / {wf.qualityChecklist.length}</span>
-              </p>
-              <div className="space-y-1.5">
-                {wf.qualityChecklist.map((item, i) => {
-                  const checked = checkedItems.has(i);
-                  return (
-                    <button
-                      key={i}
-                      onClick={() => setCheckedItems(prev => {
-                        const next = new Set(prev);
-                        checked ? next.delete(i) : next.add(i);
-                        return next;
-                      })}
-                      className={`w-full flex items-start gap-2 px-2.5 py-1.5 rounded-md text-left transition-colors border ${
-                        checked ? "bg-emerald-500/5 border-emerald-500/30" : "bg-card border-border hover:border-accent/40"
-                      }`}
-                    >
-                      <div className={`size-3.5 rounded shrink-0 mt-0.5 flex items-center justify-center border transition-colors ${
-                        checked ? "bg-emerald-500 border-emerald-500" : "border-border"
-                      }`}>
-                        {checked && <Check className="size-2.5 text-white" strokeWidth={3} />}
-                      </div>
-                      <p className={`text-xs leading-tight transition-colors ${
-                        checked ? "text-muted-foreground/40 line-through" : "text-muted-foreground"
-                      }`}>{item}</p>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
 
           {/* Stats */}
           <div className="space-y-2">
@@ -299,7 +193,7 @@ export function CampaignSidebar({
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0 flex-1">
                         <p className="text-xs font-medium truncate">{run.athleteName ?? "Unknown"}</p>
-                        <p className="text-[10px] text-muted-foreground truncate">{run.recipeName ?? "No recipe"}</p>
+                        <p className="text-[10px] text-muted-foreground truncate">{run.model ?? "Generation"}</p>
                       </div>
                       <div className="flex items-center gap-1 shrink-0">
                         <span className={`size-1.5 rounded-full ${
@@ -343,9 +237,9 @@ export function CampaignSidebar({
         <button onClick={runBatch} disabled={batchRunning}
           className="w-full h-9 rounded-md bg-accent hover:bg-accent/90 disabled:opacity-40 text-accent-foreground text-sm font-medium transition-colors flex items-center justify-center gap-2">
           <Sparkles className="size-4" strokeWidth={2} />
-          Generate all athletes
+          Generate all subjects
         </button>
-        <button onClick={() => onLaunchStudio({ workspaceId: project.id, workflowId: project.workflowId })}
+        <button onClick={() => onLaunchStudio({ workspaceId: project.id })}
           className="w-full h-9 rounded-md bg-card border border-border hover:bg-secondary text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center justify-center gap-2">
           Open in Studio
         </button>

@@ -1,6 +1,328 @@
 # Handoff
 
-## Handoff — 2026-05-07 (Post-Sprint 10) ← CURRENT
+## Handoff — 2026-06-20 (Sprint 13 — Production Hardening + Consent Moat) ← CURRENT
+
+### Completed This Session
+
+**Sprint 13a — Ship-Blockers:**
+- `App.tsx` — `BYPASS_AUTH` now `import.meta.env.VITE_BYPASS_AUTH === "true"`; `.env.local` (gitignored) holds the flag for local dev
+- `store.ts` — `clearStore()` called on SIGNED_OUT; `setWriteErrorHandler` registered (shows "Saved locally" toast); `TOKEN_REFRESHED` skip in `onAuthStateChange`
+- `App.tsx` — 429 backoff: `rateRetryAfter` on `GenerationJob`; skips job for 30s; NSFW filter strips `nsfw: true` outputs; SLA progress pill in header
+
+**Sprint 13b — Consent Moat:**
+- `proxy.ts` — 5 SubjectPortal routes: GET `/api/subject/:token`, POST consent, POST references (upload), POST approve, POST reject
+- `proxy.ts` — `resolvePortalToken()` resolves `subject_profiles.portal_token` via service-role Supabase; no talent auth required
+- `proxy.ts` — `VALID_CONSENT_SCOPES` allowlist; `htmlEscape()` helper; athlete_id anchor on approve/reject; frameIndex bounds check [0,8]; MIME allowlist + 20MB cap on reference upload
+- `proxy.ts` — consent receipt email via Resend to `invited_by` email; HTML-escaped
+- `store.ts` — Realtime subscription moved to `initStore`, tracked in `_realtimeChannel`, removed on `clearStore`; `revokePortalToken` 3-retry loop (0/2/4s) with in-memory restore on failure
+- `SubjectPortal.tsx` — `capture="user"` removed; 3-step progress bar; "Share approved" copies receipt text not portal URL
+- `CampaignWorkspace.tsx` — `can()` guards on `outputs:approve` and `outputs:export`
+- `Settings.tsx` — `can()` guards on `members:manage`
+- `Dashboard.tsx` — campaign readiness scores (enrollment + approval progress bars)
+- `promptEnhancer.ts` — `sanitizePromptField()` strips injection phrases, `system prompt`, `nsfw`, control characters from talent-sourced text
+- `nginx` — `/api/subject/` location block; `client_max_body_size 20m`; `proxy_read_timeout 60s`
+
+**Sprint 13c — Observability + Polish:**
+- `main.tsx` — Sentry init gated on `VITE_SENTRY_DSN`
+- `ErrorBoundary.tsx` — `Sentry.captureException` in `componentDidCatch`
+- `playwright.config.ts` + `e2e/consent.spec.ts` + `e2e/approval.spec.ts` — 6 E2E tests, all passing against production URL
+
+**Engineering review (2 passes):**
+- Pass 1 (primary): 3 issues found and fixed (MIME allowlist, Realtime channel leak, revocation retry)
+- Pass 2 (outside voice): 6 issues found and fixed (scope validation, email HTML injection, cross-subject forgery, frameIndex bounds, share-button portal URL exposure, Realtime channel on token refresh)
+- 9 total issues, all resolved
+
+### Known Gaps Left Open
+
+| Gap | File | Notes |
+|---|---|---|
+| `styleReferenceUrls: []` | `app/lib/houseStyle.ts` | House style conditioning inactive until fal CDN style refs sourced |
+| Members tab local-state only | `Settings.tsx` | Needs `workspace_members` Supabase table + invite email via Supabase Auth |
+| Base64 dataUrls in JSONB | `store.ts` | ~9MB per fully profiled subject; migration helper exists but base64 fallback still primary |
+
+### Next Recommended Actions
+```
+1. Source 3–5 editorial style images → upload to fal CDN → add to ACTIVE_HOUSE_STYLE.styleReferenceUrls
+2. Second customer outreach (NOT Enhanced.com) — lead with talent consent story
+3. YC application — use /root/.gstack/projects/pluribus/root-main-design-20260620-111513.md as the founder narrative doc
+```
+
+### Files Modified
+- `app/App.tsx` — BYPASS_AUTH, clearStore, setWriteErrorHandler, 429 backoff, NSFW filter, SLA pill, TOKEN_REFRESHED skip
+- `app/lib/store.ts` — Realtime to initStore, revokePortalToken retry, clearStore channel cleanup
+- `app/components/SubjectPortal.tsx` — capture attr, progress bar, share button
+- `app/components/CampaignWorkspace.tsx` — can() guards
+- `app/components/Settings.tsx` — can() guards
+- `app/components/Dashboard.tsx` — readiness scores
+- `app/components/ErrorBoundary.tsx` — new file; Sentry capture
+- `app/lib/promptEnhancer.ts` — sanitizePromptField
+- `main.tsx` — Sentry init
+- `/opt/pluribus-proxy/proxy.ts` — 5 subject routes, htmlEscape, VALID_CONSENT_SCOPES, athlete_id anchor, frameIndex bounds, MIME allowlist
+- `/etc/nginx/sites-enabled/pluribus` — /api/subject/ block
+- `playwright.config.ts` — new
+- `e2e/consent.spec.ts` — new
+- `e2e/approval.spec.ts` — new
+
+---
+
+## Handoff — 2026-05-17 (Sprints 19–20 + DB migration)
+
+### Completed This Session
+
+**Sprint 19 — Campaign Pack Generator:**
+- `data/campaignPacks.ts` (new) — 4 pack types: Athlete Announcement (5 images / 20 cr), Hero Campaign (7 / 28 cr), Social Content (6 / 24 cr), Sponsor Clean (4 / 16 cr); `packTotalImages`, `packTotalCredits` helpers; `PACK_CREDITS_PER_IMAGE = 4`
+- `Workspace.tsx` — "Pack" tab in right rail; pack card grid + slot breakdown table + credit estimate; `handlePackGenerate` loops slots × count, submits one `addJob` per image, deducts credits per job; progress display while submitting
+- `GenerationJob` extended with `packId?: string` and `packName?: string`
+- `QueuePage.tsx` — violet pack-name chip on job rows when `packId` is set
+
+**Sprint 20 — Collaboration Model (Phases 1–3):**
+- `app/lib/permissions.ts` (new) — 8 roles, 29 permissions, `can()` / `canAll()` / `canAny()` / `isInternalRole()` / `isSubjectRole()`
+- `app/components/SubjectPortal.tsx` (new) — public portal at `/subject/<token>`; consent gate (scope checkboxes + agreement) guards review and upload tabs; approve/reject per output (reject requires free-text note); 9-frame reference upload with per-slot camera/file picker
+- `App.tsx` — `/subject/<token>` IIFE route alongside existing `/review/<token>`
+- `data/athletes.ts` — `UsageConsent`, `UsageScope`, `CollabTask` interfaces added (source of truth; store re-exports)
+- `app/lib/store.ts` — `USAGE_SCOPE_LABELS`; store helpers for consent, collab tasks, and portal invites; `canExportOutput` now blocks on `subjectApprovalStatus === "rejected" | "pending"`; new `exportBlockReason()` returns human-readable string
+- `app/components/AthleteLibrary.tsx` — "Collab" tab: portal invite link generator (generates token via `savePortalInvite`, copies to clipboard), consent status panel with scope chips, task checklist, likeness approval summary counts
+- `app/components/AssetDetailPanel.tsx` — subject approval notices (amber pending / red rejected + note / emerald approved)
+- `app/components/CampaignWorkspace.tsx` — export toast uses `exportBlockReason` for specific messaging
+- `app/components/Settings.tsx` — "Members" tab with `MembersTab` component: invite form, role selector, member list with role-change + remove (local state stub — no backend yet)
+
+**Database migration (applied 2026-05-17):**
+- Phase 4–6 tables created in Supabase: `campaign_recipes`, `wardrobe_kits`, `moodboards`
+- Was causing `PGRST205` upsert errors in production; now resolved
+
+**Deployed:** `dist/` → `/var/www/pluribus/`, nginx reloaded
+
+### Known Gaps Left Open (Intentional Phase 2/3 Stubs)
+
+| Gap | File | Notes |
+|---|---|---|
+| Subject Portal proxy routes missing | `proxy.ts` | Frontend complete; need GET/POST routes + `subject_portal_tokens` table in Supabase |
+| Members tab local-state only | `Settings.tsx` | Needs `workspace_members` Supabase table + invite email via Supabase Auth |
+| `styleReferenceUrls: []` | `app/lib/houseStyle.ts` | House style conditioning inactive until style refs sourced and uploaded to fal CDN |
+
+### Next Recommended Action
+```
+1. Wire Subject Portal proxy routes in proxy.ts (see P1 in tasks.md for full endpoint list)
+2. Add nginx /api/subject/ location block
+3. Create subject_portal_tokens table in Supabase (similar pattern to review_tokens)
+4. Source 3–5 editorial style images and add to ACTIVE_HOUSE_STYLE.styleReferenceUrls
+```
+
+### Files Modified
+- `data/campaignPacks.ts` — new
+- `data/athletes.ts` — UsageConsent, UsageScope, CollabTask types; portal/consent fields on AthleteProfile
+- `app/lib/permissions.ts` — new
+- `app/lib/store.ts` — USAGE_SCOPE_LABELS, consent/task/portal helpers, canExportOutput + exportBlockReason updated, subjectApprovalStatus on CampaignOutput
+- `app/components/SubjectPortal.tsx` — new
+- `app/components/AthleteLibrary.tsx` — Collab tab, store imports
+- `app/components/AssetDetailPanel.tsx` — subject approval notices
+- `app/components/CampaignWorkspace.tsx` — exportBlockReason import + toast update
+- `app/components/QueuePage.tsx` — pack chip on job rows
+- `app/components/Settings.tsx` — Members tab + MembersTab component
+- `app/App.tsx` — /subject/<token> route
+
+---
+
+## Handoff — 2026-05-14 (Sprint 14 — UX Overhaul + Nano Banana Pipeline)
+
+### Completed This Session
+
+**UX / Dashboard cleanup:**
+- Removed greeting/stats header from Dashboard ("Good afternoon…" line)
+- Removed Activity section from Dashboard
+- Renamed "Add athlete" → "Add subject" throughout Dashboard
+- `NewCampaignModal` rewritten as 4-step wizard: Details → Subjects → Recipe → Moodboard
+  - Step indicator with checkmarks
+  - Subject step: search box, selected chips, scrollable row list with checkboxes (handles 40+ subjects)
+  - Recipe step: library tab + custom style tab
+  - Moodboard step: image/PDF upload + link input with `/fetch/preview` OG extraction, 4-col preview grid
+- Fixed campaigns not appearing after creation — `Projects.tsx` lazy-init bug; `addProject` called before navigation in `handleCampaignCreated`
+- Bundle splitting — `manualChunks` (vendor-react, vendor-ui, vendor-radix, vendor-supabase, vendor-fal) + `React.lazy`/`Suspense` for 9 heavy page components; main chunk 1,035 kB → 416 kB
+- Dynamic JSZip import in IdentityStudio (removed static import causing build conflict)
+
+**v3 9-frame capture protocol:**
+- `AngleKey` type updated to semantic keys: `front-passport`, `front-body`, `left-passport`, `left-body`, `right-passport`, `right-body`, `back-passport`, `back-body`, `face-close`; legacy keys preserved
+- `AthleteLibrary.tsx` capture UI: face close-up solo slot, then 4 angle pairs (passport + body 2-col); `CAPTURE_FRAMES` array replaces old `FACE_ANGLES`/`BODY_ANGLES`; `captureReadiness()` updated
+
+**Nano Banana pipeline:**
+- `generate.ts` — NB exclusively; removed two-stage pipeline (NB → FLUX img2img), LoRA path, `IMAGE_MODELS`, `DEFAULT_IMAGE_MODEL`; single NB call; all refs uploaded concurrently
+- `promptEnhancer.ts` — complete rewrite; `buildNanaBananaPrompt(recipe)` joins 7 scene fields into ≤60 words; `QUALITY_NEGATIVE = ""`; legacy `recipe.prompt` fallback
+- `recipes.ts` — new NB `Recipe` interface (`shot`, `action`, `environment`, `lighting`, `mood`, `style`, `colorStyle`); 6 seed recipes rewritten; old text-prompt fields optional for compat
+- `WorkflowLibrary.tsx` — form rebuilt (3 tabs: Basic / Scene / Checklist); Scene tab has 7 NB field inputs; recipe card chips updated
+- `CampaignWorkspace.tsx` + `Workspace.tsx` — all generate call sites updated; removed `loraUrl`/`loraTriggerPhrase`/`negativePrompt`; `buildNanaBananaPrompt(wf)` replaces old `buildCampaignPrompt`
+- `store.ts getCanonicalReferences` — simplified to priority-ordered list; no canonical combo logic
+
+### Known Bugs (Not Yet Fixed)
+
+| Bug | File | Severity |
+|---|---|---|
+| `wf.styleRules.length` throws TypeError for NB recipes | `CampaignSidebar.tsx:159,172,185` | **Blocker** |
+| Direction panel empty for NB recipes — should show scene fields | `CampaignSidebar.tsx` | High |
+| `recipe.cameraStyle` stale reference (renders nothing) | `Workspace.tsx:675` | Low |
+| `doNotChange` constraints no longer injected into prompts | `promptEnhancer.ts` | Medium |
+
+### Files Modified
+- `data/athletes.ts` — AngleKey v3 protocol
+- `data/recipes.ts` — NB Recipe interface + 6 seed recipes
+- `app/lib/generate.ts` — NB exclusively
+- `app/lib/promptEnhancer.ts` — complete rewrite for NB
+- `app/lib/store.ts` — getCanonicalReferences simplified
+- `app/components/AthleteLibrary.tsx` — v3 capture UI, CAPTURE_FRAMES
+- `app/components/CampaignWorkspace.tsx` — NB call sites, removed loraUrl/negativePrompt
+- `app/components/Workspace.tsx` — NB call sites, simplified IMAGE_TIERS
+- `app/components/WorkflowLibrary.tsx` — Scene tab, NB recipe form
+- `app/components/Dashboard.tsx` — removed greeting, stats, Activity section
+- `app/components/NewCampaignModal.tsx` — 4-step wizard
+- `app/components/Projects.tsx` — campaigns-after-creation fix
+- `app/App.tsx` — React.lazy, addProject, handleCampaignCreated
+- `vite.config.ts` — manualChunks bundle splitting
+
+### Next Recommended Action
+```
+Fix CampaignSidebar.tsx crash first (wf.styleRules.length on NB recipes — blocker).
+Then: update direction panel to display NB scene fields instead of old styleRules/lightingRules.
+Then: commit and deploy.
+Sprint 15 top candidates: resemblance score display, ComparePanel, style reference images.
+```
+
+---
+
+## Handoff — 2026-05-14 (Identity Pipeline + House Style + Canonical Set)
+
+### Completed This Session
+
+**Identity pipeline overhaul:**
+- Removed face-swap from LoRA path (was degrading quality 78% → 60%)
+- LoRA training speedup: rank 8, no multiresolution, 200–400 steps, best 2 face captures only
+- Two-stage identity pipeline: Nano Banana (identity lock) → FLUX dev img2img (editorial pass, strength 0.60)
+- All generation paths (Workspace, CampaignWorkspace) now use `getCanonicalReferences()` with graceful fallback
+
+**House Style v1 (`app/lib/houseStyle.ts` — new):**
+- `HOUSE_STYLE_V1`: medium format film, Kodak Portra 400, single key from camera left, teal-orange split-tone, natural skin texture
+- `ACTIVE_HOUSE_STYLE` exported constant — single source of truth for all generation paths
+- `promptEnhancer.ts`: `QUALITY_TAIL` and `QUALITY_NEGATIVE` now derive from `ACTIVE_HOUSE_STYLE`
+- `styleReferenceUrls: []` placeholder ready for style conditioning images
+
+**Canonical reference set data model:**
+- `canonicalSet.ts` (new): 10 combos × 8 test prompts, `CANONICAL_COMBOS`, `FRAME_TO_KEY`, `CANONICAL_SCORE_THRESHOLD`
+- `data/athletes.ts`: AngleKey extended with frame-1 through frame-9; `AthleteProfile` extended with canonical set fields
+- `store.ts`: `getCanonicalReferences()` replaces `getFaceDataUrls()` everywhere, `saveCanonicalSet()` helper
+
+**9-frame standardised capture protocol (`app/components/AthleteLibrary.tsx`):**
+- `CAPTURE_FRAMES` replaces `FACE_ANGLES`/`BODY_ANGLES` — 9 labelled frames with hints
+- `captureReadiness()` scores against all 9 frames
+- CaptureTab: 3-col grid for frames 1–6 (identity), 3-col grid for frames 7–9 (reference)
+- LoRA training updated to use new frame keys first, legacy keys as fallback
+
+**Canonical set validation UI (`AthleteLibrary.tsx` — identity tab):**
+- Status badge (Not validated / Validating… / score% / Failed)
+- `startCanonicalValidation()` calls proxy, patches profile to `validating`, starts 15s poller
+- Auto-resumes polling on page load if `canonicalSetStatus === "validating"`
+- Identity card grid shows up to 8 test output thumbnails when validated
+
+**Proxy endpoints (`/opt/pluribus-proxy/proxy.ts`):**
+- `POST /analyze/face-embedding-compare` — Claude Haiku placeholder for ArcFace; `{ score, confidence, faceDetected }`
+- `POST /canonical/validate` — starts background validation (10 combos × 2 sampled prompts via Nano Banana + Claude Haiku scoring)
+- `GET /canonical/status` — polls in-memory job map; returns score, variance, frameIds, identityCardUrls
+- nginx `/canonical/` location block added
+
+**Audit documentation:**
+- `docs/identity-generation-audit.md` — 15-section comprehensive audit of the full identity pipeline
+
+### Files Modified
+- `app/lib/houseStyle.ts` — new
+- `app/lib/canonicalSet.ts` — new
+- `app/lib/promptEnhancer.ts` — QUALITY_TAIL/QUALITY_NEGATIVE from ACTIVE_HOUSE_STYLE, poseId support
+- `app/lib/store.ts` — getCanonicalReferences, saveCanonicalSet
+- `app/lib/generate.ts` — styleReferenceUrls param, face-swap removed from LoRA path
+- `app/components/AthleteLibrary.tsx` — 9-frame capture protocol, canonical validation UI
+- `app/components/Workspace.tsx` — getCanonicalReferences, ACTIVE_HOUSE_STYLE
+- `app/components/CampaignWorkspace.tsx` — getCanonicalReferences, ACTIVE_HOUSE_STYLE
+- `data/athletes.ts` — AngleKey frame-1–9, canonical profile fields
+- `data/poses.ts` — new, 20 approved poses
+- `/opt/pluribus-proxy/proxy.ts` — 3 new endpoints + canonical job store
+- `/etc/nginx/sites-enabled/pluribus` — /canonical/ location block
+
+### Known Issues / Next Steps
+- `styleReferenceUrls` is `[]` until style reference images are sourced and uploaded to fal CDN
+- Face-embedding-compare uses Claude Haiku (vision similarity) — replace with ArcFace for production accuracy
+- Canonical validation runs 2 of 8 test prompts (cost reduction) — increase to all 8 for higher confidence
+- Proxy canonical job store is in-memory — lost on restart (validation jobs are short, acceptable for now)
+
+### Next Recommended Action
+```
+Complete any remaining athletes' capture protocol (all 9 frames),
+then run canonical validation per athlete.
+After validation, verify generation quality with house style v1.
+Next sprint: surface poseId picker in Workspace and CampaignWorkspace generation forms.
+```
+
+---
+
+## Handoff — 2026-05-07 (Post-Sprint 12 + Audit)
+
+### Completed This Session
+- Sprint 11: Phase 2 Supabase Postgres — full persistence layer live
+- Sprint 12: External review links — shareable `/review/{token}` pages
+- 3 security/correctness fixes: SSRF on mirror endpoint, ID collision (Date.now → UUID), review token race condition
+- nginx `/storage/` rule added (was missing — asset mirroring silently failed since storage.ts was written)
+- Full 01-audit.md protocol: 9-section audit produced, docs/current-state.md + docs/tasks.md + docs/handoff.md updated
+- Build clean, deployed to https://pluribus.danielasiegbunam.com
+
+### What Was Built
+
+**Sprint 11 — Phase 2 Supabase Postgres (`app/lib/store.ts`, `App.tsx`, `pluribus-proxy/migrate.ts`):**
+- store.ts rewritten with in-memory cache (`_cache`) populated synchronously from localStorage by `initStore()`; overwritten from Supabase by new async `hydrateStore(userId)` (6 parallel `Promise.allSettled()` queries)
+- All mutations: update cache → localStorage → fire-and-forget Supabase upsert. All existing function signatures preserved.
+- App.tsx: `getSession` callback made async; `hydrateStore` awaited before clearing `sessionLoading` — hydration covered by existing spinner
+- Auto-migration: if Supabase tables are empty on first login, all localStorage data is pushed up (one-time, then Postgres wins)
+- 6 Phase 2 tables live in Supabase: `subjects`, `subject_profiles`, `campaigns`, `recipes`, `campaign_outputs`, `campaign_runs`
+
+**Sprint 12 — External review links:**
+- `ReviewPage.tsx` (new, 268 lines) — public read-only gallery at `/review/{token}`; no auth; tab filter (All/Approved/Pending/Revision/Flagged); lightbox with keyboard nav; download on approved assets
+- `CampaignSidebar.tsx` — "Share for review" button; creates token via `POST /api/review/create`; idempotent; shows copyable URL inline
+- Proxy: `POST /review/create` (auth required) and `GET /review/:token` (public); service-role queries to `review_tokens` → `campaigns` → `campaign_outputs`
+- `review_tokens` SQL table: `UNIQUE (campaign_id, user_id)` constraint; token = stripped UUID
+- App.tsx: module-level `_reviewToken` IIFE routes to `ReviewPage` before auth check (hooks-order safe); `App` is thin shell over `AuthenticatedApp`
+- nginx: `/storage/` and `/api/review/` location blocks added
+
+**Security fixes (all in Sprint 12 commit):**
+- SSRF: fal.ai CDN domain allowlist regex on `falUrl` in proxy `/storage/mirror`
+- ID collision: `crypto.randomUUID().slice(0,8)` replaces `Date.now()` in CampaignWorkspace (5 occurrences) and Workspace
+- Race condition: review token create uses insert-first; SELECT fallback on Postgres unique violation `23505`
+
+### Audit Findings (Critical Gaps)
+
+The 01-audit.md protocol was run. Most critical actionable gaps:
+
+1. **Visual language tokens not injected** — `mood/cameraStyle/toneStyle` stored on `Recipe` but not passed to `buildCampaignPrompt` in `promptEnhancer.ts`. Zero creative effect. High trust gap — users set them and nothing changes.
+2. **50-run cap** — `addRun` hard-caps at 50. With Supabase persistence this silently destroys history. Should be 500+.
+3. **No rejection reason taxonomy** — "Reject" records no structured failure reason (CC§20: `FACE_DRIFT | AGE_DRIFT | SKIN_TONE | TATTOO_MISMATCH | WARDROBE | CONTEXT | QUALITY` not implemented).
+4. **Signed URL expiry** — 1-year signed URLs; no refresh mechanism.
+5. **No profile completeness signal** — users cannot tell how complete an identity profile is.
+
+### Next Recommended Action
+
+```
+Read docs/prompts/02-plan-sprint.md and plan Sprint 13.
+Top priority: visual language token injection into buildCampaignPrompt (highest trust gap, ~30 min fix).
+Then: rejection reason taxonomy, 50-run cap raise, profile completeness %.
+```
+
+### Files Modified (Sprints 11–12 + fixes)
+- `app/lib/store.ts` — full rewrite (in-memory cache, hydrateStore, Supabase write-through)
+- `app/App.tsx` — hydrateStore, _reviewToken IIFE, AuthenticatedApp split
+- `app/components/ReviewPage.tsx` — new file
+- `app/components/CampaignSidebar.tsx` — share-for-review button + URL display
+- `app/components/CampaignWorkspace.tsx` — Date.now → UUID (5 occurrences)
+- `app/components/Workspace.tsx` — Date.now → UUID (1 occurrence)
+- `pluribus-proxy/proxy.ts` — SSRF fix, /review/create, /review/:token
+- `pluribus-proxy/migrate.ts` — Phase 2 + Phase 3 (review_tokens) SQL blocks
+- `/etc/nginx/sites-available/pluribus` — /storage/ and /api/review/ location blocks
+
+---
+
+## Handoff — 2026-05-07 (Post-Sprint 10)
 
 ### Completed This Session
 - Sprint 10: Campaign State Machine + Recipe Visual Language Tokens + Export Log

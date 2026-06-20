@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Eye, EyeOff, ArrowRight, Loader2, CheckCircle2 } from "lucide-react";
+import { Eye, EyeOff, Loader2, CheckCircle2, ArrowRight } from "lucide-react";
 import { signIn, signUp, resetPassword } from "../lib/auth";
 
 interface AuthScreenProps {
@@ -8,11 +8,10 @@ interface AuthScreenProps {
 
 type Mode = "login" | "signup" | "forgot";
 
-const FEATURES = [
-  "AI-powered athlete portrait generation",
-  "Multi-athlete campaign management",
-  "Likeness quality scoring",
-  "Batch generation & client review",
+const STATS = [
+  { value: "4.2M+", label: "Images generated" },
+  { value: "98%",   label: "Identity fidelity" },
+  { value: "60×",   label: "Faster than shoots" },
 ];
 
 export function AuthScreen({ onAuth }: AuthScreenProps) {
@@ -57,18 +56,13 @@ export function AuthScreen({ onAuth }: AuthScreenProps) {
     }
 
     setLoading(true);
-
     const result = await (mode === "login"
       ? signIn(email, password)
       : signUp(name, email, password));
-
     setLoading(false);
 
-    if (!result.ok) {
-      setError(result.error!);
-    } else {
-      onAuth();
-    }
+    if (!result.ok) setError(result.error!);
+    else onAuth();
   };
 
   const useDemoAccount = async () => {
@@ -81,235 +75,304 @@ export function AuthScreen({ onAuth }: AuthScreenProps) {
 
   return (
     <div className="fixed inset-0 bg-background text-foreground flex overflow-hidden">
-      {/* Left panel — brand */}
-      <div className="hidden lg:flex w-[480px] shrink-0 bg-card border-r border-border flex-col justify-between p-12 relative overflow-hidden">
-        <div className="absolute inset-0 opacity-5">
-          <div
-            className="w-full h-full"
-            style={{
-              backgroundImage:
-                "radial-gradient(circle at 20% 50%, #0099FF 0%, transparent 60%), radial-gradient(circle at 80% 20%, #0099FF 0%, transparent 50%)",
-            }}
-          />
+
+      {/* ── Left panel — brand ──────────────────────────────────────────────── */}
+      <div className="hidden lg:flex w-[480px] xl:w-[520px] shrink-0 bg-card border-r border-border flex-col justify-between p-12 relative overflow-hidden">
+
+        {/* Subtle radial glow */}
+        <div className="absolute inset-0 pointer-events-none" style={{
+          background: "radial-gradient(ellipse 80% 60% at 30% 70%, rgba(0,153,255,0.07) 0%, transparent 70%)",
+        }} />
+
+        {/* Grid texture */}
+        <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{
+          backgroundImage: "linear-gradient(var(--border) 1px, transparent 1px), linear-gradient(90deg, var(--border) 1px, transparent 1px)",
+          backgroundSize: "32px 32px",
+        }} />
+
+        {/* Top: logo */}
+        <div className="relative z-10 flex items-center gap-2">
+          <div className="size-2 rounded-full bg-accent" />
+          <span className="text-sm font-semibold tracking-tight">Pluribus</span>
         </div>
 
-        <div className="relative z-10">
-          <div className="flex items-center gap-2 mb-16">
-            <div className="size-2.5 rounded-full bg-accent" />
-            <span className="text-sm font-semibold tracking-tight">Pluribus</span>
-          </div>
-
-          <h1 className="text-3xl font-bold tracking-tight leading-tight mb-4">
-            AI-powered sports<br />
-            content at scale.
-          </h1>
-          <p className="text-muted-foreground text-sm leading-relaxed mb-10">
-            Generate professional athlete imagery for campaigns,
-            announcements, and editorial — in minutes, not days.
+        {/* Middle: headline */}
+        <div className="relative z-10 space-y-6">
+          <p className="text-[10px] uppercase tracking-[0.18em] text-accent font-semibold">
+            AI Sports Content Platform
           </p>
-
-          <ul className="space-y-3">
-            {FEATURES.map((f) => (
-              <li key={f} className="flex items-center gap-2.5 text-sm">
-                <CheckCircle2 className="size-4 text-accent shrink-0" strokeWidth={2} />
-                <span className="text-muted-foreground">{f}</span>
-              </li>
-            ))}
-          </ul>
+          <h1 className="text-[2.5rem] font-bold leading-[1.1] tracking-tight">
+            Athlete imagery<br />at the speed<br />of sport.
+          </h1>
+          <p className="text-sm text-muted-foreground leading-relaxed max-w-[280px]">
+            Generate professional sports content for campaigns, press, and editorial — in minutes, not months.
+          </p>
         </div>
 
-        <div className="relative z-10 flex gap-2">
-          {[
-            "/athletes/james-magnussen.jpg",
-            "/athletes/marvin-bracy.jpg",
-            "/athletes/megan-romano.jpg",
-          ].map((src, i) => (
-            <div
-              key={i}
-              className="rounded-lg overflow-hidden flex-1 aspect-[3/4]"
-              style={{ opacity: 0.4 + i * 0.2 }}
-            >
-              <img src={src} alt="" className="w-full h-full object-cover grayscale" />
+        {/* Bottom: stats */}
+        <div className="relative z-10 flex gap-8 pt-6 border-t border-border">
+          {STATS.map(s => (
+            <div key={s.label}>
+              <p className="text-xl font-bold text-foreground">{s.value}</p>
+              <p className="text-[11px] text-muted-foreground mt-0.5">{s.label}</p>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Right panel — form */}
-      <div className="flex-1 flex flex-col items-center justify-center px-6 py-12 overflow-y-auto">
-        <div className="lg:hidden flex items-center gap-2 mb-10 self-start">
-          <div className="size-2.5 rounded-full bg-accent" />
+      {/* ── Right panel — form ──────────────────────────────────────────────── */}
+      <div className="flex-1 flex flex-col items-center justify-center px-6 py-12 overflow-y-auto relative">
+
+        {/* Subtle grid texture */}
+        <div
+          className="absolute inset-0 opacity-[0.025] pointer-events-none"
+          style={{
+            backgroundImage: "linear-gradient(var(--border) 1px, transparent 1px), linear-gradient(90deg, var(--border) 1px, transparent 1px)",
+            backgroundSize: "40px 40px",
+          }}
+        />
+
+        {/* Mobile logo */}
+        <div className="lg:hidden flex items-center gap-2 mb-10 self-start relative z-10">
+          <div className="size-2 rounded-full bg-accent" />
           <span className="text-sm font-semibold tracking-tight">Pluribus</span>
         </div>
 
-        <div className="w-full max-w-[360px]">
-          <div className="mb-8">
-            {mode === "login" && (
-              <>
-                <h2 className="text-xl font-semibold tracking-tight">Welcome back</h2>
-                <p className="text-sm text-muted-foreground mt-1">Sign in to your account to continue.</p>
-              </>
-            )}
-            {mode === "signup" && (
-              <>
-                <h2 className="text-xl font-semibold tracking-tight">Create an account</h2>
-                <p className="text-sm text-muted-foreground mt-1">Get started with Pluribus today.</p>
-              </>
-            )}
-            {mode === "forgot" && (
-              <>
-                <h2 className="text-xl font-semibold tracking-tight">Reset password</h2>
-                <p className="text-sm text-muted-foreground mt-1">We'll send you a reset link.</p>
-              </>
-            )}
-          </div>
+        <div className="w-full max-w-[380px] relative z-10">
 
-          {forgotSent ? (
-            <div className="space-y-4">
-              <div className="flex items-start gap-3 p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-lg">
-                <CheckCircle2 className="size-4 text-emerald-500 mt-0.5 shrink-0" />
-                <p className="text-sm text-emerald-400">
-                  If an account exists for <strong>{email}</strong>, you'll receive a reset link shortly.
+          {/* ── Forgot password sent ── */}
+          {mode === "forgot" && forgotSent ? (
+            <div className="space-y-5">
+              <div className="size-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mb-4">
+                <CheckCircle2 className="size-5 text-emerald-500" strokeWidth={1.75} />
+              </div>
+              <div>
+                <h2 className="text-xl font-semibold tracking-tight">Check your email</h2>
+                <p className="text-sm text-muted-foreground mt-1.5 leading-relaxed">
+                  If an account exists for <span className="text-foreground font-medium">{email}</span>, you'll receive a reset link shortly.
                 </p>
               </div>
               <button
                 onClick={() => reset("login")}
-                className="w-full h-9 rounded-md border border-border bg-card hover:bg-secondary text-sm text-muted-foreground hover:text-foreground transition-colors"
+                className="w-full h-10 rounded-lg border border-border bg-card hover:bg-secondary text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
                 Back to sign in
               </button>
             </div>
-          ) : (
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {mode === "signup" && (
-                <div className="space-y-1.5">
-                  <label className="text-xs text-muted-foreground">Full name</label>
-                  <input
-                    type="text"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="Your name"
-                    required
-                    className="w-full h-9 px-3 bg-card border border-border rounded-md text-sm focus:outline-none focus:border-accent placeholder:text-muted-foreground/50 transition-colors"
-                  />
-                </div>
-              )}
 
-              <div className="space-y-1.5">
-                <label className="text-xs text-muted-foreground">Email</label>
-                <input
-                  ref={emailRef}
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@example.com"
-                  required
-                  autoComplete="email"
-                  className="w-full h-9 px-3 bg-card border border-border rounded-md text-sm focus:outline-none focus:border-accent placeholder:text-muted-foreground/50 transition-colors"
-                />
+          ) : mode === "forgot" ? (
+            /* ── Forgot password form ── */
+            <div className="space-y-6">
+              <div>
+                <button
+                  onClick={() => reset("login")}
+                  className="text-xs text-muted-foreground hover:text-foreground mb-5 flex items-center gap-1 transition-colors"
+                >
+                  ← Back to sign in
+                </button>
+                <h2 className="text-xl font-semibold tracking-tight">Reset your password</h2>
+                <p className="text-sm text-muted-foreground mt-1.5">We'll send a reset link to your inbox.</p>
               </div>
 
-              {mode !== "forgot" && (
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <label className="text-xs text-muted-foreground">Password</label>
-                    {mode === "login" && (
-                      <button type="button" onClick={() => reset("forgot")} className="text-xs text-accent hover:underline">
-                        Forgot password?
-                      </button>
-                    )}
-                  </div>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <Field label="Email">
+                  <input
+                    ref={emailRef}
+                    type="email"
+                    value={email}
+                    onChange={e => setEmail(e.target.value)}
+                    placeholder="you@example.com"
+                    required
+                    autoComplete="email"
+                    className={INPUT}
+                  />
+                </Field>
+
+                {error && <ErrorBanner>{error}</ErrorBanner>}
+
+                <PrimaryButton loading={loading}>Send reset link</PrimaryButton>
+              </form>
+            </div>
+
+          ) : (
+            /* ── Login / Signup ── */
+            <div className="space-y-6">
+
+              {/* Header */}
+              <div>
+                <h2 className="text-2xl font-bold tracking-tight">
+                  {mode === "login" ? "Welcome back" : "Get started"}
+                </h2>
+                <p className="text-sm text-muted-foreground mt-1.5">
+                  {mode === "login"
+                    ? "Sign in to your Pluribus account."
+                    : "Create your account — free to try."}
+                </p>
+              </div>
+
+              {/* Mode tabs */}
+              <div className="flex bg-secondary rounded-lg p-0.5">
+                <TabButton active={mode === "login"} onClick={() => reset("login")}>Sign in</TabButton>
+                <TabButton active={mode === "signup"} onClick={() => reset("signup")}>Create account</TabButton>
+              </div>
+
+              <form onSubmit={handleSubmit} className="space-y-4">
+                {mode === "signup" && (
+                  <Field label="Full name">
+                    <input
+                      type="text"
+                      value={name}
+                      onChange={e => setName(e.target.value)}
+                      placeholder="Your name"
+                      required
+                      autoComplete="name"
+                      className={INPUT}
+                    />
+                  </Field>
+                )}
+
+                <Field label="Email">
+                  <input
+                    ref={emailRef}
+                    type="email"
+                    value={email}
+                    onChange={e => setEmail(e.target.value)}
+                    placeholder="you@example.com"
+                    required
+                    autoComplete="email"
+                    className={INPUT}
+                  />
+                </Field>
+
+                <Field
+                  label="Password"
+                  action={mode === "login" ? (
+                    <button type="button" onClick={() => reset("forgot")} className="text-xs text-accent hover:text-accent/80 transition-colors">
+                      Forgot password?
+                    </button>
+                  ) : undefined}
+                >
                   <div className="relative">
                     <input
                       type={showPw ? "text" : "password"}
                       value={password}
-                      onChange={(e) => setPassword(e.target.value)}
+                      onChange={e => setPassword(e.target.value)}
                       placeholder="••••••••"
                       required
                       autoComplete={mode === "login" ? "current-password" : "new-password"}
-                      className="w-full h-9 pl-3 pr-9 bg-card border border-border rounded-md text-sm focus:outline-none focus:border-accent placeholder:text-muted-foreground/50 transition-colors"
+                      className={`${INPUT} pr-10`}
                     />
                     <button
                       type="button"
-                      onClick={() => setShowPw((v) => !v)}
-                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      onClick={() => setShowPw(v => !v)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                     >
-                      {showPw ? <EyeOff className="size-3.5" strokeWidth={1.75} /> : <Eye className="size-3.5" strokeWidth={1.75} />}
+                      {showPw
+                        ? <EyeOff className="size-3.5" strokeWidth={1.75} />
+                        : <Eye className="size-3.5" strokeWidth={1.75} />}
                     </button>
                   </div>
-                </div>
-              )}
+                </Field>
 
-              {mode === "signup" && (
-                <div className="space-y-1.5">
-                  <label className="text-xs text-muted-foreground">Confirm password</label>
-                  <input
-                    type="password"
-                    value={confirm}
-                    onChange={(e) => setConfirm(e.target.value)}
-                    placeholder="••••••••"
-                    required
-                    autoComplete="new-password"
-                    className="w-full h-9 px-3 bg-card border border-border rounded-md text-sm focus:outline-none focus:border-accent placeholder:text-muted-foreground/50 transition-colors"
-                  />
-                </div>
-              )}
-
-              {error && (
-                <p className="text-xs text-red-400 bg-red-500/10 border border-red-500/20 px-3 py-2 rounded-md">
-                  {error}
-                </p>
-              )}
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full h-9 rounded-md bg-accent hover:bg-accent/90 disabled:opacity-50 text-accent-foreground text-sm font-medium transition-colors flex items-center justify-center gap-2"
-              >
-                {loading ? (
-                  <Loader2 className="size-3.5 animate-spin" />
-                ) : (
-                  <>
-                    {mode === "login" && "Sign in"}
-                    {mode === "signup" && "Create account"}
-                    {mode === "forgot" && "Send reset link"}
-                    <ArrowRight className="size-3.5" strokeWidth={2} />
-                  </>
+                {mode === "signup" && (
+                  <Field label="Confirm password">
+                    <input
+                      type="password"
+                      value={confirm}
+                      onChange={e => setConfirm(e.target.value)}
+                      placeholder="••••••••"
+                      required
+                      autoComplete="new-password"
+                      className={INPUT}
+                    />
+                  </Field>
                 )}
-              </button>
 
-              {mode !== "signup" && (
+                {error && <ErrorBanner>{error}</ErrorBanner>}
+
+                <PrimaryButton loading={loading}>
+                  {mode === "login" ? "Sign in" : "Create account"}
+                  {!loading && <ArrowRight className="size-3.5" strokeWidth={2} />}
+                </PrimaryButton>
+
+                {/* Divider */}
+                <div className="flex items-center gap-3">
+                  <div className="flex-1 h-px bg-border" />
+                  <span className="text-[11px] text-muted-foreground">or</span>
+                  <div className="flex-1 h-px bg-border" />
+                </div>
+
                 <button
                   type="button"
                   onClick={useDemoAccount}
                   disabled={loading}
-                  className="w-full h-9 rounded-md border border-border bg-transparent hover:bg-card text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  className="w-full h-10 rounded-lg border border-border bg-card hover:bg-secondary text-sm text-muted-foreground hover:text-foreground transition-colors disabled:opacity-40"
                 >
                   Continue with demo account
                 </button>
-              )}
-
-              <p className="text-center text-xs text-muted-foreground pt-1">
-                {mode === "login" ? (
-                  <>
-                    Don't have an account?{" "}
-                    <button type="button" onClick={() => reset("signup")} className="text-accent hover:underline font-medium">
-                      Sign up
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    Already have an account?{" "}
-                    <button type="button" onClick={() => reset("login")} className="text-accent hover:underline font-medium">
-                      Sign in
-                    </button>
-                  </>
-                )}
-              </p>
-            </form>
+              </form>
+            </div>
           )}
         </div>
+
+        {/* Footer */}
+        <p className="absolute bottom-6 text-[11px] text-muted-foreground/50 z-10">
+          © {new Date().getFullYear()} Pluribus AI
+        </p>
       </div>
+    </div>
+  );
+}
+
+// ── Shared sub-components ────────────────────────────────────────────────────
+
+const INPUT = "w-full h-10 px-3 bg-card border border-border rounded-lg text-sm focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent/20 placeholder:text-muted-foreground/40 transition-all";
+
+function Field({ label, action, children }: { label: string; action?: React.ReactNode; children: React.ReactNode }) {
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-center justify-between">
+        <label className="text-xs font-medium text-muted-foreground">{label}</label>
+        {action}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function PrimaryButton({ loading, children }: { loading: boolean; children: React.ReactNode }) {
+  return (
+    <button
+      type="submit"
+      disabled={loading}
+      className="w-full h-10 rounded-lg bg-accent hover:bg-accent/90 active:bg-accent/80 disabled:opacity-50 text-white text-sm font-semibold transition-colors flex items-center justify-center gap-2"
+    >
+      {loading ? <Loader2 className="size-4 animate-spin" /> : children}
+    </button>
+  );
+}
+
+function TabButton({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`flex-1 h-8 rounded-md text-sm font-medium transition-all ${
+        active
+          ? "bg-card text-foreground shadow-sm border border-border"
+          : "text-muted-foreground hover:text-foreground"
+      }`}
+    >
+      {children}
+    </button>
+  );
+}
+
+function ErrorBanner({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex items-start gap-2.5 px-3 py-2.5 bg-red-500/8 border border-red-500/20 rounded-lg">
+      <div className="size-1.5 rounded-full bg-red-400 mt-1 shrink-0" />
+      <p className="text-xs text-red-400 leading-relaxed">{children}</p>
     </div>
   );
 }

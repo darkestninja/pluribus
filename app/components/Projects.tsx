@@ -1,16 +1,16 @@
 import { useState, useEffect, useRef } from "react";
 import {
   Search, Plus, ChevronDown,
-  Image as ImageIcon, Users, Layers,
+  Image as ImageIcon, Users,
 } from "lucide-react";
 import { Project } from "../../data/projects";
-import { getAthletes, getProjects, getArchivedProjects, getRecipes } from "../lib/store";
+import { getAthletes, getProjects, getArchivedProjects, subscribeToStore } from "../lib/store";
 import { CampaignWorkspace } from "./CampaignWorkspace";
 import { NewCampaignModal } from "./NewCampaignModal";
 
 
 interface ProjectsProps {
-  onLaunchStudio: (opts: { workspaceId?: string; workflowId?: string; athleteId?: string }) => void;
+  onLaunchStudio: (opts: { workspaceId?: string; athleteId?: string }) => void;
   extraProjects?: Project[];
 }
 
@@ -32,12 +32,16 @@ function getProjectAthletes(p: Project) {
   return [];
 }
 
-function getWorkflow(p: Project) {
-  return getRecipes().find(r => r.id === p.workflowId);
-}
-
 export function Projects({ onLaunchStudio, extraProjects = [] }: ProjectsProps) {
-  const [allProjects, setAllProjects] = useState<Project[]>(() => [...(extraProjects ?? []), ...getProjects()]);
+  const [allProjects, setAllProjects] = useState<Project[]>(() => getProjects());
+
+  useEffect(() => subscribeToStore(() => setAllProjects(getProjects())), []);
+
+  useEffect(() => {
+    if (extraProjects.length > 0) {
+      setAllProjects(getProjects());
+    }
+  }, [extraProjects]);
   const [filter, setFilter] = useState<FilterTab>("all");
   const [search, setSearch] = useState("");
   const [workspaceProjectId, setWorkspaceProjectId] = useState<string | null>(null);
@@ -165,7 +169,6 @@ export function Projects({ onLaunchStudio, extraProjects = [] }: ProjectsProps) 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {sorted.map(project => {
               const projAthletes = getProjectAthletes(project);
-              const wf = getWorkflow(project);
               return (
                 <button
                   key={project.id}
@@ -208,12 +211,6 @@ export function Projects({ onLaunchStudio, extraProjects = [] }: ProjectsProps) 
                     </div>
                     <div className="flex items-center justify-between pt-0.5">
                       <div className="flex items-center gap-2">
-                        {wf && (
-                          <span className="flex items-center gap-1 text-xs text-muted-foreground bg-secondary px-1.5 py-0.5 rounded">
-                            <Layers className="size-2.5" strokeWidth={1.75} />
-                            {wf.name}
-                          </span>
-                        )}
                         <span className="flex items-center gap-1 text-xs text-muted-foreground">
                           <Users className="size-2.5" strokeWidth={1.75} />
                           {projAthletes.length || 1}

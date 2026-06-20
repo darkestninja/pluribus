@@ -1,18 +1,22 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { ArrowLeft, Download, Sparkles } from "lucide-react";
 import { Project, type CampaignStatus } from "../../data/projects";
-import { generateImage, DEFAULT_IMAGE_MODEL } from "../lib/generate";
+import { generateImage } from "../lib/generate";
+import type { AthleteProfile } from "../../data/athletes";
 import { supabase } from "../lib/supabase";
 import { toast } from "../lib/notifications";
-import { computeResemblanceScore } from "../lib/faceScore";
-import { buildCampaignPrompt } from "../lib/promptEnhancer";
+import { scoreOutputWithRetry } from "../lib/store";
+import { buildGenerationPrompt } from "../lib/promptEnhancer";
+import { getCanonicalReferences } from "../lib/store";
 import {
   getAthletes, getCampaignOutputs, addCampaignOutput, updateCampaignOutput,
-  getAthleteProfile, saveAthleteProfile, createEmptyProfile, getProfilePromptConstraints,
-  getProjects, getRecipes, getRuns, addRun, updateRun, updateProject, appendExportLog,
+  getAthleteProfile, saveAthleteProfile, createEmptyProfile,
+  getProjects, getRuns, addRun, updateRun, updateProject, appendExportLog,
   setOutputStatus, addOutputComment, addOutputTag, removeOutputTag, addRejectedLikeness,
+  canExportOutput, exportBlockReason, subscribeToStore, getUserRole,
   type CampaignOutput, type Run, type OutputStatus, type OutputComment, type ExportLogEntry,
 } from "../lib/store";
+import { can } from "../lib/permissions";
 import { downloadZip } from "../lib/utils";
 import {
   mirrorAsset, generatedAssetPath, likenessPath, ASSETS_BUCKET,
@@ -21,11 +25,12 @@ import type { ApprovedLikeness } from "../../data/athletes";
 import { AssetDetailPanel } from "./AssetDetailPanel";
 import { CampaignGallery, type OutputTab } from "./CampaignGallery";
 import { CampaignSidebar } from "./CampaignSidebar";
+import { ComparePanel } from "./ComparePanel";
 
 interface CampaignWorkspaceProps {
   project: Project;
   onBack: () => void;
-  onLaunchStudio: (opts: { workspaceId?: string; workflowId?: string; athleteId?: string }) => void;
+  onLaunchStudio: (opts: { workspaceId?: string; athleteId?: string }) => void;
 }
 
 const CAMPAIGN_STATUSES: { value: CampaignStatus; label: string; dot: string }[] = [
@@ -60,17 +65,17 @@ export function CampaignWorkspace({ project, onBack, onLaunchStudio }: CampaignW
   const [brief, setBrief]               = useState(() => getProjects().find(p => p.id === project.id)?.brief ?? project.brief ?? "");
   const [briefSaved, setBriefSaved]     = useState(false);
   const briefSavedTimerRef              = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [directionOpen, setDirectionOpen] = useState(false);
-  const [checkedItems, setCheckedItems] = useState<Set<number>>(new Set());
   const [campaignStatus, setCampaignStatus] = useState<CampaignStatus>(
     () => (getProjects().find(p => p.id === project.id)?.status as CampaignStatus) ?? "draft"
   );
   const [exportLog, setExportLog] = useState<ExportLogEntry[]>(
     () => getProjects().find(p => p.id === project.id)?.exportLog ?? []
   );
+  const [compareMode, setCompareMode]     = useState(false);
+  const [compareIds, setCompareIds]       = useState<string[]>([]);
+  const [showCompare, setShowCompare]     = useState(false);
 
   const projAthletes = getProjectAthletes(project);
-  const wf = getRecipes().find(r => r.id === project.workflowId);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -90,7 +95,55 @@ export function CampaignWorkspace({ project, onBack, onLaunchStudio }: CampaignW
   useEffect(() => {
     refreshOutputs();
     refreshRuns();
+    return subscribeToStore(() => { refreshOutputs(); refreshRuns(); });
   }, [refreshOutputs, refreshRuns]);
+
+  // Poll store while any output is being scored — keeps React state in sync with scoring updates
+  useEffect(() => {
+    const hasPending = outputs.some(
+      o => o.identityScoringStatus === "pending" || o.identityScoringStatus === "scoring",
+    );
+    if (!hasPending) return;
+    const id = setInterval(refreshOutputs, 1000);
+    return () => clearInterval(id);
+  }, [outputs, refreshOutputs]);
+
+  // Keep detailOutput in sync when the underlying output changes (e.g. scoring completes)
+  useEffect(() => {
+    if (!detailOutput) return;
+    const updated = outputs.find(o => o.id === detailOutput.id);
+    if (updated && updated !== detailOutput) setDetailOutput(updated);
+  }, [outputs, detailOutput]);
+
+  // Keyboard navigation for gallery review
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement).tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+      if (showCompare) {
+        if (e.key === "Escape") setShowCompare(false);
+        return;
+      }
+      if (detailOutput) {
+        if (e.key === "Escape") { setDetailOutput(null); return; }
+        if (e.key === "j" || e.key === "J") { changeStatus(detailOutput.id, "approved"); return; }
+        if (e.key === "k" || e.key === "K") { changeStatus(detailOutput.id, "rejected"); return; }
+        if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+          const idx = visibleOutputs.findIndex(o => o.id === detailOutput.id);
+          if (idx < visibleOutputs.length - 1) setDetailOutput(visibleOutputs[idx + 1]);
+          return;
+        }
+        if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+          const idx = visibleOutputs.findIndex(o => o.id === detailOutput.id);
+          if (idx > 0) setDetailOutput(visibleOutputs[idx - 1]);
+          return;
+        }
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [detailOutput, visibleOutputs, showCompare]);
 
   const tabCounts = {
     all:            outputs.length,
@@ -108,10 +161,16 @@ export function CampaignWorkspace({ project, onBack, onLaunchStudio }: CampaignW
     ? filteredByRun
     : filteredByRun.filter(o => o.status === activeTab);
 
-  const changeStatus = (id: string, status: OutputStatus) => {
+  const changeStatus = (id: string, status: OutputStatus, rejectionReason?: import("../lib/store").RejectionReason) => {
+    if (!can(getUserRole(), "outputs:approve")) {
+      toast({ type: "error", title: "Permission denied", body: "Your role cannot approve or reject outputs." });
+      return;
+    }
     const now = new Date().toISOString();
-    setOutputStatus(id, status, reviewerEmail);
-    const patch = { status, reviewedBy: reviewerEmail, reviewedAt: now };
+    setOutputStatus(id, status, reviewerEmail, rejectionReason);
+    const patch: Partial<import("../lib/store").CampaignOutput> = { status, reviewedBy: reviewerEmail, reviewedAt: now };
+    if (status === "rejected" && rejectionReason) patch.rejectionReason = rejectionReason;
+    if (status !== "rejected") patch.rejectionReason = undefined;
     setOutputs(prev => prev.map(o => o.id === id ? { ...o, ...patch } : o));
     if (detailOutput?.id === id) setDetailOutput(prev => prev ? { ...prev, ...patch } : null);
   };
@@ -147,6 +206,19 @@ export function CampaignWorkspace({ project, onBack, onLaunchStudio }: CampaignW
     if (detailOutput?.id === outputId) setDetailOutput(prev => prev ? patch(prev) : null);
   };
 
+  const handleCompareToggle = (id: string) => {
+    setCompareIds(prev => {
+      if (prev.includes(id)) return prev.filter(x => x !== id);
+      if (prev.length >= 4) return prev; // cap at 4
+      return [...prev, id];
+    });
+  };
+
+  const handleCompareModeChange = (v: boolean) => {
+    setCompareMode(v);
+    if (!v) { setCompareIds([]); setShowCompare(false); }
+  };
+
   const handleBriefBlur = () => {
     updateProject(project.id, { brief: brief.trim() || undefined });
     setBriefSaved(true);
@@ -161,24 +233,25 @@ export function CampaignWorkspace({ project, onBack, onLaunchStudio }: CampaignW
     setBatchRunning(true);
     const athlete = getAthletes().find(a => a.id === output.athleteId);
     const runId = `run-${crypto.randomUUID().slice(0, 8)}-regen`;
-    const basePrompt = wf?.prompt ?? `Professional sports portrait. Athlete: ${athlete?.name ?? "athlete"}`;
-    const constraints = getProfilePromptConstraints(athlete ? getAthleteProfile(athlete.id) : null);
-    const prompt = athlete ? buildCampaignPrompt(basePrompt, athlete, constraints, brief || undefined) : basePrompt;
+    const regenConstraints = athlete ? (getAthleteProfile(athlete.id)?.doNotChange ?? []) : [];
+    const prompt = buildGenerationPrompt({ doNotChange: regenConstraints.length ? regenConstraints : undefined });
 
     addRun({
       id: runId, campaignId: project.id, athleteId: athlete?.id, athleteName: athlete?.name,
-      recipeId: project.workflowId, recipeName: wf?.name, prompt,
-      negativePrompt: wf?.negativePrompt || undefined, model: DEFAULT_IMAGE_MODEL.id,
-      aspectRatio: wf?.aspectRatio ?? "9:16", status: "running",
+      prompt, model: "nano-banana",
+      aspectRatio: "9:16", status: "running",
       startedAt: new Date().toISOString(), assetIds: [],
     });
     refreshRuns();
 
     try {
       let capturedSeed: number | undefined;
+      const _prof1 = getAthleteProfile(athlete ? athlete.id : "");
+      const refDataUrl = await getCanonicalReferences(_prof1);
       const result = await generateImage({
-        prompt, negativePrompt: wf?.negativePrompt || undefined,
-        aspectRatio: wf?.aspectRatio ?? "9:16", onSeed: s => { capturedSeed = s; },
+        prompt,
+        aspectRatio: "9:16", onSeed: s => { capturedSeed = s; },
+        referenceImageDataUrls: refDataUrl.length > 0 ? refDataUrl : undefined,
       });
       const falUrl = result[0].url;
       const patch = { url: falUrl, originalFalUrl: falUrl, status: "pending" as OutputStatus, runId };
@@ -215,25 +288,26 @@ export function CampaignWorkspace({ project, onBack, onLaunchStudio }: CampaignW
     for (let i = 0; i < projAthletes.length; i++) {
       const athlete = projAthletes[i];
       const runId = `run-${crypto.randomUUID().slice(0, 8)}-${athlete.id}`;
-      const basePrompt = wf?.prompt ?? `Professional sports portrait. Athlete: ${athlete.name}.`;
-      const constraints = getProfilePromptConstraints(getAthleteProfile(athlete.id));
-      const enrichedPrompt = buildCampaignPrompt(basePrompt, athlete, constraints, brief || undefined);
+      const batchConstraints = getAthleteProfile(athlete.id)?.doNotChange ?? [];
+      const enrichedPrompt = buildGenerationPrompt({ doNotChange: batchConstraints.length ? batchConstraints : undefined });
 
       addRun({
         id: runId, campaignId: project.id, athleteId: athlete.id, athleteName: athlete.name,
-        recipeId: project.workflowId, recipeName: wf?.name, prompt: enrichedPrompt,
-        negativePrompt: wf?.negativePrompt || undefined, model: DEFAULT_IMAGE_MODEL.id,
-        aspectRatio: wf?.aspectRatio ?? "9:16", status: "running",
+        prompt: enrichedPrompt, model: "nano-banana",
+        aspectRatio: "9:16", status: "running",
         startedAt: new Date().toISOString(), assetIds: [],
       });
       refreshRuns();
 
       try {
         let capturedSeed: number | undefined;
+        const _prof2 = getAthleteProfile(athlete.id);
+        const refDataUrl = await getCanonicalReferences(_prof2);
         const result = await generateImage({
-          prompt: enrichedPrompt, negativePrompt: wf?.negativePrompt || undefined,
-          aspectRatio: wf?.aspectRatio ?? "9:16", onSeed: s => { capturedSeed = s; },
-        });
+          prompt: enrichedPrompt,
+          aspectRatio: "9:16", onSeed: s => { capturedSeed = s; },
+          referenceImageDataUrls: refDataUrl.length > 0 ? refDataUrl : undefined,
+          });
 
         if (result[0]?.url) {
           const outId = `out-${crypto.randomUUID().slice(0, 8)}-${athlete.id}`;
@@ -241,6 +315,7 @@ export function CampaignWorkspace({ project, onBack, onLaunchStudio }: CampaignW
           const out: CampaignOutput = {
             id: outId, campaignId: project.id, athleteId: athlete.id, runId,
             url: falUrl, originalFalUrl: falUrl, status: "pending", createdAt: new Date().toISOString(),
+            identityScoringStatus: athlete.image ? "pending" : undefined,
           };
           addCampaignOutput(out);
           updateRun(project.id, runId, { status: "complete", seed: capturedSeed, completedAt: new Date().toISOString(), assetIds: [outId] });
@@ -261,12 +336,8 @@ export function CampaignWorkspace({ project, onBack, onLaunchStudio }: CampaignW
           }
 
           if (athlete.image) {
-            computeResemblanceScore(athlete.image, falUrl)
-              .then(score => {
-                if (score !== null) {
-                  setOutputs(prev => prev.map(o => o.id === outId ? { ...o, resemblanceScore: score } : o));
-                }
-              })
+            scoreOutputWithRetry(outId, athlete.image, falUrl)
+              .then(() => refreshOutputs())
               .catch(() => {});
           }
         }
@@ -297,17 +368,20 @@ export function CampaignWorkspace({ project, onBack, onLaunchStudio }: CampaignW
     const newRunId = `run-${crypto.randomUUID().slice(0, 8)}-rerun`;
     addRun({
       id: newRunId, campaignId: project.id, athleteId: athlete.id, athleteName: athlete.name,
-      recipeId: run.recipeId, recipeName: run.recipeName, prompt: run.prompt,
-      negativePrompt: run.negativePrompt, model: run.model, aspectRatio: run.aspectRatio,
+      prompt: run.prompt, negativePrompt: run.negativePrompt,
+      model: run.model, aspectRatio: run.aspectRatio,
       status: "running", startedAt: new Date().toISOString(), assetIds: [],
     });
     refreshRuns();
 
     try {
       let capturedSeed: number | undefined;
+      const _prof3 = getAthleteProfile(athlete.id);
+      const refDataUrl = await getCanonicalReferences(_prof3);
       const result = await generateImage({
-        prompt: run.prompt, negativePrompt: run.negativePrompt || undefined,
+        prompt: run.prompt,
         aspectRatio: run.aspectRatio, seed: run.seed, onSeed: s => { capturedSeed = s; },
+        referenceImageDataUrls: refDataUrl.length > 0 ? refDataUrl : undefined,
       });
       if (result[0]?.url) {
         const outId = `out-${crypto.randomUUID().slice(0, 8)}-rerun`;
@@ -315,10 +389,14 @@ export function CampaignWorkspace({ project, onBack, onLaunchStudio }: CampaignW
         addCampaignOutput({
           id: outId, campaignId: project.id, athleteId: athlete.id, runId: newRunId,
           url: falUrl, originalFalUrl: falUrl, status: "pending", createdAt: new Date().toISOString(),
+          identityScoringStatus: athlete.image ? "pending" : undefined,
         });
         updateRun(project.id, newRunId, { status: "complete", seed: capturedSeed, completedAt: new Date().toISOString(), assetIds: [outId] });
         refreshOutputs();
         toast({ type: "success", title: "Re-run complete", body: `New output for ${athlete.name}` });
+        if (athlete.image) {
+          scoreOutputWithRetry(outId, athlete.image, falUrl).then(() => refreshOutputs()).catch(() => {});
+        }
         if (reviewerUserId) {
           mirrorAsset(falUrl, generatedAssetPath(reviewerUserId, project.id, outId))
             .then(stored => {
@@ -345,7 +423,7 @@ export function CampaignWorkspace({ project, onBack, onLaunchStudio }: CampaignW
     const existing = getAthleteProfile(athlete.id);
     const entry: ApprovedLikeness = {
       imageUrl: output.url,
-      context: `${wf?.name ?? "Generated"} · ${new Date().toLocaleDateString()}`,
+      context: `Generated · ${new Date().toLocaleDateString()}`,
       approvedAt: new Date().toISOString(),
     };
     const profile = existing ?? createEmptyProfile(athlete.id);
@@ -370,12 +448,44 @@ export function CampaignWorkspace({ project, onBack, onLaunchStudio }: CampaignW
   };
 
   const handleExport = async () => {
+    if (!can(getUserRole(), "outputs:export")) {
+      toast({ type: "error", title: "Permission denied", body: "Your role cannot export assets." });
+      return;
+    }
     const approved = outputs.filter(o => o.status === "approved");
-    if (approved.length === 0) return;
+    const exportable = approved.filter(canExportOutput);
+    const blocked = approved.length - exportable.length;
+    if (exportable.length === 0) {
+      const blockedReasons = blocked > 0
+        ? approved.filter(o => !canExportOutput(o)).map(o => exportBlockReason(o)).filter(Boolean)
+        : [];
+      const uniqueReasons = [...new Set(blockedReasons)];
+      toast({
+        type: "error",
+        title: "Nothing export-ready",
+        body: blocked > 0
+          ? uniqueReasons.length > 0
+            ? uniqueReasons.join("; ")
+            : `${blocked} approved asset${blocked > 1 ? "s" : ""} blocked from export. Open each asset to review.`
+          : "No approved assets to export.",
+      });
+      return;
+    }
+    if (blocked > 0) {
+      const blockedReasons = approved.filter(o => !canExportOutput(o)).map(o => exportBlockReason(o)).filter(Boolean);
+      const uniqueReasons = [...new Set(blockedReasons)];
+      toast({
+        type: "warning",
+        title: `${blocked} asset${blocked > 1 ? "s" : ""} excluded from export`,
+        body: uniqueReasons.length > 0
+          ? uniqueReasons.join("; ")
+          : `${blocked} asset${blocked > 1 ? "s" : ""} blocked. ${exportable.length} export-ready asset${exportable.length > 1 ? "s" : ""} will be included.`,
+      });
+    }
     setIsExporting(true);
     try {
       await downloadZip(
-        approved.map((o, i) => ({
+        exportable.map((o, i) => ({
           url: o.url,
           filename: `${project.name.replace(/\s+/g, "-").toLowerCase()}-${i + 1}.jpg`,
           meta: { id: o.id, status: o.status, athleteId: o.athleteId, createdAt: o.createdAt },
@@ -385,7 +495,7 @@ export function CampaignWorkspace({ project, onBack, onLaunchStudio }: CampaignW
       const entry: ExportLogEntry = {
         exportedAt: new Date().toISOString(),
         exportedBy: reviewerEmail,
-        assetCount: approved.length,
+        assetCount: exportable.length,
       };
       appendExportLog(project.id, entry);
       setExportLog(prev => [entry, ...prev]);
@@ -399,7 +509,7 @@ export function CampaignWorkspace({ project, onBack, onLaunchStudio }: CampaignW
     const athlete = getAthletes().find(a => a.id === output.athleteId);
     addRejectedLikeness(output.athleteId, {
       imageUrl: output.url,
-      context: `${wf?.name ?? "Generated"} · ${new Date().toLocaleDateString()}`,
+      context: `Generated · ${new Date().toLocaleDateString()}`,
       rejectedAt: new Date().toISOString(),
     });
     toast({ type: "success", title: "Rejected likeness saved", body: `Added to ${athlete?.name ?? "athlete"}'s profile as what to avoid` });
@@ -425,9 +535,22 @@ export function CampaignWorkspace({ project, onBack, onLaunchStudio }: CampaignW
     }
   };
 
+  const handleRetryScoring = (output: CampaignOutput) => {
+    const athlete = output.athleteId ? getAthletes().find(a => a.id === output.athleteId) : undefined;
+    const referenceUrl = athlete?.image;
+    const generatedUrl = output.originalFalUrl ?? output.url;
+    if (!referenceUrl || !generatedUrl) return;
+    updateCampaignOutput(output.id, { identityScoringStatus: "pending", identityScoringError: undefined });
+    scoreOutputWithRetry(output.id, referenceUrl, generatedUrl)
+      .then(() => refreshOutputs())
+      .catch(() => {});
+  };
+
   const detailRun = detailOutput?.runId ? runs.find(r => r.id === detailOutput.runId) : undefined;
   const detailAthlete = detailOutput?.athleteId ? getAthletes().find(a => a.id === detailOutput.athleteId) : undefined;
   const approvedCount = tabCounts.approved;
+  const exportableCount = outputs.filter(o => o.status === "approved" && canExportOutput(o)).length;
+  const exportBlockedCount = approvedCount - exportableCount;
 
   return (
     <div className="h-full flex flex-col bg-background overflow-hidden">
@@ -461,10 +584,19 @@ export function CampaignWorkspace({ project, onBack, onLaunchStudio }: CampaignW
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <button onClick={handleExport} disabled={approvedCount === 0 || isExporting}
-            className="h-8 px-3 rounded-md bg-card border border-border hover:bg-secondary text-xs text-muted-foreground hover:text-foreground disabled:opacity-40 transition-colors flex items-center gap-1.5">
+          <button
+            onClick={handleExport}
+            disabled={approvedCount === 0 || isExporting}
+            title={exportBlockedCount > 0 ? `${exportBlockedCount} approved asset${exportBlockedCount > 1 ? "s" : ""} excluded — score or approval gate` : undefined}
+            className="h-8 px-3 rounded-md bg-card border border-border hover:bg-secondary text-xs text-muted-foreground hover:text-foreground disabled:opacity-40 transition-colors flex items-center gap-1.5"
+          >
             <Download className="size-3.5" strokeWidth={1.75} />
-            {isExporting ? "Exporting…" : `Export ${approvedCount > 0 ? approvedCount : ""}`}
+            {isExporting
+              ? "Exporting…"
+              : exportableCount > 0
+                ? `Export ${exportableCount}${exportBlockedCount > 0 ? ` (${exportBlockedCount} blocked)` : ""}`
+                : approvedCount > 0 ? `Export (${approvedCount} blocked)` : "Export"
+            }
           </button>
         </div>
       </header>
@@ -485,19 +617,19 @@ export function CampaignWorkspace({ project, onBack, onLaunchStudio }: CampaignW
           onRegenerate={regenerateOutput}
           onSelectOutput={setDetailOutput}
           onMarkLikeness={markAsLikeness}
+          compareMode={compareMode}
+          setCompareMode={handleCompareModeChange}
+          compareIds={compareIds}
+          onCompareToggle={handleCompareToggle}
+          onCompareOpen={() => setShowCompare(true)}
         />
         <CampaignSidebar
           project={project}
           projAthletes={projAthletes}
-          wf={wf}
           brief={brief}
           setBrief={setBrief}
           briefSaved={briefSaved}
           onBriefBlur={handleBriefBlur}
-          directionOpen={directionOpen}
-          setDirectionOpen={setDirectionOpen}
-          checkedItems={checkedItems}
-          setCheckedItems={setCheckedItems}
           statsOutputCounts={{
             generated: outputs.length,
             approved: tabCounts.approved,
@@ -532,6 +664,17 @@ export function CampaignWorkspace({ project, onBack, onLaunchStudio }: CampaignW
           onCommentAdded={handleCommentAdded}
           onTagAdded={handleTagAdded}
           onTagRemoved={handleTagRemoved}
+          onRetryScoring={handleRetryScoring}
+        />
+      )}
+
+      {showCompare && compareIds.length >= 2 && (
+        <ComparePanel
+          outputs={outputs.filter(o => compareIds.includes(o.id))}
+          onClose={() => setShowCompare(false)}
+          onStatusChange={changeStatus}
+          onMarkLikeness={markAsLikeness}
+          onSelectOutput={output => { setShowCompare(false); setDetailOutput(output); }}
         />
       )}
     </div>

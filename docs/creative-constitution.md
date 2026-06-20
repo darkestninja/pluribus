@@ -2,7 +2,7 @@
 
 ## 0. Purpose
 
-Pluribus exists to produce controlled, believable, identity-consistent, production-ready media for sports, entertainment, and culture-led brands.
+Pluribus exists to produce controlled, believable, identity-consistent, production-ready media for talent-driven industries: sports, entertainment, music, fashion, and culture-led brands. Talent scope: athletes, actors, influencers, and any human subject whose likeness requires controlled representation and legal consent.
 
 This document defines the creative operating system of Pluribus.
 
@@ -1060,56 +1060,76 @@ The constitution is the blueprint for product moat.
 
 ---
 
-# 32. Minimum Product Features Inspired by This Constitution
+# 32. Product Features Inspired by This Constitution
 
-Build these as soon as practical:
+**Status as of 2026-06-20 — all core features built.**
 
-## Identity Profile
+## Identity Profile ✓
+- [x] identity notes
+- [x] do-not-change rules
+- [x] approved likeness
+- [x] rejected likeness
+- [x] tattoo/scar registry
+- [x] identity confidence rating (5-tier: Hero/Campaign/Internal/Exploration/Weak)
+- [x] 9-frame capture protocol (v3 semantic keys)
+- [x] portal-based self-enrollment (talent uploads own references via SubjectPortal)
 
-- identity notes
-- do-not-change rules
-- approved likeness
-- rejected likeness
-- tattoo/scar registry
-- identity confidence rating
+## Recipe System ✓
+- [x] structured NB scene fields (shot, action, environment, lighting, mood, style, colorStyle)
+- [x] quality checklist
+- [x] output target
+- [x] recipe library, create, edit, clone
 
-## Recipe System
+## Review System ✓
+- [x] 5-state approval (pending / approved / needs_revision / flagged / rejected)
+- [x] resemblance scoring (OpenCV.js histogram)
+- [x] identity score tiers (auto-flag, auto-tag, export gate)
+- [x] rejection reason taxonomy (FACE_DRIFT / AGE_DRIFT / SKIN_TONE / TATTOO_MISMATCH / WARDROBE / CONTEXT / QUALITY)
+- [x] reviewer attribution + review history timeline
+- [x] external review links (no login)
+- [x] talent approval layer (subject approve/reject with note)
 
-- visual language
-- lighting rules
-- camera rules
-- negative prompt rules
-- quality checklist
-- output target
+## Asset Memory ✓
+- [x] generation lineage (run → recipe snapshot → references)
+- [x] subject/campaign/recipe links
+- [x] approved/rejected status + history
 
-## Review System
+## Campaign System ✓
+- [x] 4-step campaign creation wizard
+- [x] campaign pack generator (4 pack types)
+- [x] export approved as ZIP + metadata.json
 
-- approval state
-- quality scores
-- structured feedback tags
-- failure taxonomy
-- reviewer attribution
-
-## Asset Memory
-
-- generation lineage
-- subject link
-- campaign link
-- recipe link
-- failure reasons
-- approved/rejected status
-
-## Campaign System
-
-- visual language profile
-- approved style references
-- rejected style references
-- export presets
-- campaign coherence checklist
+## Consent System ✓ (Sprint 20 + 13)
+- [x] usage scope consent (6 scopes, signed with timestamp)
+- [x] consent receipt email to creative director
+- [x] talent portal token (revocable, 16+ char, no login)
+- [x] consent audit trail in Supabase
 
 ---
 
-# 33. Final Creative Principle
+# 33. The Rights Dimension
+
+Every creative output produced by Pluribus is also a rights object.
+
+It carries:
+
+- who consented (the talent, the date, the scope)
+- who approved (the creative director, the reviewer)
+- what it can be used for (the licensed usage scopes)
+- what it cannot be used for (revoked, restricted, or expired)
+- who generated it and under what brief
+
+The creative constitution governs what the image looks like.
+
+The rights layer governs what the image is allowed to do in the world.
+
+Both matter. A technically excellent image with no consent record is worthless commercially.
+
+Pluribus must make it impossible to produce a commercially usable output without a corresponding rights record.
+
+---
+
+# 34. Final Creative Principle
 
 Pluribus should not generate more images.
 
@@ -1122,5 +1142,7 @@ Certainty that the campaign is coherent.
 Certainty that the asset is usable.
 
 Certainty that the team can approve, reuse, and scale the work.
+
+Certainty that the rights are clean.
 
 That certainty is the product.

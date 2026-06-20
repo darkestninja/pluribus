@@ -4,6 +4,7 @@ import {
   getCampaignOutputs, getAthletes, getRuns, getProjects, getArchivedProjects,
   setOutputStatus, addOutputComment, addOutputTag, removeOutputTag,
   getAthleteProfile, saveAthleteProfile, createEmptyProfile, addRejectedLikeness,
+  subscribeToStore,
   type CampaignOutput, type OutputStatus, type OutputComment, type Run,
 } from "../lib/store";
 import type { Athlete, ApprovedLikeness } from "../../data/athletes";
@@ -34,18 +35,19 @@ const STATUS_LABEL: Record<OutputStatus, string> = {
 type StatusFilter = OutputStatus | "all";
 
 export function LibraryPage({ reviewerEmail }: LibraryPageProps) {
-  const [outputs, setOutputs] = useState<CampaignOutput[]>(() => getCampaignOutputs());
+  const [outputs, setOutputs]         = useState<CampaignOutput[]>(() => getCampaignOutputs());
+  const [athletes, setAthletes]       = useState(getAthletes);
+  const [allProjects, setAllProjects] = useState(() => [...getProjects(), ...getArchivedProjects()]);
   const [detailOutput, setDetailOutput] = useState<CampaignOutput | null>(null);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [athleteFilter, setAthleteFilter] = useState("all");
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery]   = useState("");
 
-  useEffect(() => {
+  useEffect(() => subscribeToStore(() => {
     setOutputs(getCampaignOutputs());
-  }, []);
-
-  const [athletes] = useState(getAthletes);
-  const [allProjects] = useState(() => [...getProjects(), ...getArchivedProjects()]);
+    setAthletes(getAthletes());
+    setAllProjects([...getProjects(), ...getArchivedProjects()]);
+  }), []);
 
   const athleteMap = new Map<string, Athlete>(athletes.map(a => [a.id, a]));
   const projectMap = new Map(allProjects.map(p => [p.id, p]));
@@ -68,10 +70,12 @@ export function LibraryPage({ reviewerEmail }: LibraryPageProps) {
     return getRuns(detailOutput.campaignId).find(r => r.id === detailOutput.runId);
   };
 
-  const handleStatusChange = (id: string, status: OutputStatus) => {
-    setOutputStatus(id, status, reviewerEmail);
+  const handleStatusChange = (id: string, status: OutputStatus, rejectionReason?: import("../lib/store").RejectionReason) => {
+    setOutputStatus(id, status, reviewerEmail, rejectionReason);
     const now = new Date().toISOString();
-    const patch = { status, reviewedBy: reviewerEmail, reviewedAt: now };
+    const patch: Partial<import("../lib/store").CampaignOutput> = { status, reviewedBy: reviewerEmail, reviewedAt: now };
+    if (status === "rejected" && rejectionReason) patch.rejectionReason = rejectionReason;
+    if (status !== "rejected") patch.rejectionReason = undefined;
     setOutputs(prev => prev.map(o => o.id === id ? { ...o, ...patch } : o));
     if (detailOutput?.id === id) setDetailOutput(prev => prev ? { ...prev, ...patch } : null);
   };
@@ -154,7 +158,7 @@ export function LibraryPage({ reviewerEmail }: LibraryPageProps) {
             type="text"
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            placeholder="Search by subject, campaign, tag…"
+            placeholder="Search by talent, campaign, tag…"
             className="w-full h-8 pl-8 pr-3 bg-card border border-border rounded-md text-sm focus:outline-none focus:border-accent placeholder:text-muted-foreground/50"
           />
         </div>
@@ -167,7 +171,7 @@ export function LibraryPage({ reviewerEmail }: LibraryPageProps) {
             onChange={e => setAthleteFilter(e.target.value)}
             className="h-8 px-2 bg-card border border-border rounded-md text-sm focus:outline-none focus:border-accent"
           >
-            <option value="all">All subjects</option>
+            <option value="all">All talent</option>
             {athletes.map(a => (
               <option key={a.id} value={a.id}>{a.name}</option>
             ))}

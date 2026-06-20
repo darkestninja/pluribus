@@ -1,21 +1,43 @@
 export type AngleKey =
-  | "face-front" | "face-left" | "face-right" | "face-back" | "face-close"
-  | "body-front" | "body-left" | "body-right" | "body-back";
+  // ── v3 protocol — 9 frames: 5 angles × passport + body, plus face close-up ──
+  | "front-passport"  // front, head & shoulders, neutral expression
+  | "front-body"      // front, full body, neutral stance
+  | "left-passport"   // left profile, head & shoulders
+  | "left-body"       // left profile, full body
+  | "right-passport"  // right profile, head & shoulders
+  | "right-body"      // right profile, full body
+  | "back-passport"   // rear, head & shoulders
+  | "back-body"       // rear, full body
+  | "face-close"      // tight face close-up, eye-level
+  // ── Legacy keys — kept for backward-compat with stored profiles ─────────────
+  | "face-front" | "face-left" | "face-right" | "face-back"
+  | "body-front" | "body-left" | "body-right" | "body-back"
+  | "frame-1" | "frame-2" | "frame-3" | "frame-4" | "frame-5"
+  | "frame-6" | "frame-7" | "frame-8" | "frame-9";
 
 export interface CaptureAngle {
   key: AngleKey;
-  dataUrl: string;        // base64 data URL — local fallback
+  /** base64 data URL — local fallback only. Cleared once storagePath is set. */
+  dataUrl?: string;
   uploadedAt: string;
   notes?: string;
-  storageUrl?: string;    // Supabase Storage signed URL (long-lived) — preferred for display
-  storagePath?: string;   // Storage path for URL refresh
+  /** Supabase Storage signed URL — preferred for display */
+  storageUrl?: string;
+  /** Storage object path — authoritative durable reference; allows signed-URL refresh */
+  storagePath?: string;
+  /** fal CDN permanent URL — cached after first upload; used by generation to skip re-upload */
+  falCdnUrl?: string;
 }
 
 export interface TattooMark {
   id: string;
   description: string;
   location: string;
-  visible: boolean;      // whether to reference in generation prompts
+  visible: boolean;
+  imageUrl?: string;              // compressed photo of the tattoo
+  bodyX?: number;                 // 0–100, percentage x on body map
+  bodyY?: number;                 // 0–100, percentage y on body map
+  bodyView?: "front" | "back";   // which body side was pinned
 }
 
 export interface ApprovedLikeness {
@@ -39,8 +61,71 @@ export interface AthleteProfile {
   tattoos: TattooMark[];
   doNotChange: string[];
   approvedLikeness: ApprovedLikeness[];
-  rejectedLikeness?: RejectedLikeness[];   // optional — backward compatible
+  rejectedLikeness?: RejectedLikeness[];
   notes: string;
+  /** fal CDN URL of trained LoRA weights — set after training completes */
+  loraUrl?: string;
+  /** Job status for LoRA training */
+  loraStatus?: "training" | "ready" | "failed";
+  /** fal queue request ID while training is in progress */
+  loraJobId?: string;
+  loraTrainedAt?: string;
+  /** Trigger phrase used during training — prepended to generation prompts */
+  loraTriggerPhrase?: string;
+  // ── Canonical reference set (v2 pipeline) ─────────────────────────────────
+  /** The 4 frame keys (frame-1 through frame-9) locked as this athlete's canonical reference set */
+  canonicalReferenceFrameIds?: string[];
+  /** Mean face embedding cosine similarity (0–1) of the winning combo across test prompts */
+  canonicalSetScore?: number;
+  /** Score variance across test prompts — lower = more consistent identity */
+  canonicalSetVariance?: number;
+  canonicalSetValidatedAt?: string;
+  /** House style version this canonical set was validated against */
+  canonicalSetHouseStyleVersion?: string;
+  /** 8 test output URLs from the winning combo — the athlete's identity card */
+  canonicalSetIdentityCardUrls?: string[];
+  canonicalSetStatus?: "pending" | "validating" | "ready" | "failed";
+  canonicalSetFailureReason?: string;
+  /** Proxy job ID for polling canonical validation progress */
+  canonicalJobId?: string;
+  /** Subject portal invite token — set when an invite link is generated */
+  portalToken?: string;
+  portalInvitedAt?: string;
+  portalInvitedBy?: string;
+  /** Usage consent submitted by the subject via SubjectPortal */
+  usageConsent?: UsageConsent;
+  /** Collaboration task list for this subject */
+  collabTasks?: CollabTask[];
+}
+
+// ── Collaboration / consent types ────────────────────────────────────────────
+
+export type UsageScope =
+  | "social_media"
+  | "paid_advertising"
+  | "out_of_home"
+  | "press_editorial"
+  | "internal_only"
+  | "unlimited";
+
+export interface UsageConsent {
+  consentGiven: boolean;
+  consentAt?: string;
+  scopes: UsageScope[];
+  note?: string;
+  expiresAt?: string;
+}
+
+export interface CollabTask {
+  id: string;
+  subjectId: string;
+  type: "upload_references" | "review_outputs" | "sign_consent" | "custom";
+  title: string;
+  description?: string;
+  status: "pending" | "complete" | "blocked";
+  createdAt: string;
+  completedAt?: string;
+  dueBy?: string;
 }
 
 export interface Athlete {
@@ -61,90 +146,4 @@ export interface Athlete {
   personalBest?: string;
 }
 
-export const athletes: Athlete[] = [
-  {
-    id: "1",
-    name: "James Magnussen",
-    sport: "Swimming",
-    event: "100m Freestyle",
-    status: "complete",
-    image: "/athletes/james-magnussen.jpg",
-    captureDate: "2026-03-15",
-    height: "6'5\" (196cm)",
-    weight: "200 lbs (91kg)",
-    build: "Power swimmer",
-    skinTone: "Fair",
-    hair: "Short brown",
-    age: 34,
-    country: "Australia",
-    personalBest: "47.10s",
-  },
-  {
-    id: "2",
-    name: "Marvin Bracy-Williams",
-    sport: "Track",
-    event: "100m Sprint",
-    status: "complete",
-    image: "/athletes/marvin-bracy.jpg",
-    captureDate: "2026-03-14",
-    height: "5'9\" (175cm)",
-    weight: "165 lbs (75kg)",
-    build: "Sprinter build",
-    skinTone: "Dark brown",
-    hair: "Short fade",
-    age: 32,
-    country: "USA",
-    personalBest: "9.85s",
-  },
-  {
-    id: "3",
-    name: "Megan Romano",
-    sport: "Swimming",
-    event: "200m Freestyle",
-    status: "review",
-    image: "/athletes/megan-romano.jpg",
-    captureDate: "2026-03-10",
-    height: "5'9\" (175cm)",
-    weight: "150 lbs (68kg)",
-    build: "Distance swimmer",
-    skinTone: "Fair",
-    hair: "Long brown",
-    age: 35,
-    country: "USA",
-    personalBest: "1:55.20",
-  },
-  {
-    id: "4",
-    name: "Juan Solis",
-    sport: "Weightlifting",
-    event: "Clean & Jerk 89kg",
-    status: "complete",
-    image: "/athletes/juan-solis.jpg",
-    captureDate: "2026-04-01",
-    height: "5'8\" (173cm)",
-    weight: "196 lbs (89kg)",
-    build: "Heavy weightlifter",
-    skinTone: "Olive",
-    hair: "Short black",
-    age: 27,
-    country: "Mexico",
-    personalBest: "405 lbs (184kg)",
-  },
-  {
-    id: "5",
-    name: "Tristan Evelyn",
-    sport: "Track",
-    event: "100m Sprint",
-    status: "pending",
-    image: "/athletes/tristan-evelyn.jpg",
-    captureDate: null,
-    height: "5'6\" (168cm)",
-    weight: "130 lbs (59kg)",
-    build: "Sprinter build",
-    skinTone: "Dark brown",
-    hair: "Long braids",
-    age: 27,
-    country: "Barbados",
-    personalBest: "11.04s",
-  },
-];
+export const athletes: Athlete[] = [];

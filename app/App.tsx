@@ -1,67 +1,117 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback, lazy, Suspense } from "react";
+// Heavy page components — lazy loaded to split the main bundle
+const AthleteLibrary      = lazy(() => import("./components/AthleteLibrary").then(m => ({ default: m.AthleteLibrary })));
+const LibraryPage         = lazy(() => import("./components/LibraryPage").then(m => ({ default: m.LibraryPage })));
+const Workspace           = lazy(() => import("./components/Workspace").then(m => ({ default: m.Workspace })));
+const WardrobeLibrary     = lazy(() => import("./components/WardrobeLibrary").then(m => ({ default: m.WardrobeLibrary })));
+const MoodboardLibrary    = lazy(() => import("./components/MoodboardLibrary").then(m => ({ default: m.MoodboardLibrary })));
+const IdentityStudio      = lazy(() => import("./components/IdentityStudio").then(m => ({ default: m.IdentityStudio })));
+const QueuePage           = lazy(() => import("./components/QueuePage").then(m => ({ default: m.QueuePage })));
+const ArchivePage         = lazy(() => import("./components/ArchivePage").then(m => ({ default: m.ArchivePage })));
+// Always-present components — loaded eagerly
 import { Dashboard } from "./components/Dashboard";
-import { AthleteLibrary } from "./components/AthleteLibrary";
-import { LibraryPage } from "./components/LibraryPage";
-import { Workspace } from "./components/Workspace";
 import { Settings } from "./components/Settings";
-import { WorkflowLibrary } from "./components/WorkflowLibrary";
 import { Projects } from "./components/Projects";
-import { QueuePage } from "./components/QueuePage";
-import { ArchivePage } from "./components/ArchivePage";
 import { CommandPalette } from "./components/CommandPalette";
 import { Onboarding } from "./components/Onboarding";
 import { AuthScreen } from "./components/AuthScreen";
 import { ReviewPage } from "./components/ReviewPage";
+import { SubjectPortal } from "./components/SubjectPortal";
+import { DebugPanel } from "./components/DebugPanel";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 import { NewCampaignModal } from "./components/NewCampaignModal";
 import { AddAthleteModal } from "./components/AddAthleteModal";
 import {
   Search, Moon, Sun, Plus, Settings as SettingsIcon,
-  Home, Folder, Users, LayoutGrid, Images, PanelLeft, Menu, X, Bell,
-  CheckCircle, AlertCircle, Info, LogOut,
+  Home, Folder, Users, Images, PanelLeft, Menu, X, Bell,
+  CheckCircle, AlertCircle, Info, LogOut, Shirt, Palette, ScanFace,
 } from "lucide-react";
-import { getQueue, isOnboarded, setOnboarded, initStore, hydrateStore } from "./lib/store";
+import { getProjects, getRuns, isOnboarded, setOnboarded, initStore, clearStore, hydrateStore, getUserRole, addProject, getJobs, updateJob, updateRun, addCampaignOutput, getPendingScoringOutputs, scoreOutputWithRetry, getAthletes, getCanonicalReferencesSync, getAthleteProfile, setWriteErrorHandler } from "./lib/store";
+import { pollGenerationStatus, fetchGenerationResult } from "./lib/generate";
 import { onToast, Toast } from "./lib/notifications";
 import { supabase, toAppUser, signOut } from "./lib/auth";
 import type { AppUser } from "./lib/auth";
 import type { Project } from "../data/projects";
 
-type ViewType = "home" | "studio" | "projects" | "subjects" | "workflows" | "library" | "queue" | "archive" | "settings";
+type ViewType = "home" | "studio" | "projects" | "subjects" | "wardrobe" | "moodboards" | "identity" | "library" | "queue" | "archive" | "settings";
 
 const PAGE_TITLES: Record<ViewType, string> = {
-  home: "Home",
-  studio: "Studio",
-  projects: "Campaigns",
-  subjects: "Subjects",
-  workflows: "Recipes",
-  library: "Library",
-  queue: "Queue",
-  archive: "Archive",
-  settings: "Settings",
+  home:      "Home",
+  studio:    "Studio",
+  projects:  "Campaigns",
+  subjects:  "Talent",
+  wardrobe:  "Wardrobe",
+  moodboards:"Moodboards",
+  identity:  "Identity Studio",
+  library:   "Library",
+  queue:     "Runs",
+  archive:   "Archive",
+  settings:  "Settings",
 };
 
-// Detect shareable review route at module load — value is stable for the page lifetime.
+const VIEW_HASH: Record<ViewType, string> = {
+  home:      "#/home",
+  studio:    "#/studio",
+  projects:  "#/campaigns",
+  subjects:  "#/subjects",
+  wardrobe:  "#/wardrobe",
+  moodboards:"#/moodboards",
+  identity:  "#/identity",
+  library:   "#/library",
+  queue:     "#/queue",
+  archive:   "#/archive",
+  settings:  "#/settings",
+};
+const HASH_VIEW: Record<string, ViewType> = Object.fromEntries(
+  Object.entries(VIEW_HASH).map(([v, h]) => [h.slice(1), v as ViewType])
+);
+
+// Detect shareable public routes at module load — values are stable for the page lifetime.
 const _reviewToken = (() => {
   const m = window.location.pathname.match(/^\/review\/([a-f0-9]{32})$/);
   return m?.[1] ?? null;
 })();
 
-// Top-level shell: routes to ReviewPage (no auth) or the full authenticated app.
+const _subjectToken = (() => {
+  const m = window.location.pathname.match(/^\/subject\/([a-zA-Z0-9_-]{16,})$/);
+  return m?.[1] ?? null;
+})();
+
+// Set VITE_BYPASS_AUTH=true in .env.local to skip Supabase auth during dev.
+// Never set this in production — it boots as an anonymous guest with no Supabase writes.
+const BYPASS_AUTH = import.meta.env.VITE_BYPASS_AUTH === "true";
+const GUEST_USER = { id: "guest", email: "guest@local" };
+
+// Top-level shell: routes to public pages (no auth) or the full authenticated app.
 export default function App() {
-  if (_reviewToken) return <ReviewPage token={_reviewToken} />;
+  if (_reviewToken)  return <ReviewPage token={_reviewToken} />;
+  if (_subjectToken) return <SubjectPortal token={_subjectToken} />;
   return <AuthenticatedApp />;
 }
 
 function AuthenticatedApp() {
-  const [authed, setAuthed] = useState(false);
-  const [sessionLoading, setSessionLoading] = useState(true);
+  const [authed, setAuthed] = useState(BYPASS_AUTH);
+  const [sessionLoading, setSessionLoading] = useState(!BYPASS_AUTH);
   const [appUser, setAppUser] = useState<AppUser | null>(null);
-  const [currentView, setCurrentView] = useState<ViewType>("home");
+  const [currentView, setCurrentView] = useState<ViewType>(() => {
+    // Strip leading "#" then query params before HASH_VIEW lookup.
+    // e.g. "#/studio?c=abc" → "/studio" → "studio"
+    const path = window.location.hash.slice(1).split("?")[0];
+    return (HASH_VIEW[path] as ViewType) ?? "home";
+  });
+  // Tracks whether the current view change originated from a URL event (back/forward)
+  // so the write-hash effect knows not to push a duplicate history entry.
+  const fromUrlRef = useRef(false);
   const [isDark, setIsDark] = useState(true);
-  const [selectedWorkspace, setSelectedWorkspace] = useState<string | null>(null);
+  // Restore workspace from URL on refresh: #/studio?c=<id>
+  const [selectedWorkspace, setSelectedWorkspace] = useState<string | null>(() => {
+    const m = window.location.hash.match(/[?&]c=([^&]+)/);
+    return m?.[1] ?? null;
+  });
   const [selectedAthleteId, setSelectedAthleteId] = useState<string | null>(null);
   const [activeRenders, setActiveRenders] = useState(0);
   const [paletteOpen, setPaletteOpen] = useState(false);
-  const [pendingPrefill, setPendingPrefill] = useState<{ workflowId?: string; athleteId?: string } | null>(null);
+  const [pendingPrefill, setPendingPrefill] = useState<{ athleteId?: string } | null>(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(() => {
     try { return localStorage.getItem("sidebar-collapsed") === "true"; } catch { return false; }
   });
@@ -82,12 +132,56 @@ function AuthenticatedApp() {
     document.documentElement.classList.toggle("dark", isDark);
   }, [isDark]);
 
+  // Push a history entry whenever the view changes via user navigation.
+  // Skip if the change itself came from a URL event (back/forward) to avoid duplicates.
+  useEffect(() => {
+    if (fromUrlRef.current) { fromUrlRef.current = false; return; }
+    let next = VIEW_HASH[currentView];
+    if (currentView === "studio" && selectedWorkspace && selectedWorkspace !== "new") {
+      next = `#/studio?c=${selectedWorkspace}`;
+    }
+    if (next && window.location.hash !== next) history.pushState(null, "", next);
+  }, [currentView, selectedWorkspace]);
+
+  // Handle browser back / forward (both hashchange and popstate fire depending on browser).
+  useEffect(() => {
+    const onNav = () => {
+      const path = window.location.hash.slice(1).split("?")[0];
+      const v = HASH_VIEW[path] as ViewType | undefined;
+      if (v && v !== currentView) {
+        fromUrlRef.current = true;
+        setCurrentView(v);
+        // Also restore workspace when navigating back to studio
+        if (v === "studio") {
+          const m = window.location.hash.match(/[?&]c=([^&]+)/);
+          if (m?.[1]) setSelectedWorkspace(m[1]);
+        }
+      }
+    };
+    window.addEventListener("hashchange", onNav);
+    window.addEventListener("popstate", onNav);
+    return () => { window.removeEventListener("hashchange", onNav); window.removeEventListener("popstate", onNav); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const [isAdmin, setIsAdmin] = useState(false);
+
   // Restore session and subscribe to future auth state changes
   useEffect(() => {
+    if (BYPASS_AUTH) {
+      initStore(GUEST_USER.id, GUEST_USER.email);
+      setAppUser({ id: GUEST_USER.id, email: GUEST_USER.email, name: "Guest", avatarInitials: "G" });
+      setWriteErrorHandler(() => toast({ type: "warning", title: "Saved locally", body: "Will sync when reconnected." }));
+      return;
+    }
+
+    setWriteErrorHandler(() => toast({ type: "warning", title: "Saved locally", body: "Will sync when reconnected." }));
+
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session?.user) {
         initStore(session.user.id, session.user.email ?? "");
         await hydrateStore(session.user.id);
+        setIsAdmin(getUserRole() === "admin");
       }
       setAuthed(!!session);
       setAppUser(session?.user ? toAppUser(session.user) : null);
@@ -95,8 +189,15 @@ function AuthenticatedApp() {
       setSessionLoading(false);
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user) initStore(session.user.id, session.user.email ?? "");
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session?.user) {
+        // Skip initStore on pure token-refresh — user hasn't changed, channel is fine
+        if (event !== "TOKEN_REFRESHED") {
+          initStore(session.user.id, session.user.email ?? "");
+        }
+      } else {
+        clearStore();
+      }
       setAuthed(!!session);
       setAppUser(session?.user ? toAppUser(session.user) : null);
     });
@@ -104,15 +205,127 @@ function AuthenticatedApp() {
     return () => subscription.unsubscribe();
   }, []);
 
+  // Drain any outputs left in "pending" scoring state from a previous session.
+  // Runs once after auth resolves so orphaned outputs get scored on next app open.
+  useEffect(() => {
+    if (!authed) return;
+    const pending = getPendingScoringOutputs();
+    if (pending.length === 0) return;
+    const athletes = getAthletes();
+    for (const output of pending) {
+      const athlete = athletes.find(a => a.id === output.athleteId);
+      const profile = output.athleteId ? getAthleteProfile(output.athleteId) : null;
+      const refs = getCanonicalReferencesSync(profile);
+      const referenceUrl = refs[0] ?? athlete?.image;
+      const generatedUrl = output.originalFalUrl ?? output.url;
+      if (referenceUrl && generatedUrl) {
+        scoreOutputWithRetry(output.id, referenceUrl, generatedUrl).catch(() => {});
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authed]);
+
   useEffect(() => {
     const tick = () => {
-      const n = getQueue().filter(i => i.status === "rendering" || i.status === "queued").length;
+      const projects = getProjects();
+      let n = 0;
+      for (const p of projects) n += getRuns(p.id).filter(r => r.status === "running").length;
+      // also count active generation jobs not tied to a campaign run
+      n += getJobs().filter(j => j.status === "queued" || j.status === "running").length;
       setActiveRenders(n);
     };
     tick();
-    const id = setInterval(tick, 1500);
+    const id = setInterval(tick, 2000);
     return () => clearInterval(id);
   }, []);
+
+  // Global background poller — drives progress for all queued/running generation jobs
+  // regardless of which page the user is currently on.
+  useEffect(() => {
+    if (!authed) return;
+    const poll = async () => {
+      const now = Date.now();
+      const active = getJobs().filter(j =>
+        (j.status === "queued" || j.status === "running") &&
+        (!j.rateRetryAfter || now >= j.rateRetryAfter)
+      );
+      for (const job of active) {
+        try {
+          const { status } = await pollGenerationStatus(job.modelId, job.requestId);
+
+          // Time-based progress: NB Pro typically completes in 20-45s.
+          // Advance smoothly 5→85% over 35s regardless of log output.
+          // Log-based % (if ever present) wins if higher, but never goes backward.
+          const elapsedSec = (Date.now() - new Date(job.startedAt).getTime()) / 1000;
+          const EXPECTED_SEC = 35;
+          const timeProgress = status === "IN_QUEUE"
+            ? Math.min(10, Math.round((elapsedSec / EXPECTED_SEC) * 20))
+            : Math.min(85, Math.round(5 + (elapsedSec / EXPECTED_SEC) * 80));
+          const nextProgress = Math.max(job.progress, timeProgress);
+
+          if (status === "COMPLETED") {
+            const images = await fetchGenerationResult(job.modelId, job.requestId);
+            // Basic content filter: discard any results that fal flagged as NSFW
+            const urls = images
+              .filter(i => !(i as { nsfw?: boolean }).nsfw)
+              .map(i => i.url);
+            const now = new Date().toISOString();
+            updateJob(job.id, { status: "complete", progress: 100, resultUrls: urls, completedAt: now });
+            if (job.runId && job.campaignId) {
+              updateRun(job.campaignId, job.runId, { status: "complete", completedAt: now, assetIds: [] });
+            }
+            // Auto-persist result so it survives navigation regardless of user action
+            if (urls.length > 0) {
+              const outputId = `out-${crypto.randomUUID().slice(0, 8)}`;
+              addCampaignOutput({
+                id:            outputId,
+                campaignId:    job.campaignId ?? "studio",
+                athleteId:     job.subjectId,
+                runId:         job.runId,
+                url:           urls[0],
+                originalFalUrl: urls[0],
+                status:        "pending",
+                createdAt:     now,
+              });
+              if (job.runId && job.campaignId) {
+                updateRun(job.campaignId, job.runId, { assetIds: [outputId] });
+              }
+              // Mirror to Supabase Storage non-blocking
+              import("./lib/storage").then(({ mirrorAsset }) => {
+                const path = `${job.subjectId ?? "unknown"}/${outputId}.jpg`;
+                mirrorAsset(urls[0], path).then(mirrored => {
+                  if (mirrored?.signedUrl) {
+                    import("./lib/store").then(({ updateCampaignOutput }) => {
+                      updateCampaignOutput(outputId, { url: mirrored.signedUrl, storagePath: mirrored.path });
+                    });
+                  }
+                }).catch(() => {});
+              });
+            }
+            toast({ type: "success", title: `${job.subjectName ?? "Generation"} ready`, body: "View it in Runs." });
+          } else if (status === "FAILED") {
+            updateJob(job.id, { status: "failed", error: "Generation failed" });
+            if (job.runId && job.campaignId) {
+              updateRun(job.campaignId, job.runId, { status: "failed", errorMessage: "Generation failed" });
+            }
+            toast({ type: "error", title: "Generation failed", body: job.subjectName ?? "See Studio for details." });
+          } else {
+            updateJob(job.id, { status: status === "IN_QUEUE" ? "queued" : "running", progress: nextProgress });
+          }
+        } catch (err) {
+          // 429 rate limit — back off 30s before retrying this job
+          const msg = err instanceof Error ? err.message : String(err);
+          if (msg.includes("429") || msg.toLowerCase().includes("rate limit")) {
+            updateJob(job.id, { rateRetryAfter: Date.now() + 30_000 });
+            toast({ type: "warning", title: "Rate limited", body: "Generation paused 30s, will resume automatically." });
+          }
+          // other network hiccup — retry next tick
+        }
+      }
+    };
+    const id = setInterval(poll, 1500);
+    return () => clearInterval(id);
+  }, [authed]);
 
   useEffect(() => {
     return onToast(t => {
@@ -142,8 +355,8 @@ function AuthenticatedApp() {
     });
   };
 
-  const goToStudio = useCallback((opts?: { workflowId?: string; athleteId?: string; workspaceId?: string }) => {
-    setPendingPrefill({ workflowId: opts?.workflowId, athleteId: opts?.athleteId });
+  const goToStudio = useCallback((opts?: { athleteId?: string; workspaceId?: string }) => {
+    setPendingPrefill(opts?.athleteId ? { athleteId: opts.athleteId } : null);
     setSelectedWorkspace(opts?.workspaceId ?? "new");
     setCurrentView("studio");
   }, []);
@@ -164,19 +377,21 @@ function AuthenticatedApp() {
   };
 
   const handleCampaignCreated = (project: Project) => {
+    addProject(project);
     setExtraProjects(prev => [project, ...prev]);
-    // Navigate to campaigns with the new project visible
     setCurrentView("projects");
     setShowNewCampaignModal(false);
   };
 
   const navItems = useMemo(() => [
-    { view: "home" as const,      label: "Home",      icon: Home },
-    { view: "projects" as const,  label: "Campaigns", icon: Folder },
-    { view: "subjects" as const,  label: "Subjects",  icon: Users },
-    { view: "workflows" as const, label: "Recipes",   icon: LayoutGrid },
-    { view: "library" as const,   label: "Library",   icon: Images },
-  ], []);
+    { view: "home"       as const, label: "Home",             icon: Home      },
+    { view: "projects"   as const, label: "Campaigns",        icon: Folder    },
+    { view: "subjects"   as const, label: "Talent",            icon: Users     },
+    { view: "wardrobe"   as const, label: "Wardrobe",         icon: Shirt     },
+    { view: "moodboards" as const, label: "Moodboards",       icon: Palette   },
+    { view: "library"    as const, label: "Library",          icon: Images    },
+    ...(isAdmin ? [{ view: "identity" as const, label: "Identity Studio", icon: ScanFace }] : []),
+  ], [isAdmin]);
 
   const renderNavItem = (
     view: ViewType,
@@ -292,15 +507,25 @@ function AuthenticatedApp() {
               {user?.avatarInitials ?? "?"}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate">{user?.name ?? "User"}</p>
+              <div className="flex items-center gap-1.5">
+                <p className="text-sm font-medium truncate">{user?.name ?? "User"}</p>
+                {isAdmin && (
+                  <span className="text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-400 border border-amber-500/20 shrink-0">
+                    Admin
+                  </span>
+                )}
+              </div>
               <p className="text-xs text-muted-foreground truncate">{user?.email ?? ""}</p>
             </div>
           </div>
         ) : (
-          <div className="mt-1 flex justify-center">
+          <div className="mt-1 flex justify-center relative">
             <div className="size-7 rounded-full bg-accent/20 text-accent flex items-center justify-center text-xs font-semibold">
               {user?.avatarInitials ?? "?"}
             </div>
+            {isAdmin && (
+              <span className="absolute -top-1 -right-1 size-2.5 rounded-full bg-amber-400 border border-background" title="Admin" />
+            )}
           </div>
         )}
       </div>
@@ -325,10 +550,10 @@ function AuthenticatedApp() {
       {/* Onboarding overlay */}
       {showOnboarding && (
         <Onboarding
-          onComplete={(athleteId, workflowId) => {
+          onComplete={(athleteId) => {
             setOnboarded();
             setShowOnboarding(false);
-            goToStudio({ athleteId, workflowId });
+            goToStudio({ athleteId });
           }}
           onSkip={() => {
             setOnboarded();
@@ -389,6 +614,23 @@ function AuthenticatedApp() {
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
+            {activeRenders > 0 && (() => {
+              const jobs = getJobs().filter(j => j.status === "queued" || j.status === "running");
+              const totalSlots = jobs.reduce((n, j) => n + (j.packId ? 1 : 1), 0);
+              const avgPct = totalSlots > 0 ? Math.round(jobs.reduce((s, j) => s + j.progress, 0) / totalSlots) : 0;
+              const estRemSec = avgPct > 0 && avgPct < 100 ? Math.round(35 * (1 - avgPct / 100)) : null;
+              return (
+                <button
+                  onClick={() => setCurrentView("queue")}
+                  className="hidden sm:flex items-center gap-1.5 h-8 px-2.5 rounded-md border border-border bg-card text-xs text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <span className="size-1.5 rounded-full bg-accent pulse-dot shrink-0" />
+                  {totalSlots === 1
+                    ? `${avgPct}%${estRemSec ? ` · ~${estRemSec}s` : ""}`
+                    : `${jobs.filter(j => j.progress === 100).length}/${totalSlots} ready`}
+                </button>
+              );
+            })()}
             <button
               onClick={() => setCurrentView("queue")}
               title="Queue"
@@ -414,15 +656,12 @@ function AuthenticatedApp() {
         <div className="flex-1 overflow-hidden relative">
           {currentView === "home" && (
             <Dashboard
-              userName={user?.name ?? ""}
               onOpenCampaigns={() => setCurrentView("projects")}
               onNewCampaign={() => setShowNewCampaignModal(true)}
               onQuickGenerate={() => goToStudio()}
               onAddAthlete={() => setShowAddAthleteModal(true)}
               onAthleteClick={(id) => { if (id) setSelectedAthleteId(id); setCurrentView("subjects"); }}
               onAthleteGenerate={(id) => goToStudio({ athleteId: id })}
-              onViewAllWorkflows={() => setCurrentView("workflows")}
-              onWorkflowClick={(id) => goToStudio({ workflowId: id })}
             />
           )}
           {currentView === "projects" && (
@@ -431,6 +670,8 @@ function AuthenticatedApp() {
               extraProjects={extraProjects}
             />
           )}
+          <ErrorBoundary>
+          <Suspense fallback={<div className="flex-1 flex items-center justify-center"><span className="size-5 border-2 border-accent/30 border-t-accent rounded-full animate-spin" /></div>}>
           {currentView === "subjects" && (
             <AthleteLibrary
               preSelectedAthleteId={selectedAthleteId}
@@ -441,18 +682,32 @@ function AuthenticatedApp() {
           {currentView === "library" && (
             <LibraryPage reviewerEmail={appUser?.email ?? ""} />
           )}
-          {currentView === "workflows" && (
-            <WorkflowLibrary onSelectWorkflow={(id) => goToStudio({ workflowId: id })} />
-          )}
-          {currentView === "studio" && selectedWorkspace && (
+{currentView === "wardrobe"    && <WardrobeLibrary />}
+          {currentView === "moodboards"  && <MoodboardLibrary />}
+          {currentView === "identity"    && isAdmin && <IdentityStudio />}
+          {currentView === "studio" && (
             <Workspace
-              workspaceId={selectedWorkspace}
+              workspaceId={selectedWorkspace ?? "new"}
               prefill={pendingPrefill ?? undefined}
-              onBack={() => setCurrentView("home")}
+              onBack={() => {
+                const isCampaign = getProjects().some(p => p.id === selectedWorkspace);
+                setCurrentView(isCampaign ? "projects" : "home");
+              }}
             />
           )}
-          {currentView === "queue" && <QueuePage />}
+          {currentView === "queue" && (
+            <QueuePage
+              onOpenCampaign={(campaignId) => {
+                setCurrentView("projects");
+              }}
+              onOpenStudio={(opts) => {
+                goToStudio({ athleteId: opts.athleteId, workspaceId: opts.campaignId });
+              }}
+            />
+          )}
           {currentView === "archive" && <ArchivePage />}
+          </Suspense>
+          </ErrorBoundary>
           {currentView === "settings" && (
             <Settings
               appUser={appUser}
@@ -502,6 +757,7 @@ function AuthenticatedApp() {
           </div>
         ))}
       </div>
+      <DebugPanel isAdmin={isAdmin} />
     </div>
   );
 }

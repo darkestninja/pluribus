@@ -70,7 +70,9 @@
       "Bash(rsync -az --delete --exclude node_modules --exclude dist --exclude .git --exclude '*.zip' /Users/nomad/Pluribus/ athena:/opt/pluribus/)",
       "Bash(git add *)",
       "Bash(git rm *)",
-      "Bash(git commit -m ' *)"
+      "Bash(git commit -m ' *)",
+      "Bash(git remote *)",
+      "Bash(bash /opt/pluribus/deploy.sh)"
     ]
   }
 }

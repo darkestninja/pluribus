@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import {
   User, Bell, Palette, CreditCard, Shield, HelpCircle, LogOut,
   Check, ChevronRight, Moon, Sun, Monitor, Zap, Mail, Lock,
-  Globe, Download, Loader2, Eye, EyeOff,
+  Globe, Download, Loader2, Eye, EyeOff, Users, Plus, X,
 } from "lucide-react";
 import { supabase } from "../lib/supabase";
 import { toast } from "../lib/notifications";
@@ -16,7 +16,7 @@ interface SettingsProps {
   onClose: () => void;
 }
 
-type Tab = "account" | "appearance" | "notifications" | "billing" | "security" | "help";
+type Tab = "account" | "appearance" | "notifications" | "billing" | "security" | "members" | "help";
 
 function Toggle({ enabled, onToggle }: { enabled: boolean; onToggle: () => void }) {
   return (
@@ -44,8 +44,179 @@ const TABS: { id: Tab; label: string; icon: React.ElementType }[] = [
   { id: "notifications", label: "Notifications",  icon: Bell },
   { id: "billing",      label: "Billing & Credits", icon: CreditCard },
   { id: "security",     label: "Security",        icon: Shield },
+  { id: "members",      label: "Members",         icon: Users },
   { id: "help",         label: "Help & Support",  icon: HelpCircle },
 ];
+
+import { can, type UserRole } from "../lib/permissions";
+import { getUserRole } from "../lib/store";
+
+type WorkspaceMember = {
+  id: string;
+  email: string;
+  role: UserRole;
+  joinedAt: string;
+  status: "active" | "invited";
+};
+
+const ROLE_OPTIONS: { value: UserRole; label: string; desc: string }[] = [
+  { value: "admin",          label: "Admin",           desc: "Full access — can manage members and settings" },
+  { value: "editor",         label: "Editor",          desc: "Generate, review, and approve outputs" },
+  { value: "viewer",         label: "Viewer",          desc: "View-only — cannot approve or export" },
+  { value: "legal",          label: "Legal",           desc: "Can flag outputs; read-only otherwise" },
+  { value: "subject_manager",label: "Subject Manager", desc: "Manages a subject's portal on their behalf" },
+];
+
+function MembersTab({ currentUserEmail }: { currentUserEmail: string }) {
+  const [members, setMembers] = useState<WorkspaceMember[]>(() => [
+    { id: "owner", email: currentUserEmail, role: "admin", joinedAt: new Date().toISOString(), status: "active" },
+  ]);
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteRole, setInviteRole] = useState<UserRole>("editor");
+  const [inviting, setInviting] = useState(false);
+
+  const handleInvite = async () => {
+    if (!can(getUserRole(), "members:manage")) {
+      toast({ type: "error", title: "Permission denied", body: "Only admins can invite members." }); return;
+    }
+    const email = inviteEmail.trim().toLowerCase();
+    if (!email || !email.includes("@")) return;
+    if (members.some(m => m.email === email)) {
+      toast({ type: "error", title: "Already a member", body: email }); return;
+    }
+    setInviting(true);
+    await new Promise(r => setTimeout(r, 600)); // stub — replace with API call
+    setMembers(prev => [...prev, {
+      id: crypto.randomUUID().slice(0, 8),
+      email,
+      role: inviteRole,
+      joinedAt: new Date().toISOString(),
+      status: "invited",
+    }]);
+    toast({ type: "success", title: "Invite sent", body: `${email} invited as ${inviteRole}` });
+    setInviteEmail("");
+    setInviting(false);
+  };
+
+  const handleRoleChange = (id: string, role: UserRole) => {
+    if (!can(getUserRole(), "members:manage")) {
+      toast({ type: "error", title: "Permission denied", body: "Only admins can change member roles." }); return;
+    }
+    setMembers(prev => prev.map(m => m.id === id ? { ...m, role } : m));
+    toast({ type: "info", title: "Role updated" });
+  };
+
+  const handleRemove = (id: string) => {
+    if (!can(getUserRole(), "members:manage")) {
+      toast({ type: "error", title: "Permission denied", body: "Only admins can remove members." }); return;
+    }
+    setMembers(prev => prev.filter(m => m.id !== id));
+    toast({ type: "info", title: "Member removed" });
+  };
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h3 className="text-sm font-semibold tracking-tight">Workspace members</h3>
+        <p className="text-xs text-muted-foreground mt-0.5">Manage who has access to this workspace and their roles.</p>
+      </div>
+
+      {/* Invite form */}
+      <div className="rounded-lg border border-border bg-card p-4 space-y-3">
+        <p className="text-xs font-medium text-foreground">Invite a member</p>
+        <div className="flex gap-2">
+          <input
+            type="email"
+            value={inviteEmail}
+            onChange={e => setInviteEmail(e.target.value)}
+            onKeyDown={e => { if (e.key === "Enter") handleInvite(); }}
+            placeholder="colleague@example.com"
+            className="flex-1 h-9 bg-background border border-border rounded-md px-3 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-accent"
+          />
+          <select
+            value={inviteRole}
+            onChange={e => setInviteRole(e.target.value as UserRole)}
+            className="h-9 pl-2.5 pr-7 bg-background border border-border rounded-md text-sm text-foreground focus:outline-none focus:border-accent appearance-none cursor-pointer"
+          >
+            {ROLE_OPTIONS.map(r => (
+              <option key={r.value} value={r.value}>{r.label}</option>
+            ))}
+          </select>
+          <button
+            onClick={handleInvite}
+            disabled={inviting || !inviteEmail.trim()}
+            className="h-9 px-3 rounded-md bg-accent hover:bg-accent/90 text-accent-foreground text-sm font-medium transition-colors disabled:opacity-40 flex items-center gap-1.5"
+          >
+            {inviting ? <Loader2 className="size-3.5 animate-spin" /> : <Plus className="size-3.5" />}
+            Invite
+          </button>
+        </div>
+        <p className="text-[11px] text-muted-foreground">
+          They will receive an email invitation. Pending invites expire after 7 days.
+        </p>
+      </div>
+
+      {/* Role descriptions */}
+      <details className="rounded-lg border border-border bg-card overflow-hidden">
+        <summary className="px-4 py-2.5 text-xs text-muted-foreground cursor-pointer hover:text-foreground transition-colors flex items-center gap-2">
+          Role reference
+        </summary>
+        <div className="divide-y divide-border">
+          {ROLE_OPTIONS.map(r => (
+            <div key={r.value} className="px-4 py-2.5">
+              <p className="text-xs font-medium">{r.label}</p>
+              <p className="text-[11px] text-muted-foreground">{r.desc}</p>
+            </div>
+          ))}
+        </div>
+      </details>
+
+      {/* Member list */}
+      <div className="rounded-lg border border-border overflow-hidden divide-y divide-border">
+        {members.map(member => (
+          <div key={member.id} className="flex items-center gap-3 px-4 py-3 bg-card hover:bg-secondary/30 transition-colors">
+            <div className="size-8 rounded-full bg-accent/20 text-accent flex items-center justify-center text-xs font-semibold shrink-0">
+              {member.email[0].toUpperCase()}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium truncate">{member.email}</p>
+              <div className="flex items-center gap-2 mt-0.5">
+                {member.status === "invited" && (
+                  <span className="text-[10px] text-amber-400 border border-amber-400/30 rounded px-1">Pending invite</span>
+                )}
+                <span className="text-[11px] text-muted-foreground">
+                  {member.status === "active" ? "Joined" : "Invited"} {new Date(member.joinedAt).toLocaleDateString()}
+                </span>
+              </div>
+            </div>
+            {member.email === currentUserEmail ? (
+              <span className="text-xs text-muted-foreground px-2 py-1 rounded-md bg-secondary">You · Admin</span>
+            ) : (
+              <div className="flex items-center gap-1.5">
+                <select
+                  value={member.role}
+                  onChange={e => handleRoleChange(member.id, e.target.value as UserRole)}
+                  className="h-7 pl-2 pr-6 bg-background border border-border rounded text-xs text-foreground focus:outline-none focus:border-accent appearance-none cursor-pointer"
+                >
+                  {ROLE_OPTIONS.map(r => (
+                    <option key={r.value} value={r.value}>{r.label}</option>
+                  ))}
+                </select>
+                <button
+                  onClick={() => handleRemove(member.id)}
+                  title="Remove member"
+                  className="size-7 rounded-md border border-border text-muted-foreground hover:text-red-400 hover:border-red-400/40 transition-colors flex items-center justify-center"
+                >
+                  <X className="size-3.5" />
+                </button>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export function Settings({ appUser, isDark, onThemeChange, onSignOut, onClose }: SettingsProps) {
   const [activeTab, setActiveTab] = useState<Tab>("account");
@@ -137,15 +308,7 @@ export function Settings({ appUser, isDark, onThemeChange, onSignOut, onClose }:
   };
 
   const downloadData = () => {
-    const data: Record<string, unknown> = { user: appUser };
-    try {
-      for (let i = 0; i < localStorage.length; i++) {
-        const k = localStorage.key(i)!;
-        if (k.startsWith("plb_")) {
-          try { data[k] = JSON.parse(localStorage.getItem(k)!); } catch { data[k] = localStorage.getItem(k); }
-        }
-      }
-    } catch {}
+    const data: Record<string, unknown> = { user: appUser, note: "Full data export available via Supabase dashboard." };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
     const a = document.createElement("a"); a.href = URL.createObjectURL(blob);
     a.download = "pluribus-data.json"; a.click(); URL.revokeObjectURL(a.href);
@@ -545,6 +708,8 @@ export function Settings({ appUser, isDark, onThemeChange, onSignOut, onClose }:
           )}
 
           {/* ── Help ── */}
+          {activeTab === "members" && <MembersTab currentUserEmail={appUser?.email ?? ""} />}
+
           {activeTab === "help" && (
             <div className="space-y-6">
               <div>

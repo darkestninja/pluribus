@@ -2,15 +2,17 @@
 
 ## 1. Overview
 
-Pluribus is a pre-launch AI-native media production platform.
+Pluribus is the operating system for commercial identity rights.
 
-It is not an AI image generator.
+We manage consent, approvals, licensing, AI usage permissions, asset generation, and monetization across millions of athlete and creator identities.
 
-It is creative operating infrastructure for high-volume, identity-based media production, starting with sports, athletes, entertainment, and brand/media teams.
+**Talent scope:** athletes, actors, influencers, musicians, and any human subject whose likeness has commercial value and requires controlled representation, legal consent, and creative approval before public use.
 
-The goal is to turn Pluribus from a generation tool into a production operating system for AI-assisted creative teams.
+**The long arc:** Today Pluribus is a production platform used by creative teams and brands. The destination is infrastructure — a consent and rights layer that other production tools (creative platforms, agency systems, Figma plugins, brand portals) embed rather than rebuild. Pluribus becomes the Stripe of identity consent: invisible, essential, compounding.
 
-Pluribus must become operationally unavoidable, not just visually impressive.
+**The near term:** The first wedge is the end-to-end production workflow — identity capture → AI generation → consent → approval → licensed export. Every brand or agency that processes a talent likeness commercially needs what Pluribus does. The consent flow is the legal exposure that makes Pluribus unavoidable, not just convenient.
+
+**Build status (as of 2026-06-20):** Production-hardened. Sprints 1–20 + Sprint 13 complete. Deployed at https://pluribus.danielasiegbunam.com. Validated with one paying customer (Enhanced.com). Ready for second customer onboarding.
 
 ---
 
@@ -18,7 +20,11 @@ Pluribus must become operationally unavoidable, not just visually impressive.
 
 Pluribus should be positioned as:
 
-"AI-native creative infrastructure for identity-based sports and entertainment media production."
+**"The operating system for commercial identity rights."**
+
+One sentence for a customer: "We handle consent, approvals, and AI generation so brands can use talent likenesses commercially — legally and at scale."
+
+One sentence for an investor: "We're building the infrastructure layer for commercial identity rights — the consent and licensing OS that sits underneath every AI-generated use of a human likeness."
 
 Pluribus should not be positioned as:
 
@@ -29,13 +35,21 @@ Pluribus should not be positioned as:
 - Consumer AI image app
 - AI art toy
 
-The product should feel like serious creative infrastructure.
+The product should feel like serious infrastructure, not a creative toy.
+
+### The three layers (current → near → far)
+
+| Layer | Time horizon | What Pluribus is |
+|---|---|---|
+| Production platform | Now | End-to-end workflow for creative teams producing AI talent media |
+| Rights management system | 12–24 months | System of record for every consent, approval, and licensed export across a brand's talent roster |
+| B2B infrastructure / API | 24–48 months | Consent + licensing layer embedded in other creative tools, agency platforms, and brand portals |
 
 ---
 
 ## 3. Core Strategic Direction
 
-Pluribus must materially improve in six moat areas:
+Pluribus must materially improve in seven moat areas:
 
 1. Proprietary workflow orchestration
 2. Approval systems
@@ -43,6 +57,7 @@ Pluribus must materially improve in six moat areas:
 4. Art-direction tooling
 5. Asset memory
 6. Organizational workflows
+7. Talent consent + trust infrastructure — the consent moat is the primary sales wedge and the hardest to copy; it makes Pluribus the legal paper trail for every synthetic likeness produced
 
 The raw image model is not the moat.
 
@@ -61,20 +76,24 @@ The moat is the system around generation:
 
 ## 4. Primary Product Goal
 
-The primary goal is to turn Pluribus into the system of record for synthetic identity media.
+The primary goal is to turn Pluribus into the operating system for commercial identity rights.
 
-The system should remember:
+**Near term:** The system of record for every synthetic likeness produced — who consented, what was approved, what was exported, under what license.
 
-- who the subject is
-- what they should look like
-- what has been approved
-- what has been rejected
-- which workflows work
-- which campaigns assets belong to
-- who reviewed what
-- which exports were delivered
-- which creative direction is brand-safe
-- which visual systems should be reused
+**Long term:** The infrastructure layer that makes commercial AI use of human likeness legally defensible at scale — for brands, agencies, talent managers, and eventually any platform that touches a human face commercially.
+
+The system should know and remember:
+
+- who the subject is and what they consented to
+- what their likeness should look like
+- what has been approved by the creative team
+- what has been approved by the talent themselves
+- what usage licenses have been issued and to whom
+- which campaigns the likeness has appeared in
+- which exports were delivered and when
+- what the talent earned or is owed (monetization layer, Phase 3+)
+- which creative direction is brand-safe and on-brief
+- which visual systems should be reused across campaigns
 
 ---
 
@@ -295,15 +314,16 @@ Reusable output formats:
 
 ### Organization Roles
 
-At minimum:
+8-role model implemented in `app/lib/permissions.ts`:
 
-- Owner
-- Admin
-- Creative Director
-- Designer
-- Reviewer
-- External Reviewer
-- Viewer
+- `admin` — full workspace control
+- `editor` — create campaigns, generate, manage subjects
+- `viewer` — read-only access
+- `reviewer` — approve/reject outputs, comment
+- `subject` — talent-facing portal access (SubjectPortal)
+- `subject_manager` — manages talent onboarding and consent
+- `legal` — consent record access
+- `guest` — external review link access (no login)
 
 ---
 
@@ -408,9 +428,9 @@ Important screens:
 
 ---
 
-## 9. Launch-Critical Phase 1 Features
+## 9. Phase 1 Status — COMPLETE
 
-Phase 1 should focus on moat foundation.
+All Phase 1 features are built and deployed. Summary below for reference.
 
 ### 1. Identity Profiles
 
@@ -488,25 +508,28 @@ Minimum requirements:
 
 ---
 
-## 10. Phase 2 Improvements
+## 10. Phase 2 Status — PARTIALLY COMPLETE
 
-After Phase 1:
+Built:
+- [x] Side-by-side asset comparison (ComparePanel)
+- [x] External review links (`/review/{token}`, no login required)
+- [x] Export packs (Campaign Pack Generator — 4 pack types)
+- [x] Quality scoring (resemblance scoring, 5-tier identity score system)
+- [x] Identity confidence scoring (Hero/Campaign/Internal/Exploration/Weak tiers)
+- [x] Advanced permissions (8-role model, `can()` API, gates on export/approve/member management)
+- [x] Talent consent infrastructure (SubjectPortal, consent receipt email, subject approve/reject)
 
-- side-by-side asset comparison
-- contact sheet view
-- batch feedback
-- structured feedback presets
-- export packs
-- campaign boards
-- external review links
-- version history
-- AI-assisted tagging
-- AI-assisted recipe recommendations
-- quality scoring
-- identity confidence scoring
-- sponsor-safe review labels
-- brand safety checklist
-- advanced permissions
+Not yet built:
+- [ ] Contact sheet view
+- [ ] Batch feedback
+- [ ] Structured feedback presets
+- [ ] Campaign boards
+- [ ] Version history on recipes and subjects
+- [ ] AI-assisted tagging
+- [ ] AI-assisted recipe recommendations
+- [ ] Sponsor-safe review labels
+- [ ] Brand safety checklist
+- [ ] Members backend (workspace_members table + invite email)
 
 ---
 
@@ -552,8 +575,26 @@ Do not prioritize:
 
 ## 13. Strategic End State
 
-The end state is that Pluribus becomes the system of record for synthetic identity media.
+The end state is that Pluribus becomes the operating system for commercial identity rights — the infrastructure layer that any brand, agency, or creative platform uses to manage AI-generated likeness at scale.
 
-Build toward that.
+At scale, Pluribus:
 
-Start by auditing the current project carefully, then execute the highest-leverage Phase 1 improvements.
+- Holds consent records for millions of talent identities
+- Manages approval workflows across thousands of campaigns simultaneously
+- Issues usage licenses that specify what an AI-generated likeness can and cannot be used for
+- Tracks monetization (royalties, usage fees, talent tier pricing) per identity per use
+- Exposes all of this as an API that other tools embed rather than rebuild
+
+The product today (campaign production platform) is the wedge that earns trust with brands, agencies, and talent. Every consent signed, every output approved, every licensed export delivered builds the dataset and the credibility that makes the infrastructure play possible.
+
+### The API / B2B Infrastructure Play
+
+Packaging identity capture + consent as an API/SDK is a Phase 3 move, not Phase 1. It requires:
+
+1. Proven consent workflow with multiple paying customers (validates the standard)
+2. Legal review of consent record portability and jurisdiction requirements
+3. Developer-facing API surface (token issuance, webhook events, rights query)
+
+The signal to start this play: when a second or third customer asks "can we embed this into our existing platform?" instead of using Pluribus directly. That question is the product-market fit signal for the API layer.
+
+Do not build this speculatively. Build it when someone asks for it.

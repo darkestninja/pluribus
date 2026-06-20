@@ -1,9 +1,9 @@
 import { useState, useRef } from "react";
 import { X, Plus, Check } from "lucide-react";
-import { getAthletes, getRecipes } from "../lib/store";
+import { getAthletes } from "../lib/store";
 
 interface OnboardingProps {
-  onComplete: (athleteId: string, workflowId: string) => void;
+  onComplete: (athleteId: string) => void;
   onSkip: () => void;
 }
 
@@ -11,7 +11,6 @@ export function Onboarding({ onComplete, onSkip }: OnboardingProps) {
   const athletes = getAthletes();
   const [step, setStep] = useState(1);
   const [selectedAthleteId, setSelectedAthleteId] = useState<string | null>(null);
-  const [selectedWorkflowId, setSelectedWorkflowId] = useState<string | null>(null);
 
   // New athlete form state
   const [showNewAthlete, setShowNewAthlete] = useState(false);
@@ -20,10 +19,7 @@ export function Onboarding({ onComplete, onSkip }: OnboardingProps) {
   const fileRef = useRef<HTMLInputElement>(null);
 
   const selectedAthlete = athletes.find(a => a.id === selectedAthleteId);
-  const selectedWorkflow = getRecipes().find(r => r.id === selectedWorkflowId);
-
   const canGoToStep2 = !!selectedAthleteId;
-  const canGoToStep3 = !!selectedWorkflowId;
 
   return (
     <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
@@ -145,72 +141,17 @@ export function Onboarding({ onComplete, onSkip }: OnboardingProps) {
             </div>
           )}
 
-          {/* ── Step 2: Choose a style ── */}
-          {step === 2 && (
-            <div className="space-y-6">
-              <div className="text-center">
-                <h2 className="text-xl font-semibold tracking-tight">Choose a style</h2>
-                <p className="text-sm text-muted-foreground mt-1">Pick the visual direction for your first generation.</p>
-              </div>
-
-              <div className="grid grid-cols-3 gap-3">
-                {getRecipes().map(wf => {
-                  const sel = selectedWorkflowId === wf.id;
-                  return (
-                    <button
-                      key={wf.id}
-                      onClick={() => setSelectedWorkflowId(wf.id)}
-                      className={`group relative rounded-xl overflow-hidden border-2 transition-all text-left ${
-                        sel ? "border-accent ring-2 ring-accent/20" : "border-border hover:border-accent/40"
-                      }`}
-                    >
-                      <div className="aspect-[4/3] overflow-hidden">
-                        <img src={wf.thumbnail} alt={wf.name} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.03]" />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
-                      </div>
-                      <div className="absolute bottom-0 left-0 right-0 p-2.5">
-                        <p className="text-xs font-semibold text-white">{wf.name}</p>
-                        {wf.description && <p className="text-[10px] text-white/60 mt-0.5 line-clamp-1">{wf.description}</p>}
-                      </div>
-                      {sel && (
-                        <div className="absolute top-2 right-2 size-5 rounded-full bg-accent flex items-center justify-center">
-                          <Check className="size-3 text-accent-foreground" strokeWidth={2.5} />
-                        </div>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setStep(1)}
-                  className="h-10 px-5 rounded-lg bg-card border border-border hover:bg-secondary text-sm text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  Back
-                </button>
-                <button
-                  onClick={() => setStep(3)}
-                  disabled={!canGoToStep3}
-                  className="flex-1 h-10 rounded-lg bg-accent hover:bg-accent/90 disabled:opacity-40 text-accent-foreground font-medium transition-colors"
-                >
-                  Continue →
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* ── Step 3: You're all set ── */}
-          {step === 3 && selectedAthlete && selectedWorkflow && (
+          {/* ── Step 2: You're all set ── */}
+          {step === 2 && selectedAthlete && (
             <div className="space-y-6">
               <div className="text-center">
                 <h2 className="text-xl font-semibold tracking-tight">You're all set</h2>
                 <p className="text-sm text-muted-foreground mt-1">Ready to generate your first AI sports image.</p>
               </div>
 
-              <div className="flex items-center justify-center gap-6">
+              <div className="flex items-center justify-center">
                 <div className="text-center space-y-2">
-                  <div className="size-20 rounded-xl overflow-hidden mx-auto border-2 border-accent/30">
+                  <div className="size-24 rounded-xl overflow-hidden mx-auto border-2 border-accent/30">
                     <img src={selectedAthlete.image} alt={selectedAthlete.name} className="w-full h-full object-cover" />
                   </div>
                   <div>
@@ -218,23 +159,11 @@ export function Onboarding({ onComplete, onSkip }: OnboardingProps) {
                     <p className="text-xs text-muted-foreground">{selectedAthlete.sport}</p>
                   </div>
                 </div>
-
-                <div className="text-2xl text-muted-foreground">×</div>
-
-                <div className="text-center space-y-2">
-                  <div className="size-20 rounded-xl overflow-hidden mx-auto border-2 border-accent/30">
-                    <img src={selectedWorkflow.thumbnail} alt={selectedWorkflow.name} className="w-full h-full object-cover" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">{selectedWorkflow.name}</p>
-                    <p className="text-xs text-muted-foreground">{selectedWorkflow.aspectRatio}</p>
-                  </div>
-                </div>
               </div>
 
               <div className="space-y-2">
                 <button
-                  onClick={() => onComplete(selectedAthleteId!, selectedWorkflowId!)}
+                  onClick={() => onComplete(selectedAthleteId!)}
                   className="w-full h-11 rounded-lg bg-accent hover:bg-accent/90 text-accent-foreground font-semibold transition-colors flex items-center justify-center gap-2"
                 >
                   Generate first image →
