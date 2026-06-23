@@ -1,8 +1,19 @@
 # Decisions
 
+---
+
+> AI will create 100x more branded media than exists today. Pluribus is the operating system that lets brands create athlete and creator campaigns at that scale while maintaining identity consistency, approvals, and rights.
+>
+> **Generation gets you distribution.**
+> **Campaigns get you customers.**
+> **Identity becomes the moat.**
+
+---
+
 ## Product Decisions
 
 - Pluribus is not positioned as an AI image generator.
+- Pluribus produces both still images and video. Both are first-class outputs under the same consent and rights framework. Video raises the legal stakes significantly (motion likeness, deepfake legislation, platform policies) which makes the consent infrastructure more valuable, not less.
 - Pluribus is the operating system for commercial identity rights.
 - The long-term destination is B2B infrastructure — a consent + licensing API embedded in other creative tools, agency platforms, and brand portals.
 - The near-term wedge is the end-to-end production workflow: identity capture → AI generation → consent → approval → licensed export.
@@ -10,6 +21,20 @@
 - Workflow, identity, approval, consent, and rights records are more important than raw generation quality.
 - Revenue model: Platform Fee + Talent Tiers (decided 2026-06-20). API licensing is a Phase 3+ revenue line, not yet scoped.
 - The B2B API / infrastructure play (embedding consent + licensing in other tools) is a Phase 3 move — do not build speculatively. The trigger is a customer asking to embed Pluribus rather than use it directly.
+
+## Go-To-Market Structure (decided 2026-06-20)
+
+| Role | Who | Implication |
+|---|---|---|
+| Initial buyer | Brand marketing team | Lead with legal coverage + cost vs. traditional shoots |
+| Initial champion | Creative director | Product must feel like premium creative infrastructure |
+| Initial daily user | Designer / content producer | Workflow speed and reliability are table stakes |
+| Initial approver | Talent | Portal UX must make talent feel in control, not surveilled |
+| Long-term strategic buyer | Talent agency | Roster-level enrollment is the supply-side scale unlock |
+
+**Network flywheel:** More talent → more approved identities → more valuable to brands → more campaigns → more incentive for talent/agencies to enroll.
+
+Build toward the talent agency sale. Every product decision that makes it easier for an agency to onboard a full roster (bulk enrollment, standardized consent templates, agency-level permissions) accelerates the flywheel.
 
 ---
 

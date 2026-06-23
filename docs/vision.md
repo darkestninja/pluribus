@@ -1,10 +1,22 @@
 # Pluribus Vision
 
+---
+
+> AI will create 100x more branded media than exists today. Pluribus is the operating system that lets brands create athlete and creator campaigns at that scale while maintaining identity consistency, approvals, and rights.
+>
+> **Generation gets you distribution.**
+> **Campaigns get you customers.**
+> **Identity becomes the moat.**
+
+---
+
 ## 1. Overview
 
 Pluribus is the operating system for commercial identity rights.
 
-We manage consent, approvals, licensing, AI usage permissions, asset generation, and monetization across millions of athlete and creator identities.
+We manage consent, approvals, licensing, AI usage permissions, asset generation (image and video), and monetization across millions of athlete and creator identities.
+
+**Media scope:** still images and video. Both are first-class outputs. A campaign might produce hero stills, social cuts, broadcast spots, and motion graphics from a single talent session. Pluribus handles all of them under the same consent record and rights framework.
 
 **Talent scope:** athletes, actors, influencers, musicians, and any human subject whose likeness has commercial value and requires controlled representation, legal consent, and creative approval before public use.
 
@@ -22,9 +34,9 @@ Pluribus should be positioned as:
 
 **"The operating system for commercial identity rights."**
 
-One sentence for a customer: "We handle consent, approvals, and AI generation so brands can use talent likenesses commercially — legally and at scale."
+One sentence for a customer: "We handle consent, approvals, and AI generation — image and video — so brands can use talent likenesses commercially, legally, and at scale."
 
-One sentence for an investor: "We're building the infrastructure layer for commercial identity rights — the consent and licensing OS that sits underneath every AI-generated use of a human likeness."
+One sentence for an investor: "We're building the infrastructure layer for commercial identity rights — the consent and licensing OS that sits underneath every AI-generated use of a human likeness, across still and motion media."
 
 Pluribus should not be positioned as:
 
@@ -72,9 +84,41 @@ The moat is the system around generation:
 - approval history
 - team operations
 
+And the network that compounds it:
+
+**More talent enrolled → more approved identities → more valuable to brands → more campaigns → more incentive for talent to enroll.**
+
+This is a two-sided network. Supply (talent identities) makes the platform more valuable to demand (brands and agencies). Demand creates the revenue that makes enrollment worthwhile for talent. Each new identity enrolled raises the floor value for every brand already on the platform.
+
 ---
 
-## 4. Primary Product Goal
+## 4. Who Uses Pluribus
+
+Every participant in the Pluribus workflow is a distinct buyer, champion, or user. Understanding the stack is critical to sales, product prioritization, and the network effect.
+
+| Role | Who | What they need |
+|---|---|---|
+| **Initial buyer** | Brand marketing team | Budget sign-off; needs legal coverage + cost savings vs. traditional shoots |
+| **Initial champion** | Creative director | Internal advocate; needs creative control, identity consistency, faster turnaround |
+| **Initial daily user** | Designer / content producer | Operates the platform daily; needs a fast, reliable production workflow |
+| **Initial approver** | Talent (athlete, actor, influencer) | Holds veto; needs to feel in control of their likeness and trust the output |
+| **Long-term strategic buyer** | Talent agency | Manages a roster; buys once for dozens/hundreds of identities; becomes the platform's best distribution channel |
+
+**Why this structure compounds:**
+
+Every participant strengthens the network.
+
+- More talent enrolled → more approved identities available to brands
+- More approved identities → more valuable to brands (bigger roster, less friction per campaign)
+- More brands and campaigns → more revenue for talent (monetization layer)
+- More revenue for talent → more incentive for talent and agencies to enroll
+- More agency adoption → roster-level enrollment at scale
+
+The talent agency as long-term strategic buyer is the unlock. A single agency relationship can bring dozens of identities onto the platform at once — collapsing the supply-side acquisition cost and making Pluribus the standard consent infrastructure for that agency's entire commercial operation.
+
+---
+
+## 5a. Primary Product Goal
 
 The primary goal is to turn Pluribus into the operating system for commercial identity rights.
 
@@ -97,7 +141,7 @@ The system should know and remember:
 
 ---
 
-## 5. Product Principles
+## 5b. Product Principles
 
 ### Workflow first, generation second
 
@@ -249,11 +293,11 @@ Should track:
 
 ### Asset
 
-Any generated or uploaded media file.
+Any generated or uploaded media file — still image or video.
 
 Should include:
 
-- asset type
+- asset type (`image` | `video`)
 - source
 - subject
 - project
@@ -268,6 +312,8 @@ Should include:
 - parent asset
 - generation run
 - export formats
+
+**Video is a first-class asset type.** A video output has the same consent, approval, and rights requirements as a still — and typically stricter legal exposure (motion likeness, audio sync, duration of use). The consent record covers both.
 
 ### Review
 
@@ -520,6 +566,9 @@ Built:
 - [x] Talent consent infrastructure (SubjectPortal, consent receipt email, subject approve/reject)
 
 Not yet built:
+- [ ] Video generation — pipeline exists (Pika 2.2, Kling v2/Pro, Sora via fal.ai), not yet wired to campaign workflows or the consent/approval chain
+- [ ] Video review UI — playback, frame-level approval, motion-specific rejection reasons
+- [ ] Video in export packs — ZIP currently image-only
 - [ ] Contact sheet view
 - [ ] Batch feedback
 - [ ] Structured feedback presets
@@ -579,11 +628,13 @@ The end state is that Pluribus becomes the operating system for commercial ident
 
 At scale, Pluribus:
 
-- Holds consent records for millions of talent identities
+- Holds consent records for millions of talent identities — covering both image and video use
 - Manages approval workflows across thousands of campaigns simultaneously
-- Issues usage licenses that specify what an AI-generated likeness can and cannot be used for
-- Tracks monetization (royalties, usage fees, talent tier pricing) per identity per use
+- Issues usage licenses that specify what an AI-generated likeness can and cannot be used for, across media types (still, short-form video, broadcast, OOH)
+- Tracks monetization (royalties, usage fees, talent tier pricing) per identity per use per media type
 - Exposes all of this as an API that other tools embed rather than rebuild
+
+**Why video raises the stakes:** AI-generated video of a real person is the highest-friction category in synthetic media law. Deepfake legislation, right-of-publicity statutes, and platform content policies all treat motion likeness more seriously than stills. Pluribus's consent infrastructure becomes a legal necessity — not just a nice-to-have — the moment a brand wants to run a 30-second AI-generated video of an athlete or actor in a paid placement.
 
 The product today (campaign production platform) is the wedge that earns trust with brands, agencies, and talent. Every consent signed, every output approved, every licensed export delivered builds the dataset and the credibility that makes the infrastructure play possible.
 

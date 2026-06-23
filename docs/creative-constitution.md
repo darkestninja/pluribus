@@ -1,8 +1,20 @@
 # Pluribus Creative Constitution
 
+---
+
+> AI will create 100x more branded media than exists today. Pluribus is the operating system that lets brands create athlete and creator campaigns at that scale while maintaining identity consistency, approvals, and rights.
+>
+> **Generation gets you distribution.**
+> **Campaigns get you customers.**
+> **Identity becomes the moat.**
+
+---
+
 ## 0. Purpose
 
-Pluribus exists to produce controlled, believable, identity-consistent, production-ready media for talent-driven industries: sports, entertainment, music, fashion, and culture-led brands. Talent scope: athletes, actors, influencers, and any human subject whose likeness requires controlled representation and legal consent.
+Pluribus exists to produce controlled, believable, identity-consistent, production-ready media — still and video — for talent-driven industries: sports, entertainment, music, fashion, and culture-led brands. Talent scope: athletes, actors, influencers, and any human subject whose likeness requires controlled representation and legal consent.
+
+Video is a first-class output. The same identity standards, approval requirements, and rights obligations that apply to a still image apply equally — and with greater legal weight — to motion.
 
 This document defines the creative operating system of Pluribus.
 
@@ -1109,15 +1121,18 @@ The constitution is the blueprint for product moat.
 
 # 33. The Rights Dimension
 
-Every creative output produced by Pluribus is also a rights object.
+Every creative output produced by Pluribus — still or video — is also a rights object.
 
 It carries:
 
 - who consented (the talent, the date, the scope)
 - who approved (the creative director, the reviewer)
+- what media type it is (still image, short-form video, broadcast)
 - what it can be used for (the licensed usage scopes)
 - what it cannot be used for (revoked, restricted, or expired)
 - who generated it and under what brief
+
+Video outputs carry additional rights weight. A 30-second AI-generated video of a real person in a paid placement is subject to stricter platform policies, right-of-publicity law, and deepfake legislation than a still. The consent record must cover motion use explicitly.
 
 The creative constitution governs what the image looks like.
 

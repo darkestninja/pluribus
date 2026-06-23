@@ -26,7 +26,7 @@ Pre-launch. Sprints 1–20 complete + Sprint 13 (13a Ship-Blockers + 13b Consent
 
 ### Generation
 - [x] Image generation via Nano Banana exclusively (fal-ai/nano-banana, IP-Adapter)
-- [x] Video generation (Pika 2.2, Kling v2/Pro, Sora) via fal.ai — unchanged
+- [x] Video generation via fal.ai — Pika 2.2, Kling v2/Pro, Sora; infrastructure wired but not yet integrated into campaign workflows, consent chain, or export packs (Phase 2 priority)
 - [x] All reference captures uploaded to fal CDN concurrently; passed as `reference_image_urls` (all) + `reference_image_url` (primary) to Nano Banana
 - [x] House style conditioning via `styleReferenceUrls` (placeholder `[]` until style refs are sourced)
 - [x] Resemblance scoring (OpenCV.js histogram, 0–100)
