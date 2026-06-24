@@ -714,7 +714,7 @@ function AuthenticatedApp() {
                 }
                 else goToStudio();
               }}
-              className="h-8 px-2 rounded-md bg-accent hover:bg-accent/90 text-accent-foreground text-sm font-medium transition-colors flex items-center gap-1.5"
+              className="h-8 px-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary/50 text-sm font-medium transition-colors flex items-center gap-1.5"
             >
               <Plus className="size-3.5" strokeWidth={2.25} />
               <span className="hidden sm:inline">New</span>
