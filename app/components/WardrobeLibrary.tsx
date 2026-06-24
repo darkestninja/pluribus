@@ -673,15 +673,7 @@ export function WardrobeLibrary({ onSelectKit, selectedKitId }: Props) {
       <div className="max-w-4xl mx-auto">
 
         {/* Page header */}
-        <div className="flex items-center justify-between mb-6">
-          <p className="text-xs text-muted-foreground">Build kits and apply them to any render</p>
-          <button
-            onClick={() => { setEditing(undefined); setShowBuilder(true); }}
-            className="h-8 px-2 rounded-md border border-border bg-card hover:bg-secondary text-muted-foreground hover:text-foreground text-sm font-medium transition-colors flex items-center gap-1.5"
-          >
-            <Plus className="size-3.5" strokeWidth={2.25} /> New kit
-          </button>
-        </div>
+        <p className="text-xs text-muted-foreground mb-6">Build kits and apply them to any render</p>
 
         {kits.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-4 py-24 text-center">

@@ -465,16 +465,7 @@ export function MoodboardLibrary() {
       <div className="max-w-5xl mx-auto space-y-6">
 
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <p className="text-xs text-muted-foreground">Import references from images, PDFs, Pinterest, or Behance — Claude extracts the creative direction.</p>
-          <button
-            onClick={() => setBuilding(true)}
-            className="h-8 px-2 rounded-md border border-border bg-card hover:bg-secondary text-muted-foreground hover:text-foreground text-sm font-medium transition-colors flex items-center gap-1.5"
-          >
-            <Plus className="size-3.5" strokeWidth={2.25} />
-            New Moodboard
-          </button>
-        </div>
+        <p className="text-xs text-muted-foreground mb-6">Import references from images, PDFs, Pinterest, or Behance — Claude extracts the creative direction.</p>
 
         {/* Grid */}
         {moodboards.length === 0 ? (

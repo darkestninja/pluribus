@@ -1370,12 +1370,6 @@ export function AthleteLibrary({ preSelectedAthleteId, onAthleteDeselect, onGene
               className="h-8 w-8 flex items-center justify-center rounded-md border border-border bg-card text-muted-foreground hover:text-foreground hover:border-accent/40 transition-colors shrink-0">
               {viewMode === "grid" ? <List className="size-3.5" strokeWidth={1.75} /> : <LayoutGrid className="size-3.5" strokeWidth={1.75} />}
             </button>
-            {/* Add */}
-            <button
-              onClick={() => setShowAddModal(true)}
-              className="h-8 px-2 rounded-md border border-border bg-card hover:bg-secondary text-muted-foreground hover:text-foreground text-sm font-medium transition-colors flex items-center gap-1.5 shrink-0">
-              <Plus className="size-3.5" strokeWidth={2.25} /> Add
-            </button>
           </div>
 
           {/* ── Grid view ── */}
