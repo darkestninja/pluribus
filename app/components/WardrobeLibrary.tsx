@@ -673,9 +673,9 @@ export function WardrobeLibrary({ onSelectKit, selectedKitId }: Props) {
           </div>
           <button
             onClick={() => { setEditing(undefined); setShowBuilder(true); }}
-            className="h-9 px-4 rounded-lg bg-accent hover:bg-accent/90 text-white text-sm font-medium transition-colors flex items-center gap-2"
+            className="h-8 px-3 rounded-md bg-accent hover:bg-accent/90 text-accent-foreground text-sm font-medium transition-colors flex items-center gap-1.5"
           >
-            <Plus className="size-4" strokeWidth={2} /> New kit
+            <Plus className="size-3.5" strokeWidth={2.25} /> New kit
           </button>
         </div>
 
@@ -690,9 +690,9 @@ export function WardrobeLibrary({ onSelectKit, selectedKitId }: Props) {
             </div>
             <button
               onClick={() => setShowBuilder(true)}
-              className="h-9 px-4 rounded-lg bg-accent hover:bg-accent/90 text-white text-sm font-medium transition-colors flex items-center gap-2"
+              className="h-8 px-3 rounded-md bg-accent hover:bg-accent/90 text-accent-foreground text-sm font-medium transition-colors flex items-center gap-1.5"
             >
-              <Plus className="size-4" strokeWidth={2} /> Create first kit
+              <Plus className="size-3.5" strokeWidth={2.25} /> Create first kit
             </button>
           </div>
         ) : (

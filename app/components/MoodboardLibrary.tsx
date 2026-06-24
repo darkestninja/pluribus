@@ -467,9 +467,9 @@ export function MoodboardLibrary() {
           </div>
           <button
             onClick={() => setBuilding(true)}
-            className="flex items-center gap-2 h-9 px-4 rounded-lg bg-accent hover:bg-accent/90 text-white text-sm font-semibold transition-colors"
+            className="h-8 px-3 rounded-md bg-accent hover:bg-accent/90 text-accent-foreground text-sm font-medium transition-colors flex items-center gap-1.5"
           >
-            <Plus className="size-4" strokeWidth={2} />
+            <Plus className="size-3.5" strokeWidth={2.25} />
             New Moodboard
           </button>
         </div>
