@@ -669,12 +669,15 @@ export function WardrobeLibrary({ onSelectKit, selectedKitId }: Props) {
   };
 
   return (
-    <div className="flex-1 overflow-y-auto p-6">
-      <div className="max-w-4xl mx-auto">
+    <div className="h-full flex flex-col overflow-hidden">
 
-        {/* Page header */}
-        <p className="text-xs text-muted-foreground mb-6">Build kits and apply them to any render</p>
+      {/* Toolbar */}
+      <div className="px-6 py-4 border-b border-border flex items-center gap-3 shrink-0">
+        <p className="text-xs text-muted-foreground">Build kits and apply them to any render</p>
+        <span className="text-xs text-muted-foreground ml-auto">{kits.length} kit{kits.length !== 1 ? "s" : ""}</span>
+      </div>
 
+      <div className="flex-1 overflow-y-auto p-6">
         {kits.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-4 py-24 text-center">
             <div className="size-16 rounded-xl bg-card border border-border flex items-center justify-center text-2xl">
@@ -717,3 +720,4 @@ export function WardrobeLibrary({ onSelectKit, selectedKitId }: Props) {
     </div>
   );
 }
+

@@ -326,43 +326,40 @@ export function QueuePage({ onOpenStudio }: QueuePageProps) {
   const showEmpty = filteredRuns.length === 0 && activeJobs.length === 0 && doneJobs.length === 0;
 
   return (
-    <div className="h-full overflow-y-auto">
-      <div className="max-w-[900px] mx-auto px-6 py-8 space-y-6">
+    <div className="h-full flex flex-col overflow-hidden">
 
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-lg font-semibold tracking-tight">Runs</h2>
-            <p className="text-sm text-muted-foreground mt-0.5">Every generation across all campaigns</p>
-          </div>
-          <button onClick={refresh} className="size-8 rounded-md border border-border bg-card hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors flex items-center justify-center" title="Refresh">
-            <RefreshCw className="size-3.5" strokeWidth={1.75} />
-          </button>
-        </div>
-
-        <div className="flex gap-3">
+      {/* Toolbar: stats + refresh */}
+      <div className="px-6 py-4 border-b border-border flex items-center gap-3 shrink-0">
+        <div className="flex gap-3 flex-1">
           {[
             { label: "Total",     value: counts.all      },
             { label: "Completed", value: counts.complete  },
             { label: "Running",   value: counts.running   },
             { label: "Failed",    value: counts.failed    },
           ].map(s => (
-            <div key={s.label} className="flex-1 rounded-lg bg-card border border-border px-4 py-3">
-              <p className="text-xs text-muted-foreground">{s.label}</p>
-              <p className="text-xl font-semibold tracking-tight mt-0.5">{s.value}</p>
+            <div key={s.label} className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">{s.label}</span>
+              <span className="text-sm font-semibold tabular-nums">{s.value}</span>
             </div>
           ))}
         </div>
+        <button onClick={refresh} className="size-8 rounded-md border border-border bg-card hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors flex items-center justify-center shrink-0" title="Refresh">
+          <RefreshCw className="size-3.5" strokeWidth={1.75} />
+        </button>
+      </div>
 
-        <div className="flex items-center gap-1">
-          {TABS.map(t => (
-            <button key={t.key} onClick={() => setFilter(t.key)}
-              className={`h-8 px-2 rounded-md text-sm transition-colors flex items-center gap-1.5 ${filter === t.key ? "bg-secondary text-foreground" : "text-muted-foreground hover:text-foreground hover:bg-card"}`}
-            >
-              {t.label}
-              <span className="text-xs text-muted-foreground/60">{counts[t.key]}</span>
-            </button>
-          ))}
-        </div>
+      {/* Tabs */}
+      <div className="px-6 flex gap-1 border-b border-border shrink-0">
+        {TABS.map(t => (
+          <button key={t.key} onClick={() => setFilter(t.key)}
+            className={`px-3 h-9 text-xs font-medium whitespace-nowrap border-b-2 transition-colors flex items-center gap-1.5 ${filter === t.key ? "border-accent text-foreground" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
+            {t.label}
+            <span className="text-xs text-muted-foreground/60">{counts[t.key]}</span>
+          </button>
+        ))}
+      </div>
+
+      <div className="flex-1 overflow-y-auto p-6 space-y-6">
 
         {showEmpty ? (
           <div className="rounded-xl border border-border bg-card px-8 py-16 text-center">

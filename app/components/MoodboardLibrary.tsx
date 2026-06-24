@@ -461,13 +461,15 @@ export function MoodboardLibrary() {
   };
 
   return (
-    <div className="flex-1 overflow-y-auto p-6">
-      <div className="max-w-5xl mx-auto space-y-6">
+    <div className="h-full flex flex-col overflow-hidden">
 
-        {/* Header */}
-        <p className="text-xs text-muted-foreground mb-6">Import references from images, PDFs, Pinterest, or Behance — Claude extracts the creative direction.</p>
+      {/* Toolbar */}
+      <div className="px-6 py-4 border-b border-border flex items-center gap-3 shrink-0">
+        <p className="text-xs text-muted-foreground">Import references from images, PDFs, Pinterest, or Behance — Claude extracts the creative direction.</p>
+        <span className="text-xs text-muted-foreground ml-auto shrink-0">{moodboards.length} board{moodboards.length !== 1 ? "s" : ""}</span>
+      </div>
 
-        {/* Grid */}
+      <div className="flex-1 overflow-y-auto p-6">
         {moodboards.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-4 py-24 text-center">
             <div className="size-14 rounded-2xl bg-card border border-border flex items-center justify-center">

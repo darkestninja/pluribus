@@ -1319,58 +1319,59 @@ export function AthleteLibrary({ preSelectedAthleteId, onAthleteDeselect, onGene
 
   return (
     <div className="h-full flex bg-background">
-      <div className="flex-1 overflow-y-auto">
-        <div className="max-w-[1400px] mx-auto px-6 py-8 space-y-6">
+      <div className="flex-1 flex flex-col overflow-hidden">
 
-          {/* ── Toolbar ── */}
-          <div className="flex items-center gap-2 flex-wrap">
-            {/* Search */}
-            <div className="relative flex-1 min-w-40">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground pointer-events-none" strokeWidth={1.75} />
-              <input
-                type="text"
-                placeholder="Search talent…"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full h-8 pl-8 pr-3 bg-card border border-border rounded-md text-sm focus:outline-none focus:border-accent placeholder:text-muted-foreground"
-              />
-            </div>
-            {/* Sport filter */}
-            {uniqueSports.length > 0 && (
-              <select value={activeSportFilter} onChange={e => setActiveSportFilter(e.target.value)}
-                className="h-8 px-2 bg-card border border-border rounded-md text-xs focus:outline-none focus:border-accent text-muted-foreground">
-                <option value="">All sports</option>
-                {uniqueSports.map(s => <option key={s} value={s}>{s}</option>)}
-              </select>
-            )}
-            {/* Status filter */}
-            <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}
-              className="h-8 px-2 bg-card border border-border rounded-md text-xs focus:outline-none focus:border-accent text-muted-foreground">
-              <option value="all">All statuses</option>
-              <option value="complete">Captured</option>
-              <option value="review">In progress</option>
-              <option value="pending">Not started</option>
-            </select>
-            {/* Sort */}
-            <select value={sortBy} onChange={e => setSortBy(e.target.value as typeof sortBy)}
-              className="h-8 px-2 bg-card border border-border rounded-md text-xs focus:outline-none focus:border-accent text-muted-foreground">
-              <option value="name">Name</option>
-              <option value="sport">Sport</option>
-              <option value="date-added">Date added</option>
-            </select>
-            <button onClick={() => setSortOrder(o => o === "asc" ? "desc" : "asc")}
-              title={sortOrder === "asc" ? "Ascending" : "Descending"}
-              className="h-8 w-8 flex items-center justify-center rounded-md border border-border bg-card text-muted-foreground hover:text-foreground hover:border-accent/40 transition-colors shrink-0">
-              {sortOrder === "asc" ? <ArrowUp className="size-3" strokeWidth={2} /> : <ArrowDown className="size-3" strokeWidth={2} />}
-            </button>
-            {/* View toggle — single button, shows icon for the OTHER mode */}
-            <button
-              onClick={() => setViewMode(v => v === "grid" ? "list" : "grid")}
-              title={viewMode === "grid" ? "List view" : "Grid view"}
-              className="h-8 w-8 flex items-center justify-center rounded-md border border-border bg-card text-muted-foreground hover:text-foreground hover:border-accent/40 transition-colors shrink-0">
-              {viewMode === "grid" ? <List className="size-3.5" strokeWidth={1.75} /> : <LayoutGrid className="size-3.5" strokeWidth={1.75} />}
-            </button>
+        {/* ── Toolbar: search row ── */}
+        <div className="px-6 py-4 border-b border-border flex items-center gap-2 flex-wrap shrink-0">
+          <div className="relative flex-1 min-w-40">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground pointer-events-none" strokeWidth={1.75} />
+            <input
+              type="text"
+              placeholder="Search talent…"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full h-8 pl-8 pr-3 bg-card border border-border rounded-md text-sm focus:outline-none focus:border-accent placeholder:text-muted-foreground"
+            />
           </div>
+          {uniqueSports.length > 0 && (
+            <select value={activeSportFilter} onChange={e => setActiveSportFilter(e.target.value)}
+              className="h-8 px-2 bg-card border border-border rounded-md text-xs focus:outline-none focus:border-accent text-muted-foreground">
+              <option value="">All sports</option>
+              {uniqueSports.map(s => <option key={s} value={s}>{s}</option>)}
+            </select>
+          )}
+          <select value={sortBy} onChange={e => setSortBy(e.target.value as typeof sortBy)}
+            className="h-8 px-2 bg-card border border-border rounded-md text-xs focus:outline-none focus:border-accent text-muted-foreground">
+            <option value="name">Name</option>
+            <option value="sport">Sport</option>
+            <option value="date-added">Date added</option>
+          </select>
+          <button onClick={() => setSortOrder(o => o === "asc" ? "desc" : "asc")}
+            title={sortOrder === "asc" ? "Ascending" : "Descending"}
+            className="h-8 w-8 flex items-center justify-center rounded-md border border-border bg-card text-muted-foreground hover:text-foreground hover:border-accent/40 transition-colors shrink-0">
+            {sortOrder === "asc" ? <ArrowUp className="size-3" strokeWidth={2} /> : <ArrowDown className="size-3" strokeWidth={2} />}
+          </button>
+          <button
+            onClick={() => setViewMode(v => v === "grid" ? "list" : "grid")}
+            title={viewMode === "grid" ? "List view" : "Grid view"}
+            className="h-8 w-8 flex items-center justify-center rounded-md border border-border bg-card text-muted-foreground hover:text-foreground hover:border-accent/40 transition-colors shrink-0">
+            {viewMode === "grid" ? <List className="size-3.5" strokeWidth={1.75} /> : <LayoutGrid className="size-3.5" strokeWidth={1.75} />}
+          </button>
+          <span className="text-xs text-muted-foreground ml-auto">{filteredAthletes.length} talent</span>
+        </div>
+
+        {/* ── Tabs: status filter ── */}
+        <div className="px-6 flex gap-1 border-b border-border overflow-x-auto shrink-0">
+          {([["all", "All"], ["complete", "Captured"], ["review", "In progress"], ["pending", "Not started"]] as const).map(([val, label]) => (
+            <button key={val} onClick={() => setStatusFilter(val)}
+              className={`px-3 h-9 text-xs font-medium whitespace-nowrap border-b-2 transition-colors ${statusFilter === val ? "border-accent text-foreground" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {/* ── Content ── */}
+        <div className="flex-1 overflow-y-auto p-6">
 
           {/* ── Grid view ── */}
           {viewMode === "grid" && (
@@ -1466,6 +1467,7 @@ export function AthleteLibrary({ preSelectedAthleteId, onAthleteDeselect, onGene
               )}
             </div>
           )}
+        </div>
         </div>
       </div>
 
