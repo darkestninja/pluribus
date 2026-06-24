@@ -659,7 +659,7 @@ function AuthenticatedApp() {
       {/* Main */}
       <main className="flex-1 flex flex-col overflow-hidden min-w-0">
         {/* Top bar */}
-        <header className="h-14 bg-secondary/30 px-4 md:px-6 flex items-center justify-between shrink-0 gap-3">
+        <header className="h-14 bg-secondary/30 px-4 md:px-1 flex items-center justify-between shrink-0 gap-3">
           <div className="flex items-center gap-3 min-w-0">
             <button
               onClick={() => setMobileSidebarOpen(true)}
@@ -707,7 +707,13 @@ function AuthenticatedApp() {
               className="h-8 px-2 rounded-md border border-border text-muted-foreground hover:text-foreground hover:bg-secondary/50 text-sm font-medium transition-colors flex items-center gap-1.5"
             >
               <Plus className="size-3.5" strokeWidth={2.25} />
-              <span className="hidden sm:inline">New</span>
+              <span className="hidden sm:inline">
+                {currentView === "projects" ? "New campaign" :
+                 currentView === "subjects" ? "New talent" :
+                 currentView === "wardrobe" ? "New kit" :
+                 currentView === "moodboards" ? "New moodboard" :
+                 "New render"}
+              </span>
               <span className="sm:hidden">+</span>
             </button>
           </div>
