@@ -475,19 +475,18 @@ function AuthenticatedApp() {
       {/* Quick actions: Home + Search pill | New render */}
       {!collapsed && (
         <div className="px-2.5 pb-3 flex items-center gap-2 shrink-0">
-          <div className="flex items-center rounded-lg border border-border bg-card overflow-hidden shrink-0">
+          <div className="flex items-center gap-0.5 rounded-lg border border-border bg-card p-0.5 shrink-0">
             <button
               onClick={() => { navigateTo("home"); setMobileSidebarOpen(false); }}
               title="Home"
-              className={`flex items-center justify-center size-8 transition-colors ${currentView === "home" ? "text-foreground bg-secondary" : "text-muted-foreground hover:text-foreground hover:bg-secondary"}`}
+              className={`flex items-center justify-center size-7 rounded-md transition-colors ${currentView === "home" ? "text-foreground bg-secondary" : "text-muted-foreground hover:text-foreground hover:bg-secondary"}`}
             >
               <Home className="size-3.5" strokeWidth={1.75} />
             </button>
-            <div className="w-px h-4 bg-border" />
             <button
               onClick={() => { setPaletteOpen(true); setMobileSidebarOpen(false); }}
               title="Search (⌘K)"
-              className="flex items-center justify-center size-8 text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+              className="flex items-center justify-center size-7 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
             >
               <Search className="size-3.5" strokeWidth={1.75} />
             </button>
@@ -579,7 +578,11 @@ function AuthenticatedApp() {
 
         {/* Trigger row */}
         {collapsed ? (
-          <button onClick={() => setUserMenuOpen(o => !o)} title="Account" className="w-full flex justify-center py-1 relative">
+          <button
+            onClick={() => { toggleSidebar(); setUserMenuOpen(true); }}
+            title="Account"
+            className="w-full flex justify-center py-1 relative"
+          >
             <div className="size-7 rounded-full bg-accent/20 text-accent flex items-center justify-center text-xs font-semibold">
               {user?.avatarInitials ?? "?"}
             </div>
