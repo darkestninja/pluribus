@@ -637,6 +637,12 @@ export function WardrobeLibrary({ onSelectKit, selectedKitId }: Props) {
 
   useEffect(() => subscribeToStore(refresh), []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  useEffect(() => {
+    const handler = () => { setEditing(undefined); setShowBuilder(true); };
+    window.addEventListener("openWardrobeBuilder", handler);
+    return () => window.removeEventListener("openWardrobeBuilder", handler);
+  }, []);
+
   const handleSave = (data: Omit<WardrobeKit, "id" | "createdAt" | "updatedAt">) => {
     const now = new Date().toISOString();
     if (editing) {
@@ -671,7 +677,7 @@ export function WardrobeLibrary({ onSelectKit, selectedKitId }: Props) {
           <p className="text-xs text-muted-foreground">Build kits and apply them to any render</p>
           <button
             onClick={() => { setEditing(undefined); setShowBuilder(true); }}
-            className="h-8 px-2 rounded-md bg-accent hover:bg-accent/90 text-accent-foreground text-sm font-medium transition-colors flex items-center gap-1.5"
+            className="h-8 px-2 rounded-md border border-border bg-card hover:bg-secondary text-muted-foreground hover:text-foreground text-sm font-medium transition-colors flex items-center gap-1.5"
           >
             <Plus className="size-3.5" strokeWidth={2.25} /> New kit
           </button>

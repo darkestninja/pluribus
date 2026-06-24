@@ -437,6 +437,12 @@ export function MoodboardLibrary() {
 
   useEffect(() => subscribeToStore(refresh), []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  useEffect(() => {
+    const handler = () => { setEditing(null); setBuilding(true); };
+    window.addEventListener("openMoodboardBuilder", handler);
+    return () => window.removeEventListener("openMoodboardBuilder", handler);
+  }, []);
+
   const handleSave = (mb: Moodboard) => {
     if (editing) {
       updateMoodboard(mb.id, mb);
@@ -463,7 +469,7 @@ export function MoodboardLibrary() {
           <p className="text-xs text-muted-foreground">Import references from images, PDFs, Pinterest, or Behance — Claude extracts the creative direction.</p>
           <button
             onClick={() => setBuilding(true)}
-            className="h-8 px-2 rounded-md bg-accent hover:bg-accent/90 text-accent-foreground text-sm font-medium transition-colors flex items-center gap-1.5"
+            className="h-8 px-2 rounded-md border border-border bg-card hover:bg-secondary text-muted-foreground hover:text-foreground text-sm font-medium transition-colors flex items-center gap-1.5"
           >
             <Plus className="size-3.5" strokeWidth={2.25} />
             New Moodboard

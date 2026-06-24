@@ -699,18 +699,32 @@ function AuthenticatedApp() {
               )}
             </button>
             <button
-              onClick={() => goToStudio()}
+              onClick={() => {
+                if (currentView === "projects") setShowNewCampaignModal(true);
+                else if (currentView === "subjects") setShowAddAthleteModal(true);
+                else if (currentView === "wardrobe") {
+                  // Wardrobe has its own internal builder toggle
+                  const event = new CustomEvent("openWardrobeBuilder");
+                  window.dispatchEvent(event);
+                }
+                else if (currentView === "moodboards") {
+                  // Moodboards has its own internal builder toggle
+                  const event = new CustomEvent("openMoodboardBuilder");
+                  window.dispatchEvent(event);
+                }
+                else goToStudio();
+              }}
               className="h-8 px-2 rounded-md bg-accent hover:bg-accent/90 text-accent-foreground text-sm font-medium transition-colors flex items-center gap-1.5"
             >
               <Plus className="size-3.5" strokeWidth={2.25} />
-              <span className="hidden sm:inline">New render</span>
-              <span className="sm:hidden">New</span>
+              <span className="hidden sm:inline">New</span>
+              <span className="sm:hidden">+</span>
             </button>
           </div>
         </header>
 
         {/* Content — island effect */}
-        <div className="flex-1 overflow-hidden relative px-4 pb-4 pt-2 bg-secondary/30">
+        <div className="flex-1 overflow-hidden relative p-2 bg-secondary/30">
           <div className="size-full rounded-xl border border-border bg-background shadow-sm overflow-hidden relative">
           {currentView === "home" && (
             <Dashboard
