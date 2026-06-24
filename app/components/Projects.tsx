@@ -113,24 +113,24 @@ export function Projects({ onLaunchStudio, extraProjects = [] }: ProjectsProps) 
       <div className="max-w-[1400px] mx-auto px-6 py-8 space-y-6">
 
         {/* Toolbar */}
-        <div className="flex items-center justify-between gap-3 flex-wrap">
-          <div className="flex items-center gap-1">
+        <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex items-center gap-1 border-b border-border -mb-6 pb-0 shrink-0">
             {(["all", "active", "review", "complete"] as FilterTab[]).map(tab => (
               <button key={tab} onClick={() => setFilter(tab)}
-                className={`h-8 px-3 rounded-md text-sm transition-colors flex items-center gap-1.5 ${
-                  filter === tab ? "bg-secondary text-foreground" : "text-muted-foreground hover:text-foreground hover:bg-card"
+                className={`h-9 px-3 text-xs font-medium whitespace-nowrap border-b-2 transition-colors flex items-center gap-1.5 ${
+                  filter === tab ? "border-accent text-foreground" : "border-transparent text-muted-foreground hover:text-foreground"
                 }`}
               >
                 <span className="capitalize">{tab}</span>
-                <span className="text-xs text-muted-foreground/60">{counts[tab]}</span>
+                <span className="text-[11px] tabular-nums opacity-50">{counts[tab]}</span>
               </button>
             ))}
           </div>
-          <div className="flex items-center gap-2">
-            <div className="relative">
+          <div className="flex items-center gap-2 ml-auto">
+            <div className="relative flex-1 min-w-[160px] max-w-[240px]">
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" strokeWidth={1.75} />
               <input type="text" placeholder="Search campaigns…" value={search} onChange={e => setSearch(e.target.value)}
-                className="w-52 h-8 pl-8 pr-3 bg-card border border-border rounded-md text-sm focus-visible:border-accent placeholder:text-muted-foreground"
+                className="w-full h-8 pl-8 pr-3 bg-card border border-border rounded-md text-sm focus-visible:border-accent placeholder:text-muted-foreground"
               />
             </div>
             <div className="relative" ref={sortRef}>
@@ -162,9 +162,25 @@ export function Projects({ onLaunchStudio, extraProjects = [] }: ProjectsProps) 
 
         {/* Campaign grid */}
         {sorted.length === 0 ? (
-          <div className="text-center py-16">
-            <p className="text-sm text-muted-foreground">No campaigns found</p>
-          </div>
+          allProjects.length === 0 ? (
+            <div className="flex flex-col items-center justify-center gap-4 py-24 text-center">
+              <div className="size-14 rounded-2xl bg-card border border-border flex items-center justify-center">
+                <ImageIcon className="size-6 text-muted-foreground/40" strokeWidth={1.5} />
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm font-medium">No campaigns yet</p>
+                <p className="text-xs text-muted-foreground">Create a campaign to start generating</p>
+              </div>
+              <button onClick={() => setShowNewModal(true)}
+                className="h-8 px-3 rounded-md bg-accent hover:bg-accent/90 text-accent-foreground text-sm font-medium transition-colors flex items-center gap-1.5">
+                <Plus className="size-3.5" strokeWidth={2.25} /> New campaign
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center justify-center py-16">
+              <p className="text-sm text-muted-foreground">No campaigns match your filters</p>
+            </div>
+          )
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {sorted.map(project => {
