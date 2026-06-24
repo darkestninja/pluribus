@@ -23,9 +23,10 @@ import { NewCampaignModal } from "./components/NewCampaignModal";
 import { AddAthleteModal } from "./components/AddAthleteModal";
 import {
   Search, Moon, Sun, Plus, Settings as SettingsIcon,
-  Home, Folder, Users, Images, PanelLeft, Menu, X, Bell,
+  Home, Folder, Users, Images, PanelLeft, Menu, X,
   CheckCircle, AlertCircle, Info, LogOut, Shirt, Palette, ScanFace,
 } from "lucide-react";
+import { RenderQueueIcon } from "./components/icons/RenderQueueIcon";
 import { getProjects, getRuns, isOnboarded, setOnboarded, initStore, clearStore, hydrateStore, getUserRole, addProject, getJobs, updateJob, updateRun, addCampaignOutput, getPendingScoringOutputs, scoreOutputWithRetry, getAthletes, getCanonicalReferencesSync, getAthleteProfile, setWriteErrorHandler } from "./lib/store";
 import { pollGenerationStatus, fetchGenerationResult } from "./lib/generate";
 import { onToast, Toast } from "./lib/notifications";
@@ -636,7 +637,7 @@ function AuthenticatedApp() {
               title="Queue"
               className="relative h-8 w-8 rounded-md border border-border bg-card hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors hidden sm:flex items-center justify-center"
             >
-              <Bell className="size-3.5" strokeWidth={1.75} />
+              <RenderQueueIcon className="size-3.5" />
               {activeRenders > 0 && (
                 <span className="absolute top-1 right-1 size-2 rounded-full bg-accent animate-pulse" />
               )}
