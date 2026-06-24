@@ -709,8 +709,9 @@ function AuthenticatedApp() {
           </div>
         </header>
 
-        {/* Content */}
-        <div className="flex-1 overflow-hidden relative">
+        {/* Content — island effect */}
+        <div className="flex-1 overflow-hidden relative p-4 bg-secondary/30">
+          <div className="size-full rounded-xl border border-border bg-background shadow-sm overflow-hidden relative">
           {currentView === "home" && (
             <Dashboard
               onOpenCampaigns={() => setCurrentView("projects")}
@@ -774,6 +775,7 @@ function AuthenticatedApp() {
               onClose={() => setCurrentView("home")}
             />
           )}
+          </div>
         </div>
       </main>
 
