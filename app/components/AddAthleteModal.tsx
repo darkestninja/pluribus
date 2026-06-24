@@ -107,7 +107,7 @@ function Field({ label, optional, children }: {
   );
 }
 
-const INPUT = "w-full h-9 px-3 bg-card border border-border rounded-md text-sm focus:outline-none focus:border-accent placeholder:text-muted-foreground/50 transition-colors";
+const INPUT = "w-full h-9 px-2 bg-card border border-border rounded-md text-sm focus:outline-none focus:border-accent placeholder:text-muted-foreground/50 transition-colors";
 
 function Picker({ value, onChange, placeholder, options }: {
   value: string;
@@ -347,7 +347,7 @@ export function AddAthleteModal({ onClose, onAdded }: AddAthleteModalProps) {
                     placeholder="e.g. 100m Freestyle — press Enter"
                     className={`${INPUT} flex-1`} />
                   <button type="button" onClick={addEvent}
-                    className="h-9 px-3 rounded-md bg-card border border-border hover:bg-secondary text-muted-foreground hover:text-foreground text-xs transition-colors">
+                    className="h-9 px-2 rounded-md bg-card border border-border hover:bg-secondary text-muted-foreground hover:text-foreground text-xs transition-colors">
                     Add
                   </button>
                 </div>
@@ -424,7 +424,7 @@ export function AddAthleteModal({ onClose, onAdded }: AddAthleteModalProps) {
                       Save
                     </button>
                     <button type="button" onClick={() => { setAddingTatt(false); setNewTatt({ description: "", location: "" }); }}
-                      className="h-7 px-3 rounded bg-secondary text-muted-foreground hover:text-foreground text-xs transition-colors">
+                      className="h-7 px-2 rounded bg-secondary text-muted-foreground hover:text-foreground text-xs transition-colors">
                       Cancel
                     </button>
                   </div>

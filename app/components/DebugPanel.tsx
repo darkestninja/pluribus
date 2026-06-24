@@ -178,7 +178,7 @@ export function DebugPanel({ isAdmin }: { isAdmin: boolean }) {
           }`}
         >
           {/* Header */}
-          <div className="flex items-center h-9 px-3 gap-3 border-b border-zinc-800 shrink-0">
+          <div className="flex items-center h-9 px-2 gap-3 border-b border-zinc-800 shrink-0">
             <Terminal className="size-3.5 text-zinc-400 shrink-0" strokeWidth={1.75} />
             <span className="text-xs font-semibold text-zinc-300">Debug</span>
 

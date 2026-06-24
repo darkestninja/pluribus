@@ -108,7 +108,7 @@ function PreviewModal({ item, onClose }: { item: PreviewItem; onClose: () => voi
               download
               target="_blank"
               rel="noreferrer"
-              className="h-7 px-2.5 rounded-md bg-white/10 hover:bg-white/20 text-white text-xs flex items-center gap-1.5 transition-colors"
+              className="h-7 px-2 rounded-md bg-white/10 hover:bg-white/20 text-white text-xs flex items-center gap-1.5 transition-colors"
               onClick={e => e.stopPropagation()}
             >
               <Download className="size-3" strokeWidth={1.75} /> Download
@@ -356,7 +356,7 @@ export function QueuePage({ onOpenStudio }: QueuePageProps) {
         <div className="flex items-center gap-1">
           {TABS.map(t => (
             <button key={t.key} onClick={() => setFilter(t.key)}
-              className={`h-8 px-3 rounded-md text-sm transition-colors flex items-center gap-1.5 ${filter === t.key ? "bg-secondary text-foreground" : "text-muted-foreground hover:text-foreground hover:bg-card"}`}
+              className={`h-8 px-2 rounded-md text-sm transition-colors flex items-center gap-1.5 ${filter === t.key ? "bg-secondary text-foreground" : "text-muted-foreground hover:text-foreground hover:bg-card"}`}
             >
               {t.label}
               <span className="text-xs text-muted-foreground/60">{counts[t.key]}</span>

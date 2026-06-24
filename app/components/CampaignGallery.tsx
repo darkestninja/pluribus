@@ -202,7 +202,7 @@ export function CampaignGallery({
         <div className="flex items-center gap-0.5 overflow-x-auto scrollbar-none">
           {(Object.keys(TAB_LABELS) as OutputTab[]).map(tab => (
             <button key={tab} onClick={() => setActiveTab(tab)}
-              className={`h-7 px-2.5 rounded-md text-xs transition-colors flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
+              className={`h-7 px-2 rounded-md text-xs transition-colors flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
                 activeTab === tab ? "bg-secondary text-foreground" : "text-muted-foreground hover:text-foreground hover:bg-card"
               }`}>
               <span>{TAB_LABELS[tab]}</span>
@@ -221,21 +221,21 @@ export function CampaignGallery({
           {compareMode && compareIds.length >= 2 && (
             <button
               onClick={onCompareOpen}
-              className="h-7 px-3 rounded-md text-xs font-medium bg-accent hover:bg-accent/90 text-accent-foreground transition-colors flex items-center gap-1.5">
+              className="h-7 px-2 rounded-md text-xs font-medium bg-accent hover:bg-accent/90 text-accent-foreground transition-colors flex items-center gap-1.5">
               <Columns2 className="size-3" strokeWidth={2} />
               Compare {compareIds.length}
             </button>
           )}
           <button
             onClick={() => setCompareMode(!compareMode)}
-            className={`h-7 px-2.5 rounded-md text-xs transition-colors flex items-center gap-1.5 ${
+            className={`h-7 px-2 rounded-md text-xs transition-colors flex items-center gap-1.5 ${
               compareMode ? "bg-accent/15 text-accent border border-accent/30" : "text-muted-foreground hover:text-foreground hover:bg-card"
             }`}>
             <Columns2 className="size-3" strokeWidth={1.75} />
             {compareMode ? "Exit compare" : "Compare"}
           </button>
           <button onClick={runBatch} disabled={batchRunning}
-            className={`h-7 px-3 rounded-md text-xs font-medium transition-colors flex items-center gap-1.5 ${
+            className={`h-7 px-2 rounded-md text-xs font-medium transition-colors flex items-center gap-1.5 ${
               batchRunning ? "bg-card border border-border text-muted-foreground" : "bg-accent hover:bg-accent/90 text-accent-foreground"
             }`}>
             {batchRunning ? (

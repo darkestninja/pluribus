@@ -387,12 +387,12 @@ export function AssetDetailPanel({
                   onChange={e => setCommentText(e.target.value)}
                   onKeyDown={e => { if (e.key === "Enter") handlePost(); }}
                   placeholder="Leave a comment…"
-                  className="flex-1 h-8 px-3 bg-card border border-border rounded-md text-xs focus:outline-none focus:border-accent placeholder:text-muted-foreground/50"
+                  className="flex-1 h-8 px-2 bg-card border border-border rounded-md text-xs focus:outline-none focus:border-accent placeholder:text-muted-foreground/50"
                 />
                 <button
                   onClick={handlePost}
                   disabled={!commentText.trim()}
-                  className="h-8 px-3 rounded-md bg-accent hover:bg-accent/90 disabled:opacity-40 text-accent-foreground text-xs font-medium transition-colors"
+                  className="h-8 px-2 rounded-md bg-accent hover:bg-accent/90 disabled:opacity-40 text-accent-foreground text-xs font-medium transition-colors"
                 >
                   Post
                 </button>
@@ -473,7 +473,7 @@ export function AssetDetailPanel({
                 <button
                   onClick={() => onMarkLikeness(output)}
                   title="Save as approved likeness reference"
-                  className="h-8 px-3 rounded-md bg-card border border-border hover:bg-secondary text-muted-foreground hover:text-foreground text-xs transition-colors flex items-center justify-center gap-1.5"
+                  className="h-8 px-2 rounded-md bg-card border border-border hover:bg-secondary text-muted-foreground hover:text-foreground text-xs transition-colors flex items-center justify-center gap-1.5"
                 >
                   <Bookmark className="size-3" strokeWidth={1.75} /> Likeness ✓
                 </button>
@@ -482,7 +482,7 @@ export function AssetDetailPanel({
                 <button
                   onClick={() => onMarkRejectedLikeness(output)}
                   title="Mark as rejected likeness — what to avoid"
-                  className="h-8 px-3 rounded-md bg-card border border-border hover:bg-red-500/10 hover:border-red-500/40 text-muted-foreground hover:text-red-400 text-xs transition-colors flex items-center justify-center gap-1.5"
+                  className="h-8 px-2 rounded-md bg-card border border-border hover:bg-red-500/10 hover:border-red-500/40 text-muted-foreground hover:text-red-400 text-xs transition-colors flex items-center justify-center gap-1.5"
                 >
                   <ThumbsDown className="size-3" strokeWidth={1.75} /> Reject
                 </button>

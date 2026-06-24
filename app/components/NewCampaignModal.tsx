@@ -184,7 +184,7 @@ export function NewCampaignModal({ onClose, onCreate }: NewCampaignModalProps) {
                   onKeyDown={e => e.key === "Enter" && canAdvance() && setStep(2)}
                   placeholder="e.g. Olympic announcement portraits"
                   autoFocus
-                  className="w-full h-9 px-3 bg-card border border-border rounded-lg text-sm focus:outline-none focus:border-accent placeholder:text-muted-foreground/50"
+                  className="w-full h-9 px-2 bg-card border border-border rounded-lg text-sm focus:outline-none focus:border-accent placeholder:text-muted-foreground/50"
                 />
               </div>
               <div className="space-y-1.5">

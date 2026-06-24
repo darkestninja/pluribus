@@ -167,7 +167,7 @@ function BuilderModal({ initial, onSave, onClose }: BuilderModalProps) {
               <div className="flex items-center gap-1.5">
                 <button
                   onClick={() => { setShowUrlBar(v => !v); setUrlErr(null); }}
-                  className={`flex items-center gap-1.5 h-7 px-2.5 rounded-md border text-xs transition-colors ${
+                  className={`flex items-center gap-1.5 h-7 px-2 rounded-md border text-xs transition-colors ${
                     showUrlBar ? "border-accent text-accent bg-accent/5" : "border-border text-muted-foreground hover:text-foreground bg-card"
                   }`}
                 >
@@ -176,7 +176,7 @@ function BuilderModal({ initial, onSave, onClose }: BuilderModalProps) {
                 </button>
                 <button
                   onClick={() => fileRef.current?.click()}
-                  className="flex items-center gap-1.5 h-7 px-2.5 rounded-md border border-border bg-card text-xs text-muted-foreground hover:text-foreground transition-colors"
+                  className="flex items-center gap-1.5 h-7 px-2 rounded-md border border-border bg-card text-xs text-muted-foreground hover:text-foreground transition-colors"
                 >
                   <Upload className="size-3" strokeWidth={1.75} />
                   Upload
@@ -202,7 +202,7 @@ function BuilderModal({ initial, onSave, onClose }: BuilderModalProps) {
                     onChange={e => { setUrlInput(e.target.value); setUrlErr(null); }}
                     onKeyDown={e => e.key === "Enter" && handleImportUrl()}
                     placeholder="pinterest.com/board, behance.net/gallery, or image URL…"
-                    className="flex-1 h-9 px-3 bg-card border border-border rounded-lg text-sm focus:outline-none focus:border-accent placeholder:text-muted-foreground/40"
+                    className="flex-1 h-9 px-2 bg-card border border-border rounded-lg text-sm focus:outline-none focus:border-accent placeholder:text-muted-foreground/40"
                   />
                   <button
                     onClick={handleImportUrl}
@@ -463,7 +463,7 @@ export function MoodboardLibrary() {
           <p className="text-xs text-muted-foreground">Import references from images, PDFs, Pinterest, or Behance — Claude extracts the creative direction.</p>
           <button
             onClick={() => setBuilding(true)}
-            className="h-8 px-3 rounded-md bg-accent hover:bg-accent/90 text-accent-foreground text-sm font-medium transition-colors flex items-center gap-1.5"
+            className="h-8 px-2 rounded-md bg-accent hover:bg-accent/90 text-accent-foreground text-sm font-medium transition-colors flex items-center gap-1.5"
           >
             <Plus className="size-3.5" strokeWidth={2.25} />
             New Moodboard

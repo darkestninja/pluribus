@@ -145,7 +145,7 @@ function MembersTab({ currentUserEmail }: { currentUserEmail: string }) {
           <button
             onClick={handleInvite}
             disabled={inviting || !inviteEmail.trim()}
-            className="h-9 px-3 rounded-md bg-accent hover:bg-accent/90 text-accent-foreground text-sm font-medium transition-colors disabled:opacity-40 flex items-center gap-1.5"
+            className="h-9 px-2 rounded-md bg-accent hover:bg-accent/90 text-accent-foreground text-sm font-medium transition-colors disabled:opacity-40 flex items-center gap-1.5"
           >
             {inviting ? <Loader2 className="size-3.5 animate-spin" /> : <Plus className="size-3.5" />}
             Invite
@@ -389,7 +389,7 @@ export function Settings({ appUser, isDark, onThemeChange, onSignOut, onClose }:
                       type="text"
                       value={firstName}
                       onChange={e => setFirstName(e.target.value)}
-                      className="w-full h-9 px-3 bg-card border border-border rounded-md text-sm focus:outline-none focus:border-accent placeholder:text-muted-foreground/50 transition-colors"
+                      className="w-full h-9 px-2 bg-card border border-border rounded-md text-sm focus:outline-none focus:border-accent placeholder:text-muted-foreground/50 transition-colors"
                     />
                   </div>
                   <div className="space-y-1.5">
@@ -398,7 +398,7 @@ export function Settings({ appUser, isDark, onThemeChange, onSignOut, onClose }:
                       type="text"
                       value={lastName}
                       onChange={e => setLastName(e.target.value)}
-                      className="w-full h-9 px-3 bg-card border border-border rounded-md text-sm focus:outline-none focus:border-accent placeholder:text-muted-foreground/50 transition-colors"
+                      className="w-full h-9 px-2 bg-card border border-border rounded-md text-sm focus:outline-none focus:border-accent placeholder:text-muted-foreground/50 transition-colors"
                     />
                   </div>
                 </div>
@@ -409,7 +409,7 @@ export function Settings({ appUser, isDark, onThemeChange, onSignOut, onClose }:
                     type="email"
                     value={appUser?.email ?? ""}
                     readOnly
-                    className="w-full h-9 px-3 bg-secondary border border-border rounded-md text-sm text-muted-foreground cursor-not-allowed"
+                    className="w-full h-9 px-2 bg-secondary border border-border rounded-md text-sm text-muted-foreground cursor-not-allowed"
                   />
                   <p className="text-xs text-muted-foreground/60">Email cannot be changed here. Contact support if needed.</p>
                 </div>
@@ -448,7 +448,7 @@ export function Settings({ appUser, isDark, onThemeChange, onSignOut, onClose }:
                         <p className="text-xs text-muted-foreground">Interface language</p>
                       </div>
                     </div>
-                    <select className="h-8 px-2.5 bg-card border border-border rounded-md text-sm text-foreground focus:outline-none focus:border-accent transition-colors">
+                    <select className="h-8 px-2 bg-card border border-border rounded-md text-sm text-foreground focus:outline-none focus:border-accent transition-colors">
                       <option>English (US)</option>
                       <option>Spanish</option>
                       <option>French</option>
@@ -647,7 +647,7 @@ export function Settings({ appUser, isDark, onThemeChange, onSignOut, onClose }:
                           onChange={e => setConfirmPw(e.target.value)}
                           placeholder="••••••••"
                           autoComplete="new-password"
-                          className="w-full h-9 px-3 bg-background border border-border rounded-md text-sm focus:outline-none focus:border-accent placeholder:text-muted-foreground/50 transition-colors"
+                          className="w-full h-9 px-2 bg-background border border-border rounded-md text-sm focus:outline-none focus:border-accent placeholder:text-muted-foreground/50 transition-colors"
                         />
                       </div>
                       {pwError && (

@@ -588,7 +588,7 @@ export function CampaignWorkspace({ project, onBack, onLaunchStudio }: CampaignW
             onClick={handleExport}
             disabled={approvedCount === 0 || isExporting}
             title={exportBlockedCount > 0 ? `${exportBlockedCount} approved asset${exportBlockedCount > 1 ? "s" : ""} excluded — score or approval gate` : undefined}
-            className="h-8 px-3 rounded-md bg-card border border-border hover:bg-secondary text-xs text-muted-foreground hover:text-foreground disabled:opacity-40 transition-colors flex items-center gap-1.5"
+            className="h-8 px-2 rounded-md bg-card border border-border hover:bg-secondary text-xs text-muted-foreground hover:text-foreground disabled:opacity-40 transition-colors flex items-center gap-1.5"
           >
             <Download className="size-3.5" strokeWidth={1.75} />
             {isExporting

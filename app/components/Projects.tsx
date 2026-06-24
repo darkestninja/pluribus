@@ -117,7 +117,7 @@ export function Projects({ onLaunchStudio, extraProjects = [] }: ProjectsProps) 
           <div className="flex items-center gap-1 border-b border-border -mb-6 pb-0 shrink-0">
             {(["all", "active", "review", "complete"] as FilterTab[]).map(tab => (
               <button key={tab} onClick={() => setFilter(tab)}
-                className={`h-9 px-3 text-xs font-medium whitespace-nowrap border-b-2 transition-colors flex items-center gap-1.5 ${
+                className={`h-9 px-2 text-xs font-medium whitespace-nowrap border-b-2 transition-colors flex items-center gap-1.5 ${
                   filter === tab ? "border-accent text-foreground" : "border-transparent text-muted-foreground hover:text-foreground"
                 }`}
               >
@@ -135,7 +135,7 @@ export function Projects({ onLaunchStudio, extraProjects = [] }: ProjectsProps) 
             </div>
             <div className="relative" ref={sortRef}>
               <button onClick={() => setShowSort(s => !s)}
-                className="h-8 px-3 rounded-md bg-card border border-border hover:border-accent/40 text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1.5"
+                className="h-8 px-2 rounded-md bg-card border border-border hover:border-accent/40 text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1.5"
               >
                 {sort === "name" ? "Name A–Z" : "Recent"}
                 <ChevronDown className="size-3" strokeWidth={1.75} />
@@ -153,7 +153,7 @@ export function Projects({ onLaunchStudio, extraProjects = [] }: ProjectsProps) 
               )}
             </div>
             <button onClick={() => setShowNewModal(true)}
-              className="h-8 px-3 rounded-md bg-accent hover:bg-accent/90 text-accent-foreground text-sm font-medium transition-colors flex items-center gap-1.5"
+              className="h-8 px-2 rounded-md bg-accent hover:bg-accent/90 text-accent-foreground text-sm font-medium transition-colors flex items-center gap-1.5"
             >
               <Plus className="size-3.5" strokeWidth={2.25} /> New campaign
             </button>
@@ -172,7 +172,7 @@ export function Projects({ onLaunchStudio, extraProjects = [] }: ProjectsProps) 
                 <p className="text-xs text-muted-foreground">Create a campaign to start generating</p>
               </div>
               <button onClick={() => setShowNewModal(true)}
-                className="h-8 px-3 rounded-md bg-accent hover:bg-accent/90 text-accent-foreground text-sm font-medium transition-colors flex items-center gap-1.5">
+                className="h-8 px-2 rounded-md bg-accent hover:bg-accent/90 text-accent-foreground text-sm font-medium transition-colors flex items-center gap-1.5">
                 <Plus className="size-3.5" strokeWidth={2.25} /> New campaign
               </button>
             </div>

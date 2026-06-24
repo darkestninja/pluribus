@@ -53,7 +53,7 @@ export function ArchivePage() {
                 </div>
                 {hoveredId === project.id && (
                   <div className="absolute inset-0 bg-background/60 backdrop-blur-sm flex items-center justify-center">
-                    <button className="h-8 px-3 rounded-md bg-foreground text-background text-sm font-medium flex items-center gap-1.5">
+                    <button className="h-8 px-2 rounded-md bg-foreground text-background text-sm font-medium flex items-center gap-1.5">
                       <RotateCcw className="size-3.5" strokeWidth={2} />
                       Restore
                     </button>

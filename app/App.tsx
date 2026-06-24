@@ -679,7 +679,7 @@ function AuthenticatedApp() {
               return (
                 <button
                   onClick={() => setCurrentView("queue")}
-                  className="hidden sm:flex items-center gap-1.5 h-8 px-2.5 rounded-md border border-border bg-card text-xs text-muted-foreground hover:text-foreground transition-colors"
+                  className="hidden sm:flex items-center gap-1.5 h-8 px-2 rounded-md border border-border bg-card text-xs text-muted-foreground hover:text-foreground transition-colors"
                 >
                   <span className="size-1.5 rounded-full bg-accent pulse-dot shrink-0" />
                   {totalSlots === 1
@@ -700,7 +700,7 @@ function AuthenticatedApp() {
             </button>
             <button
               onClick={() => goToStudio()}
-              className="h-8 px-3 rounded-md bg-accent hover:bg-accent/90 text-accent-foreground text-sm font-medium transition-colors flex items-center gap-1.5"
+              className="h-8 px-2 rounded-md bg-accent hover:bg-accent/90 text-accent-foreground text-sm font-medium transition-colors flex items-center gap-1.5"
             >
               <Plus className="size-3.5" strokeWidth={2.25} />
               <span className="hidden sm:inline">New render</span>

@@ -920,15 +920,15 @@ export function AthleteLibrary({ preSelectedAthleteId, onAthleteDeselect, onGene
               </div>
               <input type="text" placeholder="Description (e.g. Eagle tattoo on forearm)" value={newMark.description}
                 onChange={e => setNewMark(m => ({ ...m, description: e.target.value }))}
-                className="w-full h-8 px-3 bg-secondary border border-border rounded text-sm placeholder:text-muted-foreground focus:outline-none focus:border-accent" autoFocus />
+                className="w-full h-8 px-2 bg-secondary border border-border rounded text-sm placeholder:text-muted-foreground focus:outline-none focus:border-accent" autoFocus />
               <input type="text" placeholder="Location" value={newMark.location}
                 onChange={e => setNewMark(m => ({ ...m, location: e.target.value }))}
-                className="w-full h-8 px-3 bg-secondary border border-border rounded text-sm placeholder:text-muted-foreground focus:outline-none focus:border-accent" />
+                className="w-full h-8 px-2 bg-secondary border border-border rounded text-sm placeholder:text-muted-foreground focus:outline-none focus:border-accent" />
               <div className="flex gap-2">
                 <button onClick={handleAddMark}
                   className="flex-1 h-7 rounded bg-foreground text-background text-xs font-medium hover:bg-foreground/90 transition-colors">Save</button>
                 <button onClick={() => { setAddingMark(false); setNewMark(resetNewMark()); }}
-                  className="h-7 px-3 rounded bg-secondary text-muted-foreground hover:text-foreground text-xs transition-colors">Cancel</button>
+                  className="h-7 px-2 rounded bg-secondary text-muted-foreground hover:text-foreground text-xs transition-colors">Cancel</button>
               </div>
             </div>
           )}
@@ -981,12 +981,12 @@ export function AthleteLibrary({ preSelectedAthleteId, onAthleteDeselect, onGene
               <input type="text" placeholder="e.g. never remove chest tattoo"
                 value={newConstraint} onChange={e => setNewConstraint(e.target.value)}
                 onKeyDown={e => { if (e.key === "Enter") handleAddConstraint(); if (e.key === "Escape") { setAddingConstraint(false); setNewConstraint(""); } }}
-                className="w-full h-8 px-3 bg-secondary border border-border rounded text-sm placeholder:text-muted-foreground focus:outline-none focus:border-accent" autoFocus />
+                className="w-full h-8 px-2 bg-secondary border border-border rounded text-sm placeholder:text-muted-foreground focus:outline-none focus:border-accent" autoFocus />
               <div className="flex gap-2">
                 <button onClick={handleAddConstraint}
                   className="flex-1 h-7 rounded bg-foreground text-background text-xs font-medium hover:bg-foreground/90 transition-colors">Save</button>
                 <button onClick={() => { setAddingConstraint(false); setNewConstraint(""); }}
-                  className="h-7 px-3 rounded bg-secondary text-muted-foreground hover:text-foreground text-xs transition-colors">Cancel</button>
+                  className="h-7 px-2 rounded bg-secondary text-muted-foreground hover:text-foreground text-xs transition-colors">Cancel</button>
               </div>
             </div>
           )}
@@ -1109,7 +1109,7 @@ export function AthleteLibrary({ preSelectedAthleteId, onAthleteDeselect, onGene
                     <p className="text-[10px] text-muted-foreground mb-1">{label}</p>
                     <input type={type ?? "text"} placeholder={placeholder} value={attrForm[key]}
                       onChange={e => setAttrForm(f => ({ ...f, [key]: e.target.value }))}
-                      className="w-full h-8 px-2.5 bg-secondary border border-border rounded text-xs focus:outline-none focus:border-accent placeholder:text-muted-foreground/50" />
+                      className="w-full h-8 px-2 bg-secondary border border-border rounded text-xs focus:outline-none focus:border-accent placeholder:text-muted-foreground/50" />
                   </div>
                 ))}
                 {/* Height picker */}
@@ -1150,7 +1150,7 @@ export function AthleteLibrary({ preSelectedAthleteId, onAthleteDeselect, onGene
                       <p className="text-[10px] text-muted-foreground mb-1">{label}</p>
                       <input type="text" placeholder={placeholder} value={attrForm[key]}
                         onChange={e => setAttrForm(f => ({ ...f, [key]: e.target.value }))}
-                        className="w-full h-8 px-2.5 bg-secondary border border-border rounded text-xs focus:outline-none focus:border-accent placeholder:text-muted-foreground/40" />
+                        className="w-full h-8 px-2 bg-secondary border border-border rounded text-xs focus:outline-none focus:border-accent placeholder:text-muted-foreground/40" />
                     </div>
                   ))}
                 </div>
@@ -1304,7 +1304,7 @@ export function AthleteLibrary({ preSelectedAthleteId, onAthleteDeselect, onGene
                 </span>
               ) : cs === "failed" ? (
                 <button onClick={startCanonicalValidation}
-                  className="h-7 px-2.5 rounded-md text-xs font-medium bg-secondary text-muted-foreground hover:text-foreground transition-colors shrink-0">
+                  className="h-7 px-2 rounded-md text-xs font-medium bg-secondary text-muted-foreground hover:text-foreground transition-colors shrink-0">
                   Retry
                 </button>
               ) : (
@@ -1338,14 +1338,14 @@ export function AthleteLibrary({ preSelectedAthleteId, onAthleteDeselect, onGene
             {/* Sport filter */}
             {uniqueSports.length > 0 && (
               <select value={activeSportFilter} onChange={e => setActiveSportFilter(e.target.value)}
-                className="h-8 px-2.5 bg-card border border-border rounded-md text-xs focus:outline-none focus:border-accent text-muted-foreground">
+                className="h-8 px-2 bg-card border border-border rounded-md text-xs focus:outline-none focus:border-accent text-muted-foreground">
                 <option value="">All sports</option>
                 {uniqueSports.map(s => <option key={s} value={s}>{s}</option>)}
               </select>
             )}
             {/* Status filter */}
             <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}
-              className="h-8 px-2.5 bg-card border border-border rounded-md text-xs focus:outline-none focus:border-accent text-muted-foreground">
+              className="h-8 px-2 bg-card border border-border rounded-md text-xs focus:outline-none focus:border-accent text-muted-foreground">
               <option value="all">All statuses</option>
               <option value="complete">Captured</option>
               <option value="review">In progress</option>
@@ -1353,7 +1353,7 @@ export function AthleteLibrary({ preSelectedAthleteId, onAthleteDeselect, onGene
             </select>
             {/* Sort */}
             <select value={sortBy} onChange={e => setSortBy(e.target.value as typeof sortBy)}
-              className="h-8 px-2.5 bg-card border border-border rounded-md text-xs focus:outline-none focus:border-accent text-muted-foreground">
+              className="h-8 px-2 bg-card border border-border rounded-md text-xs focus:outline-none focus:border-accent text-muted-foreground">
               <option value="name">Name</option>
               <option value="sport">Sport</option>
               <option value="date-added">Date added</option>
@@ -1373,7 +1373,7 @@ export function AthleteLibrary({ preSelectedAthleteId, onAthleteDeselect, onGene
             {/* Add */}
             <button
               onClick={() => setShowAddModal(true)}
-              className="h-8 px-3 rounded-md bg-accent hover:bg-accent/90 text-accent-foreground text-sm font-medium transition-colors flex items-center gap-1.5 shrink-0">
+              className="h-8 px-2 rounded-md bg-accent hover:bg-accent/90 text-accent-foreground text-sm font-medium transition-colors flex items-center gap-1.5 shrink-0">
               <Plus className="size-3.5" strokeWidth={2.25} /> Add
             </button>
           </div>
@@ -1459,7 +1459,7 @@ export function AthleteLibrary({ preSelectedAthleteId, onAthleteDeselect, onGene
                     <ReadinessBadge status={readiness.status} score={readiness.score} className="shrink-0" />
                     <button
                       onClick={() => onGenerate?.(ath.id)}
-                      className="h-7 px-2.5 rounded-md bg-secondary hover:bg-secondary/60 text-muted-foreground hover:text-foreground text-xs font-medium flex items-center gap-1 transition-colors border border-border shrink-0 opacity-0 group-hover:opacity-100"
+                      className="h-7 px-2 rounded-md bg-secondary hover:bg-secondary/60 text-muted-foreground hover:text-foreground text-xs font-medium flex items-center gap-1 transition-colors border border-border shrink-0 opacity-0 group-hover:opacity-100"
                     >
                       <Sparkles className="size-3" strokeWidth={2} />
                       Generate
@@ -1511,13 +1511,13 @@ export function AthleteLibrary({ preSelectedAthleteId, onAthleteDeselect, onGene
               </div>
               <div className="flex items-center gap-1.5">
                 <button onClick={() => openEditAttrs(athlete)}
-                  className="h-7 px-2.5 rounded-md text-xs text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors flex items-center gap-1.5">
+                  className="h-7 px-2 rounded-md text-xs text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors flex items-center gap-1.5">
                   <Pencil className="size-3" strokeWidth={1.75} /> Edit
                 </button>
                 {confirmDelete ? (
                   <div className="flex items-center gap-1">
                     <button onClick={handleDeleteAthlete}
-                      className="h-7 px-2.5 rounded-md bg-red-500 hover:bg-red-600 text-white text-xs font-medium transition-colors">
+                      className="h-7 px-2 rounded-md bg-red-500 hover:bg-red-600 text-white text-xs font-medium transition-colors">
                       Confirm
                     </button>
                     <button onClick={() => setConfirmDelete(false)}
@@ -1527,7 +1527,7 @@ export function AthleteLibrary({ preSelectedAthleteId, onAthleteDeselect, onGene
                   </div>
                 ) : (
                   <button onClick={() => setConfirmDelete(true)}
-                    className="h-7 px-2.5 rounded-md text-xs text-red-400/60 hover:text-red-400 hover:bg-red-500/10 transition-colors flex items-center gap-1.5">
+                    className="h-7 px-2 rounded-md text-xs text-red-400/60 hover:text-red-400 hover:bg-red-500/10 transition-colors flex items-center gap-1.5">
                     <Trash2 className="size-3" strokeWidth={1.75} /> Delete
                   </button>
                 )}
@@ -1605,7 +1605,7 @@ export function AthleteLibrary({ preSelectedAthleteId, onAthleteDeselect, onGene
                           <code className="flex-1 text-xs bg-secondary rounded px-2 py-1.5 truncate text-foreground">{portalUrl}</code>
                           <button
                             onClick={() => { navigator.clipboard.writeText(portalUrl); toast({ type: "info", title: "Copied" }); }}
-                            className="shrink-0 h-7 px-2.5 text-xs rounded-md border border-border hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors"
+                            className="shrink-0 h-7 px-2 text-xs rounded-md border border-border hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors"
                           >Copy</button>
                         </div>
                         {profile?.portalInvitedAt && (

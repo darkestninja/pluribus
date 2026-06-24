@@ -294,7 +294,7 @@ function BuilderModal({
                       key={s}
                       type="button"
                       onClick={() => { setSport(s); setItems([]); setExpandedItem(null); }}
-                      className={`h-7 px-3 rounded-full text-xs font-medium transition-colors ${
+                      className={`h-7 px-2 rounded-full text-xs font-medium transition-colors ${
                         sport === s
                           ? "bg-accent text-white"
                           : "bg-secondary text-muted-foreground hover:text-foreground"
@@ -425,7 +425,7 @@ function BuilderModal({
                                       key={f}
                                       type="button"
                                       onClick={() => updateItem(idx, { fit: f })}
-                                      className={`h-7 px-2.5 rounded-md text-xs capitalize border transition-colors ${
+                                      className={`h-7 px-2 rounded-md text-xs capitalize border transition-colors ${
                                         item.fit === f
                                           ? "border-accent bg-accent/10 text-foreground"
                                           : "border-border bg-card text-muted-foreground hover:text-foreground"
@@ -467,7 +467,7 @@ function BuilderModal({
                       value={logoBrand}
                       onChange={e => setLogoBrand(e.target.value)}
                       placeholder="Brand name, e.g. Nike, Adidas…"
-                      className="w-full h-8 px-2.5 bg-card border border-border rounded-md text-xs focus:outline-none focus:border-accent placeholder:text-muted-foreground/40"
+                      className="w-full h-8 px-2 bg-card border border-border rounded-md text-xs focus:outline-none focus:border-accent placeholder:text-muted-foreground/40"
                     />
                     <div className="flex flex-wrap gap-1">
                       {LOGO_PLACEMENTS.map(p => (
@@ -526,7 +526,7 @@ function BuilderModal({
                 <div className="flex flex-wrap gap-1.5">
                   {SPORT_ORDER.map(s => (
                     <button key={s} type="button" onClick={() => setSport(s)}
-                      className={`h-7 px-3 rounded-full text-xs font-medium transition-colors ${sport === s ? "bg-accent text-white" : "bg-secondary text-muted-foreground hover:text-foreground"}`}
+                      className={`h-7 px-2 rounded-full text-xs font-medium transition-colors ${sport === s ? "bg-accent text-white" : "bg-secondary text-muted-foreground hover:text-foreground"}`}
                     >
                       {SPORT_LABELS[s]}
                     </button>
@@ -598,12 +598,12 @@ function BuilderModal({
             value={name}
             onChange={e => setName(e.target.value)}
             placeholder="Kit name…"
-            className="flex-1 h-9 px-3 bg-card border border-border rounded-md text-sm focus:outline-none focus:border-accent placeholder:text-muted-foreground/40"
+            className="flex-1 h-9 px-2 bg-card border border-border rounded-md text-sm focus:outline-none focus:border-accent placeholder:text-muted-foreground/40"
           />
           <button
             type="button"
             onClick={onClose}
-            className="h-9 px-3 rounded-md border border-border bg-card hover:bg-secondary text-sm text-muted-foreground hover:text-foreground transition-colors"
+            className="h-9 px-2 rounded-md border border-border bg-card hover:bg-secondary text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
             Cancel
           </button>
@@ -671,7 +671,7 @@ export function WardrobeLibrary({ onSelectKit, selectedKitId }: Props) {
           <p className="text-xs text-muted-foreground">Build kits and apply them to any render</p>
           <button
             onClick={() => { setEditing(undefined); setShowBuilder(true); }}
-            className="h-8 px-3 rounded-md bg-accent hover:bg-accent/90 text-accent-foreground text-sm font-medium transition-colors flex items-center gap-1.5"
+            className="h-8 px-2 rounded-md bg-accent hover:bg-accent/90 text-accent-foreground text-sm font-medium transition-colors flex items-center gap-1.5"
           >
             <Plus className="size-3.5" strokeWidth={2.25} /> New kit
           </button>
@@ -688,7 +688,7 @@ export function WardrobeLibrary({ onSelectKit, selectedKitId }: Props) {
             </div>
             <button
               onClick={() => setShowBuilder(true)}
-              className="h-8 px-3 rounded-md bg-accent hover:bg-accent/90 text-accent-foreground text-sm font-medium transition-colors flex items-center gap-1.5"
+              className="h-8 px-2 rounded-md bg-accent hover:bg-accent/90 text-accent-foreground text-sm font-medium transition-colors flex items-center gap-1.5"
             >
               <Plus className="size-3.5" strokeWidth={2.25} /> Create first kit
             </button>

@@ -656,7 +656,7 @@ export function Workspace({ workspaceId, prefill, onBack }: WorkspaceProps) {
                   download
                   target="_blank"
                   rel="noreferrer"
-                  className="h-8 px-3 rounded-md bg-background/90 backdrop-blur-sm border border-border text-xs font-medium flex items-center gap-1.5 hover:bg-card transition-colors"
+                  className="h-8 px-2 rounded-md bg-background/90 backdrop-blur-sm border border-border text-xs font-medium flex items-center gap-1.5 hover:bg-card transition-colors"
                 >
                   <Download className="size-3.5" strokeWidth={1.75} /> Download
                 </a>
@@ -844,7 +844,7 @@ export function Workspace({ workspaceId, prefill, onBack }: WorkspaceProps) {
                     <select
                       value={selectedRatio}
                       onChange={e => setSelectedRatio(e.target.value)}
-                      className="w-full h-9 px-3 bg-card border border-border rounded-md text-sm text-foreground focus:outline-none focus:border-accent"
+                      className="w-full h-9 px-2 bg-card border border-border rounded-md text-sm text-foreground focus:outline-none focus:border-accent"
                     >
                       {RATIO_OPTIONS.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
                     </select>
@@ -961,7 +961,7 @@ export function Workspace({ workspaceId, prefill, onBack }: WorkspaceProps) {
                       <select
                         value={selectedRatio}
                         onChange={e => setSelectedRatio(e.target.value)}
-                        className="w-full h-9 px-3 bg-card border border-border rounded-md text-sm text-foreground focus:outline-none focus:border-accent"
+                        className="w-full h-9 px-2 bg-card border border-border rounded-md text-sm text-foreground focus:outline-none focus:border-accent"
                       >
                         {RATIO_OPTIONS.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
                       </select>
@@ -995,7 +995,7 @@ export function Workspace({ workspaceId, prefill, onBack }: WorkspaceProps) {
                             <button
                               key={d}
                               onClick={() => setVideoDuration(d)}
-                              className={`h-8 px-3 rounded-md text-xs border transition-colors ${
+                              className={`h-8 px-2 rounded-md text-xs border transition-colors ${
                                 videoDuration === d
                                   ? "bg-secondary border-border text-foreground"
                                   : "border-border text-muted-foreground hover:text-foreground bg-card"
@@ -1026,11 +1026,11 @@ export function Workspace({ workspaceId, prefill, onBack }: WorkspaceProps) {
                           type="number"
                           value={seedValue}
                           onChange={e => setSeedValue(parseInt(e.target.value) || 0)}
-                          className="flex-1 h-8 px-3 bg-card border border-border rounded-md text-sm focus:outline-none focus:border-accent"
+                          className="flex-1 h-8 px-2 bg-card border border-border rounded-md text-sm focus:outline-none focus:border-accent"
                         />
                         <button
                           onClick={() => setSeedValue(Math.floor(Math.random() * 99999))}
-                          className="h-8 px-2.5 rounded-md bg-card border border-border hover:border-accent/40 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                          className="h-8 px-2 rounded-md bg-card border border-border hover:border-accent/40 text-xs text-muted-foreground hover:text-foreground transition-colors"
                         >
                           Shuffle
                         </button>
@@ -1078,7 +1078,7 @@ export function Workspace({ workspaceId, prefill, onBack }: WorkspaceProps) {
                   <select
                     value={targetCampaignId}
                     onChange={e => setTargetCampaignId(e.target.value)}
-                    className="flex-1 h-9 px-2.5 bg-card border border-border rounded-lg text-sm text-foreground focus:outline-none focus:border-accent"
+                    className="flex-1 h-9 px-2 bg-card border border-border rounded-lg text-sm text-foreground focus:outline-none focus:border-accent"
                   >
                     {projects.map(p => (
                       <option key={p.id} value={p.id}>{p.name}</option>
@@ -1087,7 +1087,7 @@ export function Workspace({ workspaceId, prefill, onBack }: WorkspaceProps) {
                   <button
                     onClick={handleAddToCampaign}
                     disabled={!targetCampaignId}
-                    className="h-9 px-3 rounded-lg bg-accent hover:bg-accent/90 disabled:opacity-40 text-white text-xs font-semibold transition-colors"
+                    className="h-9 px-2 rounded-lg bg-accent hover:bg-accent/90 disabled:opacity-40 text-white text-xs font-semibold transition-colors"
                   >
                     Add
                   </button>
@@ -1230,8 +1230,8 @@ export function Workspace({ workspaceId, prefill, onBack }: WorkspaceProps) {
             <div className="px-4 h-12 flex items-center justify-between border-b border-border shrink-0">
               <h2 className="text-sm font-semibold">Wardrobe</h2>
               <div className="flex items-center gap-1">
-                <button onClick={() => setWardrobePickerTab("browse")} className={`h-7 px-2.5 rounded-md text-xs font-medium transition-colors ${wardrobePickerTab === "browse" ? "bg-secondary text-foreground" : "text-muted-foreground hover:text-foreground"}`}>Browse</button>
-                <button onClick={() => setWardrobePickerTab("create")} className={`h-7 px-2.5 rounded-md text-xs font-medium transition-colors ${wardrobePickerTab === "create" ? "bg-secondary text-foreground" : "text-muted-foreground hover:text-foreground"}`}>+ New</button>
+                <button onClick={() => setWardrobePickerTab("browse")} className={`h-7 px-2 rounded-md text-xs font-medium transition-colors ${wardrobePickerTab === "browse" ? "bg-secondary text-foreground" : "text-muted-foreground hover:text-foreground"}`}>Browse</button>
+                <button onClick={() => setWardrobePickerTab("create")} className={`h-7 px-2 rounded-md text-xs font-medium transition-colors ${wardrobePickerTab === "create" ? "bg-secondary text-foreground" : "text-muted-foreground hover:text-foreground"}`}>+ New</button>
                 <button onClick={() => { setShowWardrobePicker(false); setWardrobePickerTab("browse"); }} className="size-7 rounded-md flex items-center justify-center hover:bg-secondary ml-1">
                   <X className="size-3.5" strokeWidth={1.75} />
                 </button>
@@ -1248,7 +1248,7 @@ export function Workspace({ workspaceId, prefill, onBack }: WorkspaceProps) {
                     value={wardrobeCreateName}
                     onChange={e => setWardrobeCreateName(e.target.value)}
                     placeholder="e.g. Nike Match Kit 2025"
-                    className="w-full h-9 px-3 bg-card border border-border rounded-lg text-sm focus:outline-none focus:border-accent placeholder:text-muted-foreground/40"
+                    className="w-full h-9 px-2 bg-card border border-border rounded-lg text-sm focus:outline-none focus:border-accent placeholder:text-muted-foreground/40"
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -1387,8 +1387,8 @@ export function Workspace({ workspaceId, prefill, onBack }: WorkspaceProps) {
             <div className="flex items-center justify-between px-4 h-12 border-b border-border shrink-0">
               <p className="text-sm font-semibold">Moodboard</p>
               <div className="flex items-center gap-1">
-                <button onClick={() => setMoodboardPickerTab("browse")} className={`h-7 px-2.5 rounded-md text-xs font-medium transition-colors ${moodboardPickerTab === "browse" ? "bg-secondary text-foreground" : "text-muted-foreground hover:text-foreground"}`}>Browse</button>
-                <button onClick={() => setMoodboardPickerTab("create")} className={`h-7 px-2.5 rounded-md text-xs font-medium transition-colors ${moodboardPickerTab === "create" ? "bg-secondary text-foreground" : "text-muted-foreground hover:text-foreground"}`}>+ New</button>
+                <button onClick={() => setMoodboardPickerTab("browse")} className={`h-7 px-2 rounded-md text-xs font-medium transition-colors ${moodboardPickerTab === "browse" ? "bg-secondary text-foreground" : "text-muted-foreground hover:text-foreground"}`}>Browse</button>
+                <button onClick={() => setMoodboardPickerTab("create")} className={`h-7 px-2 rounded-md text-xs font-medium transition-colors ${moodboardPickerTab === "create" ? "bg-secondary text-foreground" : "text-muted-foreground hover:text-foreground"}`}>+ New</button>
                 <button onClick={() => { setShowMoodboardPicker(false); setMoodboardPickerTab("browse"); }} className="size-7 rounded-md flex items-center justify-center hover:bg-secondary ml-1">
                   <X className="size-4" strokeWidth={1.75} />
                 </button>
@@ -1405,7 +1405,7 @@ export function Workspace({ workspaceId, prefill, onBack }: WorkspaceProps) {
                     value={moodboardCreateName}
                     onChange={e => setMoodboardCreateName(e.target.value)}
                     placeholder="e.g. Dark editorial, summer vibes…"
-                    className="w-full h-9 px-3 bg-card border border-border rounded-lg text-sm focus:outline-none focus:border-accent placeholder:text-muted-foreground/40"
+                    className="w-full h-9 px-2 bg-card border border-border rounded-lg text-sm focus:outline-none focus:border-accent placeholder:text-muted-foreground/40"
                   />
                 </div>
                 <div className="space-y-1.5">

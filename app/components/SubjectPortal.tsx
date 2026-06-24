@@ -467,7 +467,7 @@ function OutputApprovalCard({
               </button>
               <button
                 onClick={() => { setShowRejectForm(false); setRejectNote(""); }}
-                className="h-7 px-3 rounded-md border border-zinc-700 text-zinc-400 hover:text-white text-xs transition-colors"
+                className="h-7 px-2 rounded-md border border-zinc-700 text-zinc-400 hover:text-white text-xs transition-colors"
               >
                 Cancel
               </button>
