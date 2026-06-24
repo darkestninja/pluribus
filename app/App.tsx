@@ -710,7 +710,7 @@ function AuthenticatedApp() {
         </header>
 
         {/* Content — island effect */}
-        <div className="flex-1 overflow-hidden relative p-4 bg-secondary/30">
+        <div className="flex-1 overflow-hidden relative px-4 pb-4 pt-2 bg-secondary/30">
           <div className="size-full rounded-xl border border-border bg-background shadow-sm overflow-hidden relative">
           {currentView === "home" && (
             <Dashboard
