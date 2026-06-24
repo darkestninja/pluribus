@@ -586,7 +586,7 @@ function AuthenticatedApp() {
             {isAdmin && <span className="absolute top-0 right-1.5 size-2.5 rounded-full bg-amber-400 border border-background" title="Admin" />}
           </button>
         ) : (
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 w-full">
             {/* Avatar + name · plan + chevron */}
             <button
               onClick={() => setUserMenuOpen(o => !o)}
@@ -602,11 +602,11 @@ function AuthenticatedApp() {
                 <ChevronUp className={`size-3 text-muted-foreground shrink-0 transition-transform duration-150 ${userMenuOpen ? "" : "rotate-180"}`} strokeWidth={2} />
               </div>
             </button>
-            {/* Settings shortcut */}
+            {/* Settings shortcut — anchored right */}
             <button
               onClick={() => { navigateTo("settings"); setUserMenuOpen(false); }}
               title="Settings"
-              className={`size-7 flex items-center justify-center rounded-md transition-colors shrink-0 ${currentView === "settings" ? "text-foreground bg-secondary" : "text-muted-foreground hover:text-foreground hover:bg-card"}`}
+              className={`size-7 flex items-center justify-center rounded-md transition-colors shrink-0 ml-auto ${currentView === "settings" ? "text-foreground bg-secondary" : "text-muted-foreground hover:text-foreground hover:bg-card"}`}
             >
               <SettingsIcon className="size-3.5" strokeWidth={1.75} />
             </button>

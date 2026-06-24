@@ -1,5 +1,7 @@
 @custom-variant dark (&:is(.dark *));
 
+html { font-size: 13px; }
+
 /* ============================================================
    Pluribus — Simple Design System (Figma Community) tokens
    Ref: github.com/figma/sds
