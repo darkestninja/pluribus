@@ -532,7 +532,7 @@ function AuthenticatedApp() {
       </nav>
 
       {/* Footer — user menu */}
-      <div ref={userMenuRef} className="p-2 border-t border-border shrink-0 relative">
+      <div ref={userMenuRef} className="p-2 shrink-0 relative">
         {/* Dropdown menu */}
         {userMenuOpen && (
           <div className="absolute bottom-full left-2 right-2 mb-1 rounded-lg border border-border bg-background shadow-lg overflow-hidden z-50">
