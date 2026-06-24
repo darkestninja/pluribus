@@ -479,7 +479,7 @@ function AuthenticatedApp() {
           </div>
           <button
             onClick={() => { goToStudio(); setMobileSidebarOpen(false); }}
-            className="flex-1 flex items-center justify-center gap-1.5 h-8 rounded-lg bg-accent hover:bg-accent/90 text-accent-foreground text-sm font-medium transition-colors"
+            className="flex-1 flex items-center justify-center gap-1.5 h-8 rounded-lg bg-accent hover:bg-accent/90 text-accent-foreground text-xs font-medium transition-colors"
           >
             <Plus className="size-3.5" strokeWidth={2.25} />
             New render
