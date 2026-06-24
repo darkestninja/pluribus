@@ -109,11 +109,10 @@ export function Projects({ onLaunchStudio, extraProjects = [] }: ProjectsProps) 
   }
 
   return (
-    <div className="h-full overflow-y-auto">
-      <div className="max-w-[1400px] mx-auto px-6 py-8 space-y-0 flex flex-col h-full">
+    <div className="h-full flex flex-col overflow-hidden">
 
         {/* Toolbar - Search row */}
-        <div className="py-4 border-b border-border flex items-center gap-3 shrink-0">
+        <div className="px-6 py-4 border-b border-border flex items-center gap-3 shrink-0">
           {/* Search */}
           <div className="relative flex-1 min-w-[200px] max-w-xs">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" strokeWidth={1.75} />
@@ -148,7 +147,7 @@ export function Projects({ onLaunchStudio, extraProjects = [] }: ProjectsProps) 
         </div>
 
         {/* Tabs row */}
-        <div className="flex gap-1 border-b border-border overflow-x-auto shrink-0">
+        <div className="px-6 flex gap-1 border-b border-border overflow-x-auto shrink-0">
           {(["all", "active", "review", "complete"] as FilterTab[]).map(tab => (
             <button key={tab} onClick={() => setFilter(tab)}
               className={`px-3 h-9 text-xs font-medium whitespace-nowrap border-b-2 transition-colors ${
@@ -282,7 +281,6 @@ export function Projects({ onLaunchStudio, extraProjects = [] }: ProjectsProps) 
           );
         })()}
         </div>
-      </div>
 
       {showNewModal && (
         <NewCampaignModal
