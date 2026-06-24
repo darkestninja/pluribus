@@ -460,11 +460,7 @@ export function MoodboardLibrary() {
 
         {/* Header */}
         <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm text-muted-foreground">
-              Import references from images, PDFs, Pinterest, or Behance — Claude extracts the creative direction.
-            </p>
-          </div>
+          <p className="text-xs text-muted-foreground">Import references from images, PDFs, Pinterest, or Behance — Claude extracts the creative direction.</p>
           <button
             onClick={() => setBuilding(true)}
             className="h-8 px-3 rounded-md bg-accent hover:bg-accent/90 text-accent-foreground text-sm font-medium transition-colors flex items-center gap-1.5"
