@@ -110,52 +110,59 @@ export function Projects({ onLaunchStudio, extraProjects = [] }: ProjectsProps) 
 
   return (
     <div className="h-full overflow-y-auto">
-      <div className="max-w-[1400px] mx-auto px-6 py-8 space-y-6">
+      <div className="max-w-[1400px] mx-auto px-6 py-8 space-y-0 flex flex-col h-full">
 
-        {/* Toolbar */}
-        <div className="flex items-center gap-3 flex-wrap">
-          <div className="flex items-center gap-1 border-b border-border -mb-6 pb-0 shrink-0">
-            {(["all", "active", "review", "complete"] as FilterTab[]).map(tab => (
-              <button key={tab} onClick={() => setFilter(tab)}
-                className={`h-9 px-2 text-xs font-medium whitespace-nowrap border-b-2 transition-colors flex items-center gap-1.5 ${
-                  filter === tab ? "border-accent text-foreground" : "border-transparent text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                <span className="capitalize">{tab}</span>
-                <span className="text-[11px] tabular-nums opacity-50">{counts[tab]}</span>
-              </button>
-            ))}
+        {/* Toolbar - Search row */}
+        <div className="py-4 border-b border-border flex items-center gap-3 shrink-0">
+          {/* Search */}
+          <div className="relative flex-1 min-w-[200px] max-w-xs">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" strokeWidth={1.75} />
+            <input type="text" placeholder="Search campaigns…" value={search} onChange={e => setSearch(e.target.value)}
+              className="w-full h-8 pl-8 pr-3 bg-card border border-border rounded-md text-sm focus:outline-none focus:border-accent placeholder:text-muted-foreground"
+            />
           </div>
-          <div className="flex items-center gap-2 ml-auto">
-            <div className="relative flex-1 min-w-[160px] max-w-[240px]">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" strokeWidth={1.75} />
-              <input type="text" placeholder="Search campaigns…" value={search} onChange={e => setSearch(e.target.value)}
-                className="w-full h-8 pl-8 pr-3 bg-card border border-border rounded-md text-sm focus:outline-none focus:border-accent placeholder:text-muted-foreground"
-              />
-            </div>
-            <div className="relative" ref={sortRef}>
-              <button onClick={() => setShowSort(s => !s)}
-                className="h-8 px-2 rounded-md bg-card border border-border hover:border-accent/40 text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1.5"
-              >
-                {sort === "name" ? "Name A–Z" : "Recent"}
-                <ChevronDown className="size-3" strokeWidth={1.75} />
-              </button>
-              {showSort && (
-                <div className="absolute right-0 top-full mt-1 bg-popover border border-border rounded-md z-20 w-32 py-1 shadow-md">
-                  {(["recent", "name"] as const).map(s => (
-                    <button key={s} onClick={() => { setSort(s); setShowSort(false); }}
-                      className={`w-full text-left px-3 h-8 text-sm ${sort === s ? "text-foreground bg-secondary" : "text-muted-foreground hover:text-foreground hover:bg-card"}`}
-                    >
-                      {s === "name" ? "Name A–Z" : "Recent"}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
+
+          {/* Sort */}
+          <div className="relative" ref={sortRef}>
+            <button onClick={() => setShowSort(s => !s)}
+              className="h-8 px-2 rounded-md bg-card border border-border hover:border-accent/40 text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1.5"
+            >
+              {sort === "name" ? "Name A–Z" : "Recent"}
+              <ChevronDown className="size-3" strokeWidth={1.75} />
+            </button>
+            {showSort && (
+              <div className="absolute right-0 top-full mt-1 bg-popover border border-border rounded-md z-20 w-32 py-1 shadow-md">
+                {(["recent", "name"] as const).map(s => (
+                  <button key={s} onClick={() => { setSort(s); setShowSort(false); }}
+                    className={`w-full text-left px-3 h-8 text-sm ${sort === s ? "text-foreground bg-secondary" : "text-muted-foreground hover:text-foreground hover:bg-card"}`}
+                  >
+                    {s === "name" ? "Name A–Z" : "Recent"}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
+
+          {/* Count */}
+          <p className="text-xs text-muted-foreground ml-auto">{sorted.length} campaign{sorted.length !== 1 ? "s" : ""}</p>
         </div>
 
-        {/* Campaign grid */}
+        {/* Tabs row */}
+        <div className="flex gap-1 border-b border-border overflow-x-auto shrink-0">
+          {(["all", "active", "review", "complete"] as FilterTab[]).map(tab => (
+            <button key={tab} onClick={() => setFilter(tab)}
+              className={`px-3 h-9 text-xs font-medium whitespace-nowrap border-b-2 transition-colors ${
+                filter === tab ? "border-accent text-foreground" : "border-transparent text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <span className="capitalize">{tab}</span>
+              <span className="text-[11px] tabular-nums opacity-50 ml-1">{counts[tab]}</span>
+            </button>
+          ))}
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto px-6">
         {sorted.length === 0 ? (
           allProjects.length === 0 ? (
             <div className="flex flex-col items-center justify-center gap-4 py-24 text-center">
@@ -164,12 +171,8 @@ export function Projects({ onLaunchStudio, extraProjects = [] }: ProjectsProps) 
               </div>
               <div className="space-y-1">
                 <p className="text-sm font-medium">No campaigns yet</p>
-                <p className="text-xs text-muted-foreground">Create a campaign to start generating</p>
+                <p className="text-xs text-muted-foreground">Use the New button to create a campaign</p>
               </div>
-              <button onClick={() => setShowNewModal(true)}
-                className="h-8 px-2 rounded-md bg-accent hover:bg-accent/90 text-accent-foreground text-sm font-medium transition-colors flex items-center gap-1.5">
-                <Plus className="size-3.5" strokeWidth={2.25} /> New campaign
-              </button>
             </div>
           ) : (
             <div className="flex items-center justify-center py-16">
