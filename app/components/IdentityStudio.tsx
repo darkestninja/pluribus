@@ -353,7 +353,7 @@ export function IdentityStudio() {
                     value={subjectName}
                     onChange={e => setSubjectName(e.target.value)}
                     placeholder="e.g. Alex Jordan"
-                    className="w-full h-9 px-3 bg-card border border-border rounded-lg text-sm focus:border-accent placeholder:text-muted-foreground/40"
+                    className="w-full h-9 px-3 bg-card border border-border rounded-lg text-sm focus:outline-none focus:border-accent placeholder:text-muted-foreground/40"
                   />
                 </div>
                 <div className="space-y-1">
@@ -361,7 +361,7 @@ export function IdentityStudio() {
                   <select
                     value={sport}
                     onChange={e => setSport(e.target.value)}
-                    className="w-full h-9 px-3 bg-card border border-border rounded-lg text-sm focus:border-accent"
+                    className="w-full h-9 px-3 bg-card border border-border rounded-lg text-sm focus:outline-none focus:border-accent"
                   >
                     {SPORT_OPTIONS.map(s => <option key={s}>{s}</option>)}
                   </select>
@@ -371,7 +371,7 @@ export function IdentityStudio() {
                   <select
                     value={environment}
                     onChange={e => setEnvironment(e.target.value)}
-                    className="w-full h-9 px-3 bg-card border border-border rounded-lg text-sm focus:border-accent"
+                    className="w-full h-9 px-3 bg-card border border-border rounded-lg text-sm focus:outline-none focus:border-accent"
                   >
                     {ENV_OPTIONS.map(e => <option key={e}>{e}</option>)}
                   </select>
@@ -412,20 +412,20 @@ export function IdentityStudio() {
                       <label className="text-xs text-muted-foreground">Steps</label>
                       <input type="number" value={steps} min={10} max={50}
                         onChange={e => setSteps(+e.target.value)}
-                        className="w-full h-8 px-2.5 bg-background border border-border rounded-md text-sm focus:border-accent" />
+                        className="w-full h-8 px-2.5 bg-background border border-border rounded-md text-sm focus:outline-none focus:border-accent" />
                     </div>
                     <div className="space-y-1">
                       <label className="text-xs text-muted-foreground">CFG</label>
                       <input type="number" value={cfg} min={1} max={10} step={0.5}
                         onChange={e => setCfg(+e.target.value)}
-                        className="w-full h-8 px-2.5 bg-background border border-border rounded-md text-sm focus:border-accent" />
+                        className="w-full h-8 px-2.5 bg-background border border-border rounded-md text-sm focus:outline-none focus:border-accent" />
                     </div>
                     <div className="space-y-1">
                       <label className="text-xs text-muted-foreground">Seed</label>
                       <div className="flex gap-1">
                         <input type="number" value={seed} disabled={randomSeed}
                           onChange={e => setSeed(+e.target.value)}
-                          className="flex-1 h-8 px-2 bg-background border border-border rounded-md text-xs focus:border-accent disabled:opacity-40" />
+                          className="flex-1 h-8 px-2 bg-background border border-border rounded-md text-xs focus:outline-none focus:border-accent disabled:opacity-40" />
                         <button onClick={() => setRandomSeed(v => !v)}
                           className={`h-8 px-2 rounded-md border text-[10px] transition-colors ${randomSeed ? "border-accent text-accent bg-accent/5" : "border-border text-muted-foreground"}`}>
                           {randomSeed ? "RND" : "FIX"}
@@ -438,27 +438,27 @@ export function IdentityStudio() {
                     <div className="space-y-1">
                       <label className="text-xs text-muted-foreground">FLUX UNET (models/unet/)</label>
                       <input type="text" value={fluxModel} onChange={e => setFluxModel(e.target.value)}
-                        className="w-full h-8 px-2.5 bg-background border border-border rounded-md text-xs font-mono focus:border-accent" />
+                        className="w-full h-8 px-2.5 bg-background border border-border rounded-md text-xs font-mono focus:outline-none focus:border-accent" />
                     </div>
                     <div className="space-y-1">
                       <label className="text-xs text-muted-foreground">PuLID model (models/pulid/)</label>
                       <input type="text" value={pulidModel} onChange={e => setPulidModel(e.target.value)}
-                        className="w-full h-8 px-2.5 bg-background border border-border rounded-md text-xs font-mono focus:border-accent" />
+                        className="w-full h-8 px-2.5 bg-background border border-border rounded-md text-xs font-mono focus:outline-none focus:border-accent" />
                     </div>
                     <div className="space-y-1">
                       <label className="text-xs text-muted-foreground">CLIP-L (models/clip/)</label>
                       <input type="text" value={clipL} onChange={e => setClipL(e.target.value)}
-                        className="w-full h-8 px-2.5 bg-background border border-border rounded-md text-xs font-mono focus:border-accent" />
+                        className="w-full h-8 px-2.5 bg-background border border-border rounded-md text-xs font-mono focus:outline-none focus:border-accent" />
                     </div>
                     <div className="space-y-1">
                       <label className="text-xs text-muted-foreground">T5-XXL (models/clip/)</label>
                       <input type="text" value={t5xxl} onChange={e => setT5xxl(e.target.value)}
-                        className="w-full h-8 px-2.5 bg-background border border-border rounded-md text-xs font-mono focus:border-accent" />
+                        className="w-full h-8 px-2.5 bg-background border border-border rounded-md text-xs font-mono focus:outline-none focus:border-accent" />
                     </div>
                     <div className="space-y-1 col-span-2">
                       <label className="text-xs text-muted-foreground">VAE (models/vae/)</label>
                       <input type="text" value={vaeModel} onChange={e => setVaeModel(e.target.value)}
-                        className="w-full h-8 px-2.5 bg-background border border-border rounded-md text-xs font-mono focus:border-accent" />
+                        className="w-full h-8 px-2.5 bg-background border border-border rounded-md text-xs font-mono focus:outline-none focus:border-accent" />
                     </div>
                   </div>
                 </div>
@@ -542,7 +542,7 @@ export function IdentityStudio() {
                       value={subjectName}
                       onChange={e => setSubjectName(e.target.value)}
                       placeholder="Talent name for import…"
-                      className="w-full h-8 px-3 bg-card border border-border rounded-lg text-xs focus:border-accent placeholder:text-muted-foreground/40"
+                      className="w-full h-8 px-3 bg-card border border-border rounded-lg text-xs focus:outline-none focus:border-accent placeholder:text-muted-foreground/40"
                     />
                   )}
                   <button

@@ -108,7 +108,7 @@ export function Onboarding({ onComplete, onSkip }: OnboardingProps) {
                       placeholder="Name"
                       value={newAthleteName}
                       onChange={e => setNewAthleteName(e.target.value)}
-                      className="w-full h-7 px-2 bg-card border border-border rounded text-xs focus-visible:border-accent placeholder:text-muted-foreground"
+                      className="w-full h-7 px-2 bg-card border border-border rounded text-xs focus:outline-none focus:border-accent placeholder:text-muted-foreground"
                     />
                     <button
                       disabled={!newAthleteName.trim()}

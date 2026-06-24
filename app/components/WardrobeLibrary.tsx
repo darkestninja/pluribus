@@ -583,7 +583,7 @@ function BuilderModal({
                     rows={3}
                     placeholder={analyzing ? "Analysing…" : "AI will describe the garment, or type your own…"}
                     disabled={analyzing}
-                    className="w-full px-3 py-2.5 bg-card border border-border rounded-lg text-sm leading-relaxed resize-none focus:border-accent placeholder:text-muted-foreground/40 disabled:opacity-50"
+                    className="w-full px-3 py-2.5 bg-card border border-border rounded-lg text-sm leading-relaxed resize-none focus:outline-none focus:border-accent placeholder:text-muted-foreground/40 disabled:opacity-50"
                   />
                 </div>
               )}

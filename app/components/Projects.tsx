@@ -130,7 +130,7 @@ export function Projects({ onLaunchStudio, extraProjects = [] }: ProjectsProps) 
             <div className="relative flex-1 min-w-[160px] max-w-[240px]">
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" strokeWidth={1.75} />
               <input type="text" placeholder="Search campaigns…" value={search} onChange={e => setSearch(e.target.value)}
-                className="w-full h-8 pl-8 pr-3 bg-card border border-border rounded-md text-sm focus-visible:border-accent placeholder:text-muted-foreground"
+                className="w-full h-8 pl-8 pr-3 bg-card border border-border rounded-md text-sm focus:outline-none focus:border-accent placeholder:text-muted-foreground"
               />
             </div>
             <div className="relative" ref={sortRef}>

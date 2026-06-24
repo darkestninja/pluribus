@@ -920,10 +920,10 @@ export function AthleteLibrary({ preSelectedAthleteId, onAthleteDeselect, onGene
               </div>
               <input type="text" placeholder="Description (e.g. Eagle tattoo on forearm)" value={newMark.description}
                 onChange={e => setNewMark(m => ({ ...m, description: e.target.value }))}
-                className="w-full h-8 px-3 bg-secondary border border-border rounded text-sm placeholder:text-muted-foreground focus-visible:border-accent" autoFocus />
+                className="w-full h-8 px-3 bg-secondary border border-border rounded text-sm placeholder:text-muted-foreground focus:outline-none focus:border-accent" autoFocus />
               <input type="text" placeholder="Location" value={newMark.location}
                 onChange={e => setNewMark(m => ({ ...m, location: e.target.value }))}
-                className="w-full h-8 px-3 bg-secondary border border-border rounded text-sm placeholder:text-muted-foreground focus-visible:border-accent" />
+                className="w-full h-8 px-3 bg-secondary border border-border rounded text-sm placeholder:text-muted-foreground focus:outline-none focus:border-accent" />
               <div className="flex gap-2">
                 <button onClick={handleAddMark}
                   className="flex-1 h-7 rounded bg-foreground text-background text-xs font-medium hover:bg-foreground/90 transition-colors">Save</button>
@@ -981,7 +981,7 @@ export function AthleteLibrary({ preSelectedAthleteId, onAthleteDeselect, onGene
               <input type="text" placeholder="e.g. never remove chest tattoo"
                 value={newConstraint} onChange={e => setNewConstraint(e.target.value)}
                 onKeyDown={e => { if (e.key === "Enter") handleAddConstraint(); if (e.key === "Escape") { setAddingConstraint(false); setNewConstraint(""); } }}
-                className="w-full h-8 px-3 bg-secondary border border-border rounded text-sm placeholder:text-muted-foreground focus-visible:border-accent" autoFocus />
+                className="w-full h-8 px-3 bg-secondary border border-border rounded text-sm placeholder:text-muted-foreground focus:outline-none focus:border-accent" autoFocus />
               <div className="flex gap-2">
                 <button onClick={handleAddConstraint}
                   className="flex-1 h-7 rounded bg-foreground text-background text-xs font-medium hover:bg-foreground/90 transition-colors">Save</button>
@@ -1332,7 +1332,7 @@ export function AthleteLibrary({ preSelectedAthleteId, onAthleteDeselect, onGene
                 placeholder="Search talent…"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full h-8 pl-8 pr-3 bg-card border border-border rounded-md text-sm focus-visible:border-accent placeholder:text-muted-foreground"
+                className="w-full h-8 pl-8 pr-3 bg-card border border-border rounded-md text-sm focus:outline-none focus:border-accent placeholder:text-muted-foreground"
               />
             </div>
             {/* Sport filter */}

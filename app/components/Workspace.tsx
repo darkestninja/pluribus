@@ -844,7 +844,7 @@ export function Workspace({ workspaceId, prefill, onBack }: WorkspaceProps) {
                     <select
                       value={selectedRatio}
                       onChange={e => setSelectedRatio(e.target.value)}
-                      className="w-full h-9 px-3 bg-card border border-border rounded-md text-sm text-foreground focus:border-accent"
+                      className="w-full h-9 px-3 bg-card border border-border rounded-md text-sm text-foreground focus:outline-none focus:border-accent"
                     >
                       {RATIO_OPTIONS.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
                     </select>
@@ -854,7 +854,7 @@ export function Workspace({ workspaceId, prefill, onBack }: WorkspaceProps) {
                     onChange={e => setCustomNotes(e.target.value)}
                     rows={4}
                     placeholder="Describe the shot — lighting, pose, mood, environment… (optional)"
-                    className="w-full px-3 py-2.5 bg-card border border-border rounded-lg text-sm leading-relaxed resize-none focus:border-accent placeholder:text-muted-foreground/40"
+                    className="w-full px-3 py-2.5 bg-card border border-border rounded-lg text-sm leading-relaxed resize-none focus:outline-none focus:border-accent placeholder:text-muted-foreground/40"
                   />
                 </div>
               )}
@@ -961,7 +961,7 @@ export function Workspace({ workspaceId, prefill, onBack }: WorkspaceProps) {
                       <select
                         value={selectedRatio}
                         onChange={e => setSelectedRatio(e.target.value)}
-                        className="w-full h-9 px-3 bg-card border border-border rounded-md text-sm text-foreground focus:border-accent"
+                        className="w-full h-9 px-3 bg-card border border-border rounded-md text-sm text-foreground focus:outline-none focus:border-accent"
                       >
                         {RATIO_OPTIONS.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
                       </select>
@@ -1026,7 +1026,7 @@ export function Workspace({ workspaceId, prefill, onBack }: WorkspaceProps) {
                           type="number"
                           value={seedValue}
                           onChange={e => setSeedValue(parseInt(e.target.value) || 0)}
-                          className="flex-1 h-8 px-3 bg-card border border-border rounded-md text-sm focus:border-accent"
+                          className="flex-1 h-8 px-3 bg-card border border-border rounded-md text-sm focus:outline-none focus:border-accent"
                         />
                         <button
                           onClick={() => setSeedValue(Math.floor(Math.random() * 99999))}
@@ -1078,7 +1078,7 @@ export function Workspace({ workspaceId, prefill, onBack }: WorkspaceProps) {
                   <select
                     value={targetCampaignId}
                     onChange={e => setTargetCampaignId(e.target.value)}
-                    className="flex-1 h-9 px-2.5 bg-card border border-border rounded-lg text-sm text-foreground focus:border-accent"
+                    className="flex-1 h-9 px-2.5 bg-card border border-border rounded-lg text-sm text-foreground focus:outline-none focus:border-accent"
                   >
                     {projects.map(p => (
                       <option key={p.id} value={p.id}>{p.name}</option>
@@ -1184,7 +1184,7 @@ export function Workspace({ workspaceId, prefill, onBack }: WorkspaceProps) {
                   value={subjectSearch}
                   onChange={e => setSubjectSearch(e.target.value)}
                   autoFocus
-                  className="w-full pl-8 pr-3 h-9 bg-card border border-border rounded-lg text-sm focus:border-accent placeholder:text-muted-foreground/50"
+                  className="w-full pl-8 pr-3 h-9 bg-card border border-border rounded-lg text-sm focus:outline-none focus:border-accent placeholder:text-muted-foreground/50"
                 />
               </div>
               {athletes.length === 0 ? (
@@ -1248,7 +1248,7 @@ export function Workspace({ workspaceId, prefill, onBack }: WorkspaceProps) {
                     value={wardrobeCreateName}
                     onChange={e => setWardrobeCreateName(e.target.value)}
                     placeholder="e.g. Nike Match Kit 2025"
-                    className="w-full h-9 px-3 bg-card border border-border rounded-lg text-sm focus:border-accent placeholder:text-muted-foreground/40"
+                    className="w-full h-9 px-3 bg-card border border-border rounded-lg text-sm focus:outline-none focus:border-accent placeholder:text-muted-foreground/40"
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -1405,7 +1405,7 @@ export function Workspace({ workspaceId, prefill, onBack }: WorkspaceProps) {
                     value={moodboardCreateName}
                     onChange={e => setMoodboardCreateName(e.target.value)}
                     placeholder="e.g. Dark editorial, summer vibes…"
-                    className="w-full h-9 px-3 bg-card border border-border rounded-lg text-sm focus:border-accent placeholder:text-muted-foreground/40"
+                    className="w-full h-9 px-3 bg-card border border-border rounded-lg text-sm focus:outline-none focus:border-accent placeholder:text-muted-foreground/40"
                   />
                 </div>
                 <div className="space-y-1.5">

@@ -26,7 +26,7 @@ function DirectionField({
         value={value}
         onChange={e => onChange(e.target.value)}
         rows={2}
-        className="w-full px-3 py-2 bg-background border border-border rounded-md text-xs leading-relaxed resize-none focus:border-accent placeholder:text-muted-foreground/40"
+        className="w-full px-3 py-2 bg-background border border-border rounded-md text-xs leading-relaxed resize-none focus:outline-none focus:border-accent placeholder:text-muted-foreground/40"
       />
     </div>
   );
@@ -157,7 +157,7 @@ function BuilderModal({ initial, onSave, onClose }: BuilderModalProps) {
             onChange={e => setName(e.target.value)}
             placeholder="Moodboard name…"
             autoFocus
-            className="w-full h-10 px-3 bg-card border border-border rounded-lg text-sm font-medium focus:border-accent placeholder:text-muted-foreground/40"
+            className="w-full h-10 px-3 bg-card border border-border rounded-lg text-sm font-medium focus:outline-none focus:border-accent placeholder:text-muted-foreground/40"
           />
 
           {/* Source images */}
@@ -202,7 +202,7 @@ function BuilderModal({ initial, onSave, onClose }: BuilderModalProps) {
                     onChange={e => { setUrlInput(e.target.value); setUrlErr(null); }}
                     onKeyDown={e => e.key === "Enter" && handleImportUrl()}
                     placeholder="pinterest.com/board, behance.net/gallery, or image URL…"
-                    className="flex-1 h-9 px-3 bg-card border border-border rounded-lg text-sm focus:border-accent placeholder:text-muted-foreground/40"
+                    className="flex-1 h-9 px-3 bg-card border border-border rounded-lg text-sm focus:outline-none focus:border-accent placeholder:text-muted-foreground/40"
                   />
                   <button
                     onClick={handleImportUrl}
@@ -328,7 +328,7 @@ function BuilderModal({ initial, onSave, onClose }: BuilderModalProps) {
               onChange={e => setNotes(e.target.value)}
               rows={3}
               placeholder="Extra direction appended when generating…"
-              className="w-full px-3 py-2.5 bg-card border border-border rounded-lg text-sm leading-relaxed resize-none focus:border-accent placeholder:text-muted-foreground/40"
+              className="w-full px-3 py-2.5 bg-card border border-border rounded-lg text-sm leading-relaxed resize-none focus:outline-none focus:border-accent placeholder:text-muted-foreground/40"
             />
           </div>
 

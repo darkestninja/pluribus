@@ -671,7 +671,7 @@ function AuthenticatedApp() {
             />
           )}
           <ErrorBoundary>
-          <Suspense fallback={<div className="flex-1 flex items-center justify-center"><span className="size-5 border-2 border-accent/30 border-t-accent rounded-full animate-spin" /></div>}>
+          <Suspense fallback={<div className="absolute inset-0 flex items-center justify-center"><span className="size-5 border-2 border-accent/30 border-t-accent rounded-full animate-spin" /></div>}>
           {currentView === "subjects" && (
             <AthleteLibrary
               preSelectedAthleteId={selectedAthleteId}

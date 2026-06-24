@@ -26,7 +26,7 @@ export function ArchivePage() {
               placeholder="Search archive…"
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className="w-56 h-8 pl-8 pr-3 bg-card border border-border rounded-md text-sm focus-visible:border-accent placeholder:text-muted-foreground"
+              className="w-56 h-8 pl-8 pr-3 bg-card border border-border rounded-md text-sm focus:outline-none focus:border-accent placeholder:text-muted-foreground"
             />
           </div>
         </div>
