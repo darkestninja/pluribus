@@ -635,7 +635,7 @@ function AuthenticatedApp() {
 
       {/* Desktop sidebar */}
       <aside
-        className={`${sidebarCollapsed ? "w-14" : "w-[208px]"} border-r border-border bg-background flex-col shrink-0 hidden md:flex transition-[width] duration-200 ease-out overflow-hidden`}
+        className={`${sidebarCollapsed ? "w-14" : "w-[208px]"} bg-secondary/30 flex-col shrink-0 hidden md:flex transition-[width] duration-200 ease-out overflow-hidden`}
       >
         {sidebarInner(sidebarCollapsed)}
       </aside>
@@ -643,7 +643,7 @@ function AuthenticatedApp() {
       {/* Mobile sidebar drawer */}
       {mobileSidebarOpen && (
         <div className="fixed inset-0 z-50 flex md:hidden" onClick={() => setMobileSidebarOpen(false)}>
-          <aside className="w-[208px] border-r border-border bg-background flex flex-col shrink-0 relative" onClick={e => e.stopPropagation()}>
+          <aside className="w-[208px] bg-secondary/30 flex flex-col shrink-0 relative" onClick={e => e.stopPropagation()}>
             <button
               onClick={() => setMobileSidebarOpen(false)}
               className="absolute top-3.5 right-3 z-10 size-7 flex items-center justify-center rounded-md hover:bg-secondary text-muted-foreground"
@@ -659,7 +659,7 @@ function AuthenticatedApp() {
       {/* Main */}
       <main className="flex-1 flex flex-col overflow-hidden min-w-0">
         {/* Top bar */}
-        <header className="h-14 border-b border-border bg-background px-4 md:px-6 flex items-center justify-between shrink-0 gap-3">
+        <header className="h-14 bg-secondary/30 px-4 md:px-6 flex items-center justify-between shrink-0 gap-3">
           <div className="flex items-center gap-3 min-w-0">
             <button
               onClick={() => setMobileSidebarOpen(true)}
