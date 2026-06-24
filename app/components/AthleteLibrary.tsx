@@ -1468,7 +1468,6 @@ export function AthleteLibrary({ preSelectedAthleteId, onAthleteDeselect, onGene
             </div>
           )}
         </div>
-        </div>
       </div>
 
       {/* ── Detail Panel ── */}
