@@ -328,21 +328,9 @@ export function QueuePage({ onOpenStudio }: QueuePageProps) {
   return (
     <div className="h-full flex flex-col overflow-hidden">
 
-      {/* Toolbar: stats + refresh */}
+      {/* Toolbar */}
       <div className="px-6 py-4 border-b border-border flex items-center gap-3 shrink-0">
-        <div className="flex gap-3 flex-1">
-          {[
-            { label: "Total",     value: counts.all      },
-            { label: "Completed", value: counts.complete  },
-            { label: "Running",   value: counts.running   },
-            { label: "Failed",    value: counts.failed    },
-          ].map(s => (
-            <div key={s.label} className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground">{s.label}</span>
-              <span className="text-sm font-semibold tabular-nums">{s.value}</span>
-            </div>
-          ))}
-        </div>
+        <span className="text-xs text-muted-foreground flex-1">{counts.all} run{counts.all !== 1 ? "s" : ""}</span>
         <button onClick={refresh} className="size-8 rounded-md border border-border bg-card hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors flex items-center justify-center shrink-0" title="Refresh">
           <RefreshCw className="size-3.5" strokeWidth={1.75} />
         </button>

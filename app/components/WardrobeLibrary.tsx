@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import {
-  Plus, X, Pencil, Trash2, Upload, Sparkles, Loader2, Check, ChevronLeft,
+  Plus, X, Pencil, Trash2, Upload, Sparkles, Loader2, Check, ChevronLeft, Shirt,
 } from "lucide-react";
 import {
   getWardrobeKits, addWardrobeKit, updateWardrobeKit, deleteWardrobeKit,
@@ -680,8 +680,8 @@ export function WardrobeLibrary({ onSelectKit, selectedKitId }: Props) {
       <div className="flex-1 overflow-y-auto p-6">
         {kits.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-4 py-24 text-center">
-            <div className="size-16 rounded-xl bg-card border border-border flex items-center justify-center text-2xl">
-              👕
+            <div className="size-16 rounded-xl bg-card border border-border flex items-center justify-center text-muted-foreground/40">
+              <Shirt className="size-7" strokeWidth={1.5} />
             </div>
             <div className="space-y-1">
               <p className="text-sm font-medium">No wardrobe kits yet</p>

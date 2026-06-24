@@ -24,7 +24,7 @@ import { AddAthleteModal } from "./components/AddAthleteModal";
 import {
   Search, Moon, Sun, Plus, Settings as SettingsIcon,
   Home, Folder, Users, Images, PanelLeft, Menu, X,
-  CheckCircle, AlertCircle, Info, LogOut, Shirt, Palette, ScanFace,
+  CheckCircle, AlertCircle, Info, LogOut, Shirt, Palette, ScanFace, ChevronUp,
 } from "lucide-react";
 import { RenderQueueIcon } from "./components/icons/RenderQueueIcon";
 import { getProjects, getRuns, isOnboarded, setOnboarded, initStore, clearStore, hydrateStore, getUserRole, addProject, getJobs, updateJob, updateRun, addCampaignOutput, getPendingScoringOutputs, scoreOutputWithRetry, getAthletes, getCanonicalReferencesSync, getAthleteProfile, setWriteErrorHandler } from "./lib/store";
@@ -117,6 +117,8 @@ function AuthenticatedApp() {
     try { return localStorage.getItem("sidebar-collapsed") === "true"; } catch { return false; }
   });
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
 
@@ -384,15 +386,28 @@ function AuthenticatedApp() {
     setShowNewCampaignModal(false);
   };
 
+  // Close user menu on outside click
+  useEffect(() => {
+    if (!userMenuOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+        setUserMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [userMenuOpen]);
+
   const navItems = useMemo(() => [
     { view: "home"       as const, label: "Home",             icon: Home      },
     { view: "projects"   as const, label: "Campaigns",        icon: Folder    },
-    { view: "subjects"   as const, label: "Talent",            icon: Users     },
+    { view: "subjects"   as const, label: "Talent",           icon: Users     },
     { view: "wardrobe"   as const, label: "Wardrobe",         icon: Shirt     },
     { view: "moodboards" as const, label: "Moodboards",       icon: Palette   },
     { view: "library"    as const, label: "Library",          icon: Images    },
+    { view: "queue"      as const, label: "Runs",             icon: RenderQueueIcon, badge: activeRenders },
     ...(isAdmin ? [{ view: "identity" as const, label: "Identity Studio", icon: ScanFace }] : []),
-  ], [isAdmin]);
+  ], [isAdmin, activeRenders]);
 
   const renderNavItem = (
     view: ViewType,
@@ -456,7 +471,7 @@ function AuthenticatedApp() {
         </button>
       </div>
 
-      {/* Quick actions: Home + Queue pill | New render */}
+      {/* Quick actions: Home + Search pill | New render */}
       {!collapsed && (
         <div className="px-2.5 pb-3 flex items-center gap-2 shrink-0">
           <div className="flex items-center rounded-lg border border-border bg-card overflow-hidden shrink-0">
@@ -469,12 +484,11 @@ function AuthenticatedApp() {
             </button>
             <div className="w-px h-4 bg-border" />
             <button
-              onClick={() => { navigateTo("queue"); setMobileSidebarOpen(false); }}
-              title="Render queue"
-              className={`relative flex items-center justify-center size-8 transition-colors ${currentView === "queue" ? "text-foreground bg-secondary" : "text-muted-foreground hover:text-foreground hover:bg-secondary"}`}
+              onClick={() => { setPaletteOpen(true); setMobileSidebarOpen(false); }}
+              title="Search (⌘K)"
+              className="flex items-center justify-center size-8 text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
             >
-              <RenderQueueIcon className="size-3.5" />
-              {activeRenders > 0 && <span className="absolute top-1 right-1 size-1.5 rounded-full bg-accent" />}
+              <Search className="size-3.5" strokeWidth={1.75} />
             </button>
           </div>
           <button
@@ -496,12 +510,11 @@ function AuthenticatedApp() {
             <Home className="size-4" strokeWidth={1.75} />
           </button>
           <button
-            onClick={() => navigateTo("queue")}
-            title="Render queue"
-            className={`relative flex items-center justify-center size-8 rounded-md transition-colors ${currentView === "queue" ? "bg-secondary text-foreground" : "text-muted-foreground hover:bg-card hover:text-foreground"}`}
+            onClick={() => { setPaletteOpen(true); }}
+            title="Search (⌘K)"
+            className="flex items-center justify-center size-8 rounded-md text-muted-foreground hover:bg-card hover:text-foreground transition-colors"
           >
-            <RenderQueueIcon className="size-4" />
-            {activeRenders > 0 && <span className="absolute top-0.5 right-0.5 size-1.5 rounded-full bg-accent" />}
+            <Search className="size-4" strokeWidth={1.75} />
           </button>
           <button
             onClick={() => goToStudio()}
@@ -513,57 +526,18 @@ function AuthenticatedApp() {
         </div>
       )}
 
-      {/* Search */}
-      <div className={`${collapsed ? "px-1.5" : "px-2.5"} pb-2 shrink-0`}>
-        <button
-          onClick={() => { setPaletteOpen(true); setMobileSidebarOpen(false); }}
-          title="Search"
-          className={`w-full flex items-center ${collapsed ? "justify-center" : "gap-2 px-2.5"} h-8 rounded-md bg-card hover:bg-secondary border border-border text-muted-foreground hover:text-foreground transition-colors`}
-        >
-          <Search className="size-3.5 shrink-0" strokeWidth={1.75} />
-          {!collapsed && <><span className="text-sm flex-1 text-left">Search</span><kbd className="text-xs text-muted-foreground/70 border border-border rounded px-1 py-0.5">⌘K</kbd></>}
-        </button>
-      </div>
-
       {/* Nav */}
       <nav className={`${collapsed ? "px-1.5" : "px-2"} flex-1 flex flex-col gap-0.5 overflow-y-auto`} aria-label="Main">
-        {navItems.filter(i => i.view !== "home").map(item => renderNavItem(item.view, item.label, item.icon, undefined, collapsed))}
+        {navItems.filter(i => i.view !== "home").map(item => renderNavItem(item.view, item.label, item.icon, item.badge, collapsed))}
       </nav>
 
-      {/* Footer */}
-      <div className={`p-2 border-t border-border flex flex-col ${collapsed ? "items-center" : ""} gap-0.5 shrink-0`}>
-        <button
-          onClick={() => setIsDark(!isDark)}
-          title={isDark ? "Light mode" : "Dark mode"}
-          className={`w-full flex items-center ${collapsed ? "justify-center" : "gap-2.5 px-2.5"} h-8 rounded-md text-muted-foreground hover:bg-card hover:text-foreground transition-colors`}
-        >
-          {isDark ? <Sun className="size-4 shrink-0" strokeWidth={1.75} /> : <Moon className="size-4 shrink-0" strokeWidth={1.75} />}
-          {!collapsed && <span className="text-sm">{isDark ? "Light" : "Dark"}</span>}
-        </button>
-        <button
-          onClick={() => navigateTo("settings")}
-          title="Settings"
-          className={`w-full flex items-center ${collapsed ? "justify-center" : "gap-2.5 px-2.5"} h-8 rounded-md transition-colors ${
-            currentView === "settings" ? "bg-secondary text-foreground" : "text-muted-foreground hover:bg-card hover:text-foreground"
-          }`}
-        >
-          <SettingsIcon className="size-4 shrink-0" strokeWidth={1.75} />
-          {!collapsed && <span className="text-sm">Settings</span>}
-        </button>
-        <button
-          onClick={handleSignOut}
-          title="Sign out"
-          className={`w-full flex items-center ${collapsed ? "justify-center" : "gap-2.5 px-2.5"} h-8 rounded-md text-muted-foreground hover:bg-card hover:text-red-400 transition-colors`}
-        >
-          <LogOut className="size-4 shrink-0" strokeWidth={1.75} />
-          {!collapsed && <span className="text-sm">Sign out</span>}
-        </button>
-        {!collapsed ? (
-          <div className="mt-2 px-2.5 py-2 flex items-center gap-2.5">
-            <div className="size-7 rounded-full bg-accent/20 text-accent flex items-center justify-center text-xs font-semibold shrink-0">
-              {user?.avatarInitials ?? "?"}
-            </div>
-            <div className="flex-1 min-w-0">
+      {/* Footer — user menu */}
+      <div ref={userMenuRef} className="p-2 border-t border-border shrink-0 relative">
+        {/* Dropdown menu */}
+        {userMenuOpen && (
+          <div className="absolute bottom-full left-2 right-2 mb-1 rounded-lg border border-border bg-background shadow-lg overflow-hidden z-50">
+            {/* User info header */}
+            <div className="px-3 py-2.5 border-b border-border">
               <div className="flex items-center gap-1.5">
                 <p className="text-sm font-medium truncate">{user?.name ?? "User"}</p>
                 {isAdmin && (
@@ -574,16 +548,69 @@ function AuthenticatedApp() {
               </div>
               <p className="text-xs text-muted-foreground truncate">{user?.email ?? ""}</p>
             </div>
+            {/* Dark mode toggle */}
+            <button
+              onClick={() => setIsDark(!isDark)}
+              className="w-full flex items-center gap-2.5 px-3 h-9 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+            >
+              {isDark ? <Sun className="size-4 shrink-0" strokeWidth={1.75} /> : <Moon className="size-4 shrink-0" strokeWidth={1.75} />}
+              {isDark ? "Light mode" : "Dark mode"}
+            </button>
+            {/* Settings */}
+            <button
+              onClick={() => { navigateTo("settings"); setUserMenuOpen(false); }}
+              className="w-full flex items-center gap-2.5 px-3 h-9 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+            >
+              <SettingsIcon className="size-4 shrink-0" strokeWidth={1.75} />
+              Settings
+            </button>
+            <div className="h-px bg-border mx-2" />
+            {/* Sign out */}
+            <button
+              onClick={handleSignOut}
+              className="w-full flex items-center gap-2.5 px-3 h-9 text-sm text-muted-foreground hover:text-red-400 hover:bg-secondary transition-colors"
+            >
+              <LogOut className="size-4 shrink-0" strokeWidth={1.75} />
+              Sign out
+            </button>
           </div>
-        ) : (
-          <div className="mt-1 flex justify-center relative">
+        )}
+
+        {/* Trigger button */}
+        {collapsed ? (
+          <button
+            onClick={() => setUserMenuOpen(o => !o)}
+            title="Account"
+            className="w-full flex justify-center py-1 relative"
+          >
             <div className="size-7 rounded-full bg-accent/20 text-accent flex items-center justify-center text-xs font-semibold">
               {user?.avatarInitials ?? "?"}
             </div>
             {isAdmin && (
-              <span className="absolute -top-1 -right-1 size-2.5 rounded-full bg-amber-400 border border-background" title="Admin" />
+              <span className="absolute top-0 right-1.5 size-2.5 rounded-full bg-amber-400 border border-background" title="Admin" />
             )}
-          </div>
+          </button>
+        ) : (
+          <button
+            onClick={() => setUserMenuOpen(o => !o)}
+            className="w-full flex items-center gap-2.5 px-2 py-2 rounded-md hover:bg-card transition-colors"
+          >
+            <div className="size-7 rounded-full bg-accent/20 text-accent flex items-center justify-center text-xs font-semibold shrink-0">
+              {user?.avatarInitials ?? "?"}
+            </div>
+            <div className="flex-1 min-w-0 text-left">
+              <div className="flex items-center gap-1.5">
+                <p className="text-sm font-medium truncate">{user?.name ?? "User"}</p>
+                {isAdmin && (
+                  <span className="text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-400 border border-amber-500/20 shrink-0">
+                    Admin
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground truncate">{user?.email ?? ""}</p>
+            </div>
+            <ChevronUp className={`size-3.5 text-muted-foreground shrink-0 transition-transform duration-150 ${userMenuOpen ? "" : "rotate-180"}`} strokeWidth={1.75} />
+          </button>
         )}
       </div>
     </>
