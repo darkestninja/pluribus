@@ -475,7 +475,7 @@ function AuthenticatedApp() {
       {/* Quick actions: Home + Search pill | New render */}
       {!collapsed && (
         <div className="px-2.5 pb-3 flex items-center gap-2 shrink-0">
-          <div className="flex items-center gap-0.5 rounded-lg border border-border bg-card p-0.5 shrink-0">
+          <div className="flex items-center gap-0.5 rounded-xl border border-border bg-card p-1 shrink-0">
             <button
               onClick={() => { navigateTo("home"); setMobileSidebarOpen(false); }}
               title="Home"
