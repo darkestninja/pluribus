@@ -281,6 +281,7 @@ export function Projects({ onLaunchStudio, extraProjects = [] }: ProjectsProps) 
             </div>
           );
         })()}
+        </div>
       </div>
 
       {showNewModal && (
