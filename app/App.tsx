@@ -444,10 +444,74 @@ function AuthenticatedApp() {
   const sidebarInner = (collapsed: boolean) => (
     <>
       {/* Brand */}
-      <div className={`h-14 flex items-center shrink-0 ${collapsed ? "justify-center" : "px-4 gap-2"}`}>
+      <div className={`h-14 flex items-center shrink-0 ${collapsed ? "justify-center px-2" : "px-3 gap-2"}`}>
         <div className="size-2 rounded-full bg-accent shrink-0" />
-        {!collapsed && <span className="text-sm font-semibold tracking-tight">Pluribus</span>}
+        {!collapsed && <span className="text-sm font-semibold tracking-tight flex-1">Pluribus</span>}
+        <button
+          onClick={toggleSidebar}
+          title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          className="hidden md:flex items-center justify-center size-7 rounded-md text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors shrink-0"
+        >
+          <PanelLeft className={`size-3.5 transition-transform duration-200 ${collapsed ? "rotate-180" : ""}`} strokeWidth={1.75} />
+        </button>
       </div>
+
+      {/* Quick actions: Home + Queue pill | New render */}
+      {!collapsed && (
+        <div className="px-2.5 pb-3 flex items-center gap-2 shrink-0">
+          <div className="flex items-center rounded-lg border border-border bg-card overflow-hidden shrink-0">
+            <button
+              onClick={() => { navigateTo("home"); setMobileSidebarOpen(false); }}
+              title="Home"
+              className={`flex items-center justify-center size-8 transition-colors ${currentView === "home" ? "text-foreground bg-secondary" : "text-muted-foreground hover:text-foreground hover:bg-secondary"}`}
+            >
+              <Home className="size-3.5" strokeWidth={1.75} />
+            </button>
+            <div className="w-px h-4 bg-border" />
+            <button
+              onClick={() => { navigateTo("queue"); setMobileSidebarOpen(false); }}
+              title="Render queue"
+              className={`relative flex items-center justify-center size-8 transition-colors ${currentView === "queue" ? "text-foreground bg-secondary" : "text-muted-foreground hover:text-foreground hover:bg-secondary"}`}
+            >
+              <RenderQueueIcon className="size-3.5" />
+              {activeRenders > 0 && <span className="absolute top-1 right-1 size-1.5 rounded-full bg-accent" />}
+            </button>
+          </div>
+          <button
+            onClick={() => { goToStudio(); setMobileSidebarOpen(false); }}
+            className="flex-1 flex items-center justify-center gap-1.5 h-8 rounded-lg bg-accent hover:bg-accent/90 text-accent-foreground text-sm font-medium transition-colors"
+          >
+            <Plus className="size-3.5" strokeWidth={2.25} />
+            New render
+          </button>
+        </div>
+      )}
+      {collapsed && (
+        <div className="px-1.5 pb-3 flex flex-col items-center gap-1.5 shrink-0">
+          <button
+            onClick={() => navigateTo("home")}
+            title="Home"
+            className={`flex items-center justify-center size-8 rounded-md transition-colors ${currentView === "home" ? "bg-secondary text-foreground" : "text-muted-foreground hover:bg-card hover:text-foreground"}`}
+          >
+            <Home className="size-4" strokeWidth={1.75} />
+          </button>
+          <button
+            onClick={() => navigateTo("queue")}
+            title="Render queue"
+            className={`relative flex items-center justify-center size-8 rounded-md transition-colors ${currentView === "queue" ? "bg-secondary text-foreground" : "text-muted-foreground hover:bg-card hover:text-foreground"}`}
+          >
+            <RenderQueueIcon className="size-4" />
+            {activeRenders > 0 && <span className="absolute top-0.5 right-0.5 size-1.5 rounded-full bg-accent" />}
+          </button>
+          <button
+            onClick={() => goToStudio()}
+            title="New render"
+            className="flex items-center justify-center size-8 rounded-md bg-accent hover:bg-accent/90 text-accent-foreground transition-colors"
+          >
+            <Plus className="size-4" strokeWidth={2.25} />
+          </button>
+        </div>
+      )}
 
       {/* Search */}
       <div className={`${collapsed ? "px-1.5" : "px-2.5"} pb-2 shrink-0`}>
@@ -463,19 +527,11 @@ function AuthenticatedApp() {
 
       {/* Nav */}
       <nav className={`${collapsed ? "px-1.5" : "px-2"} flex-1 flex flex-col gap-0.5 overflow-y-auto`} aria-label="Main">
-        {navItems.map(item => renderNavItem(item.view, item.label, item.icon, undefined, collapsed))}
+        {navItems.filter(i => i.view !== "home").map(item => renderNavItem(item.view, item.label, item.icon, undefined, collapsed))}
       </nav>
 
       {/* Footer */}
       <div className={`p-2 border-t border-border flex flex-col ${collapsed ? "items-center" : ""} gap-0.5 shrink-0`}>
-        <button
-          onClick={toggleSidebar}
-          title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-          className={`hidden md:flex w-full items-center ${collapsed ? "justify-center" : "gap-2.5 px-2.5"} h-8 rounded-md text-muted-foreground hover:bg-card hover:text-foreground transition-colors`}
-        >
-          <PanelLeft className={`size-4 shrink-0 transition-transform duration-200 ${collapsed ? "rotate-180" : ""}`} strokeWidth={1.75} />
-          {!collapsed && <span className="text-sm">Collapse</span>}
-        </button>
         <button
           onClick={() => setIsDark(!isDark)}
           title={isDark ? "Light mode" : "Dark mode"}
