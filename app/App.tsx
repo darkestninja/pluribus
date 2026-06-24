@@ -587,16 +587,18 @@ function AuthenticatedApp() {
           </button>
         ) : (
           <div className="flex items-center gap-1">
-            {/* Avatar + name + chevron */}
+            {/* Avatar + name · plan + chevron */}
             <button
               onClick={() => setUserMenuOpen(o => !o)}
-              className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-secondary transition-colors flex-1 min-w-0"
+              className="flex items-center gap-1.5 px-2 py-1.5 rounded-md hover:bg-secondary transition-colors"
             >
-              <div className="size-6 rounded-full bg-accent/20 text-accent flex items-center justify-center text-xs font-semibold shrink-0">
+              <div className="size-5 rounded-full bg-accent/20 text-accent flex items-center justify-center text-[10px] font-semibold shrink-0">
                 {user?.avatarInitials ?? "?"}
               </div>
-              <div className="flex items-center gap-1 min-w-0">
-                <span className="text-sm font-medium truncate">{user?.name ?? "User"}</span>
+              <div className="flex items-center gap-1">
+                <span className="text-xs font-medium">{user?.name ?? "User"}</span>
+                <span className="text-xs text-muted-foreground/60">·</span>
+                <span className="text-xs text-muted-foreground">{isAdmin ? "Admin" : "Pro"}</span>
                 <ChevronUp className={`size-3 text-muted-foreground shrink-0 transition-transform duration-150 ${userMenuOpen ? "" : "rotate-180"}`} strokeWidth={2} />
               </div>
             </button>
