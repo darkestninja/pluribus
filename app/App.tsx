@@ -689,16 +689,6 @@ function AuthenticatedApp() {
               );
             })()}
             <button
-              onClick={() => setCurrentView("queue")}
-              title="Queue"
-              className="relative h-8 w-8 rounded-md border border-border bg-card hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors hidden sm:flex items-center justify-center"
-            >
-              <RenderQueueIcon className="size-3.5" />
-              {activeRenders > 0 && (
-                <span className="absolute top-1 right-1 size-2 rounded-full bg-accent animate-pulse" />
-              )}
-            </button>
-            <button
               onClick={() => {
                 if (currentView === "projects") setShowNewCampaignModal(true);
                 else if (currentView === "subjects") setShowAddAthleteModal(true);
