@@ -25,6 +25,7 @@ import {
   Search, Moon, Sun, Plus, Settings as SettingsIcon,
   Home, Folder, Users, Images, PanelLeft, Menu, X,
   CheckCircle, AlertCircle, Info, LogOut, Shirt, Palette, ScanFace, ChevronUp,
+  Bell, HelpCircle, Sparkles,
 } from "lucide-react";
 import { RenderQueueIcon } from "./components/icons/RenderQueueIcon";
 import { getProjects, getRuns, isOnboarded, setOnboarded, initStore, clearStore, hydrateStore, getUserRole, addProject, getJobs, updateJob, updateRun, addCampaignOutput, getPendingScoringOutputs, scoreOutputWithRetry, getAthletes, getCanonicalReferencesSync, getAthleteProfile, setWriteErrorHandler } from "./lib/store";
@@ -533,11 +534,12 @@ function AuthenticatedApp() {
 
       {/* Footer — user menu */}
       <div ref={userMenuRef} className="p-2 shrink-0 relative">
-        {/* Dropdown menu */}
+
+        {/* Dropdown menu — opens upward */}
         {userMenuOpen && (
           <div className="absolute bottom-full left-2 right-2 mb-1 rounded-lg border border-border bg-background shadow-lg overflow-hidden z-50">
-            {/* User info header */}
-            <div className="px-3 py-2.5 border-b border-border">
+            {/* Identity */}
+            <div className="px-3 py-3">
               <div className="flex items-center gap-1.5">
                 <p className="text-sm font-medium truncate">{user?.name ?? "User"}</p>
                 {isAdmin && (
@@ -548,69 +550,63 @@ function AuthenticatedApp() {
               </div>
               <p className="text-xs text-muted-foreground truncate">{user?.email ?? ""}</p>
             </div>
-            {/* Dark mode toggle */}
-            <button
-              onClick={() => setIsDark(!isDark)}
-              className="w-full flex items-center gap-2.5 px-3 h-9 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
-            >
+            <div className="h-px bg-border" />
+            <button onClick={() => setIsDark(!isDark)}
+              className="w-full flex items-center gap-2.5 px-3 h-9 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors">
               {isDark ? <Sun className="size-4 shrink-0" strokeWidth={1.75} /> : <Moon className="size-4 shrink-0" strokeWidth={1.75} />}
               {isDark ? "Light mode" : "Dark mode"}
             </button>
-            {/* Settings */}
-            <button
-              onClick={() => { navigateTo("settings"); setUserMenuOpen(false); }}
-              className="w-full flex items-center gap-2.5 px-3 h-9 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
-            >
-              <SettingsIcon className="size-4 shrink-0" strokeWidth={1.75} />
-              Settings
+            <button className="w-full flex items-center gap-2.5 px-3 h-9 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors">
+              <Bell className="size-4 shrink-0" strokeWidth={1.75} />
+              Notifications
             </button>
-            <div className="h-px bg-border mx-2" />
-            {/* Sign out */}
-            <button
-              onClick={handleSignOut}
-              className="w-full flex items-center gap-2.5 px-3 h-9 text-sm text-muted-foreground hover:text-red-400 hover:bg-secondary transition-colors"
-            >
+            <button className="w-full flex items-center gap-2.5 px-3 h-9 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors">
+              <HelpCircle className="size-4 shrink-0" strokeWidth={1.75} />
+              Help
+            </button>
+            <button className="w-full flex items-center gap-2.5 px-3 h-9 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors">
+              <Sparkles className="size-4 shrink-0" strokeWidth={1.75} />
+              Upgrade plan
+            </button>
+            <div className="h-px bg-border" />
+            <button onClick={handleSignOut}
+              className="w-full flex items-center gap-2.5 px-3 h-9 text-sm text-muted-foreground hover:text-red-400 hover:bg-secondary transition-colors">
               <LogOut className="size-4 shrink-0" strokeWidth={1.75} />
               Sign out
             </button>
           </div>
         )}
 
-        {/* Trigger button */}
+        {/* Trigger row */}
         {collapsed ? (
-          <button
-            onClick={() => setUserMenuOpen(o => !o)}
-            title="Account"
-            className="w-full flex justify-center py-1 relative"
-          >
+          <button onClick={() => setUserMenuOpen(o => !o)} title="Account" className="w-full flex justify-center py-1 relative">
             <div className="size-7 rounded-full bg-accent/20 text-accent flex items-center justify-center text-xs font-semibold">
               {user?.avatarInitials ?? "?"}
             </div>
-            {isAdmin && (
-              <span className="absolute top-0 right-1.5 size-2.5 rounded-full bg-amber-400 border border-background" title="Admin" />
-            )}
+            {isAdmin && <span className="absolute top-0 right-1.5 size-2.5 rounded-full bg-amber-400 border border-background" title="Admin" />}
           </button>
         ) : (
-          <button
-            onClick={() => setUserMenuOpen(o => !o)}
-            className="w-full flex items-center gap-2.5 px-2 py-2 rounded-md hover:bg-card transition-colors"
-          >
-            <div className="size-7 rounded-full bg-accent/20 text-accent flex items-center justify-center text-xs font-semibold shrink-0">
-              {user?.avatarInitials ?? "?"}
-            </div>
-            <div className="flex-1 min-w-0 text-left">
-              <div className="flex items-center gap-1.5">
-                <p className="text-sm font-medium truncate">{user?.name ?? "User"}</p>
-                {isAdmin && (
-                  <span className="text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-400 border border-amber-500/20 shrink-0">
-                    Admin
-                  </span>
-                )}
+          <div className="flex items-center gap-1">
+            {/* Avatar + name + chevron */}
+            <button
+              onClick={() => setUserMenuOpen(o => !o)}
+              className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-card transition-colors flex-1 min-w-0"
+            >
+              <div className="size-6 rounded-full bg-accent/20 text-accent flex items-center justify-center text-xs font-semibold shrink-0">
+                {user?.avatarInitials ?? "?"}
               </div>
-              <p className="text-xs text-muted-foreground truncate">{user?.email ?? ""}</p>
-            </div>
-            <ChevronUp className={`size-3.5 text-muted-foreground shrink-0 transition-transform duration-150 ${userMenuOpen ? "" : "rotate-180"}`} strokeWidth={1.75} />
-          </button>
+              <span className="text-sm font-medium truncate flex-1 text-left">{user?.name ?? "User"}</span>
+              <ChevronUp className={`size-3.5 text-muted-foreground shrink-0 transition-transform duration-150 ${userMenuOpen ? "" : "rotate-180"}`} strokeWidth={1.75} />
+            </button>
+            {/* Settings shortcut */}
+            <button
+              onClick={() => { navigateTo("settings"); setUserMenuOpen(false); }}
+              title="Settings"
+              className={`size-7 flex items-center justify-center rounded-md transition-colors shrink-0 ${currentView === "settings" ? "text-foreground bg-secondary" : "text-muted-foreground hover:text-foreground hover:bg-card"}`}
+            >
+              <SettingsIcon className="size-3.5" strokeWidth={1.75} />
+            </button>
+          </div>
         )}
       </div>
     </>
