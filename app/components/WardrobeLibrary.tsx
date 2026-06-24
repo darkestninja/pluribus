@@ -517,7 +517,7 @@ function BuilderModal({
           {tab === "upload" && (
             <div className="p-5 space-y-4">
               <p className="text-xs text-muted-foreground">
-                Upload a garment image — flat lay, product photo, or outfit mockup. Claude will analyse it and write a prompt description.
+                Upload a garment image — flat lay, product photo, or outfit mockup. Pluribus will generate a prompt description.
               </p>
 
               {/* Sport selector */}

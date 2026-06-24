@@ -465,7 +465,7 @@ export function MoodboardLibrary() {
 
       {/* Toolbar */}
       <div className="px-6 py-4 border-b border-border flex items-center gap-3 shrink-0">
-        <p className="text-xs text-muted-foreground">Import references from images, PDFs, Pinterest, or Behance — Claude extracts the creative direction.</p>
+        <p className="text-xs text-muted-foreground">Import references from images, PDFs, Pinterest, or Behance.</p>
         <span className="text-xs text-muted-foreground ml-auto shrink-0">{moodboards.length} board{moodboards.length !== 1 ? "s" : ""}</span>
       </div>
 

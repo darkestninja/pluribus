@@ -8,7 +8,7 @@ export interface FaceScoreResult {
 }
 
 /**
- * Uses Claude vision to compare two faces on structural identity.
+ * Uses Pluribus vision to compare two faces on structural identity.
  * Ignores lighting, pose, expression, color, style.
  * Reference can be a data URL (base64) or an HTTP URL.
  */
