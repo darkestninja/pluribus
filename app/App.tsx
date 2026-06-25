@@ -448,9 +448,9 @@ function AuthenticatedApp() {
         <Icon className="size-4 shrink-0" strokeWidth={1.75} />
         <span className="text-sm flex-1 truncate">{label}</span>
         {badge !== undefined && badge > 0 && (
-          <span className="flex items-center gap-1 text-xs text-accent">
-            <span className="size-1.5 rounded-full bg-accent pulse-dot" />
-            {badge}
+          <span className="flex items-center gap-1 text-xs text-accent" aria-label={`${badge} active`}>
+            <span className="size-1.5 rounded-full bg-accent pulse-dot" aria-hidden="true" />
+            <span aria-hidden="true">{badge}</span>
           </span>
         )}
       </button>
@@ -465,6 +465,7 @@ function AuthenticatedApp() {
         {!collapsed && <span className="text-sm font-semibold tracking-tight flex-1">Pluribus</span>}
         <button
           onClick={toggleSidebar}
+          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           className="hidden md:flex items-center justify-center size-7 rounded-md text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors shrink-0"
         >
@@ -472,62 +473,65 @@ function AuthenticatedApp() {
         </button>
       </div>
 
-      {/* Quick actions: Home + Search pill | New render */}
-      {!collapsed && (
-        <div className="px-2.5 pb-3 flex items-center gap-2 shrink-0">
-          <div className="flex items-center gap-0.5 rounded-xl border border-border bg-card p-1 shrink-0">
+      {/* Nav — starts at same level as content island (pt-1 matches island's p-1 gap) */}
+      <nav className={`${collapsed ? "px-1.5" : "px-2"} pt-1 flex-1 flex flex-col gap-0.5 overflow-y-auto`} aria-label="Main">
+        {/* Quick actions row */}
+        {!collapsed ? (
+          <div className="flex items-center gap-2 pb-1.5 shrink-0">
+            <div className="flex items-center gap-0.5 rounded-xl border border-border bg-card p-1 shrink-0">
+              <button
+                onClick={() => { navigateTo("home"); setMobileSidebarOpen(false); }}
+                aria-label="Home"
+                title="Home"
+                className={`flex items-center justify-center size-7 rounded-md transition-colors ${currentView === "home" ? "text-foreground bg-secondary" : "text-muted-foreground hover:text-foreground hover:bg-secondary"}`}
+              >
+                <Home className="size-3.5" strokeWidth={1.75} />
+              </button>
+              <button
+                onClick={() => { setPaletteOpen(true); setMobileSidebarOpen(false); }}
+                aria-label="Search (⌘K)"
+                title="Search (⌘K)"
+                className="flex items-center justify-center size-7 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+              >
+                <Search className="size-3.5" strokeWidth={1.75} />
+              </button>
+            </div>
             <button
-              onClick={() => { navigateTo("home"); setMobileSidebarOpen(false); }}
-              title="Home"
-              className={`flex items-center justify-center size-7 rounded-md transition-colors ${currentView === "home" ? "text-foreground bg-secondary" : "text-muted-foreground hover:text-foreground hover:bg-secondary"}`}
+              onClick={() => { goToStudio(); setMobileSidebarOpen(false); }}
+              className="flex-1 flex items-center justify-center gap-1.5 h-8 rounded-lg bg-accent hover:bg-accent/90 text-accent-foreground text-xs font-medium transition-colors"
             >
-              <Home className="size-3.5" strokeWidth={1.75} />
-            </button>
-            <button
-              onClick={() => { setPaletteOpen(true); setMobileSidebarOpen(false); }}
-              title="Search (⌘K)"
-              className="flex items-center justify-center size-7 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
-            >
-              <Search className="size-3.5" strokeWidth={1.75} />
+              <Plus className="size-3.5" strokeWidth={2.25} />
+              New render
             </button>
           </div>
-          <button
-            onClick={() => { goToStudio(); setMobileSidebarOpen(false); }}
-            className="flex-1 flex items-center justify-center gap-1.5 h-8 rounded-lg bg-accent hover:bg-accent/90 text-accent-foreground text-xs font-medium transition-colors"
-          >
-            <Plus className="size-3.5" strokeWidth={2.25} />
-            New render
-          </button>
-        </div>
-      )}
-      {collapsed && (
-        <div className="px-1.5 pb-3 flex flex-col items-center gap-1.5 shrink-0">
-          <button
-            onClick={() => navigateTo("home")}
-            title="Home"
-            className={`flex items-center justify-center size-8 rounded-md transition-colors ${currentView === "home" ? "bg-secondary text-foreground" : "text-muted-foreground hover:bg-card hover:text-foreground"}`}
-          >
-            <Home className="size-4" strokeWidth={1.75} />
-          </button>
-          <button
-            onClick={() => { setPaletteOpen(true); }}
-            title="Search (⌘K)"
-            className="flex items-center justify-center size-8 rounded-md text-muted-foreground hover:bg-card hover:text-foreground transition-colors"
-          >
-            <Search className="size-4" strokeWidth={1.75} />
-          </button>
-          <button
-            onClick={() => goToStudio()}
-            title="New render"
-            className="flex items-center justify-center size-8 rounded-md bg-accent hover:bg-accent/90 text-accent-foreground transition-colors"
-          >
-            <Plus className="size-4" strokeWidth={2.25} />
-          </button>
-        </div>
-      )}
-
-      {/* Nav */}
-      <nav className={`${collapsed ? "px-1.5" : "px-2"} flex-1 flex flex-col gap-0.5 overflow-y-auto`} aria-label="Main">
+        ) : (
+          <div className="flex flex-col items-center gap-1 pb-1.5 shrink-0">
+            <button
+              onClick={() => navigateTo("home")}
+              aria-label="Home"
+              title="Home"
+              className={`flex items-center justify-center size-8 rounded-md transition-colors ${currentView === "home" ? "bg-secondary text-foreground" : "text-muted-foreground hover:bg-card hover:text-foreground"}`}
+            >
+              <Home className="size-4" strokeWidth={1.75} />
+            </button>
+            <button
+              onClick={() => { setPaletteOpen(true); }}
+              aria-label="Search (⌘K)"
+              title="Search (⌘K)"
+              className="flex items-center justify-center size-8 rounded-md text-muted-foreground hover:bg-card hover:text-foreground transition-colors"
+            >
+              <Search className="size-4" strokeWidth={1.75} />
+            </button>
+            <button
+              onClick={() => goToStudio()}
+              aria-label="New render"
+              title="New render"
+              className="flex items-center justify-center size-8 rounded-md bg-accent hover:bg-accent/90 text-accent-foreground transition-colors"
+            >
+              <Plus className="size-4" strokeWidth={2.25} />
+            </button>
+          </div>
+        )}
         {navItems.filter(i => i.view !== "home").map(item => renderNavItem(item.view, item.label, item.icon, item.badge, collapsed))}
       </nav>
 
@@ -536,9 +540,9 @@ function AuthenticatedApp() {
 
         {/* Dropdown menu — opens upward */}
         {userMenuOpen && (
-          <div className="absolute bottom-full left-2 right-2 mb-1 rounded-lg border border-border bg-background shadow-lg overflow-hidden z-50">
+          <div role="menu" aria-label="Account menu" className="absolute bottom-full left-2 right-2 mb-1 rounded-lg border border-border bg-background shadow-lg overflow-hidden z-50">
             {/* Identity */}
-            <div className="px-3 py-3">
+            <div className="px-3 py-3" role="presentation">
               <div className="flex items-center gap-1.5">
                 <p className="text-sm font-medium truncate">{user?.name ?? "User"}</p>
                 {isAdmin && (
@@ -549,26 +553,26 @@ function AuthenticatedApp() {
               </div>
               <p className="text-xs text-muted-foreground truncate">{user?.email ?? ""}</p>
             </div>
-            <div className="h-px bg-border" />
-            <button onClick={() => setIsDark(!isDark)}
+            <div className="h-px bg-border" role="separator" />
+            <button role="menuitem" onClick={() => setIsDark(!isDark)}
               className="w-full flex items-center gap-2.5 px-3 h-9 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors">
               {isDark ? <Sun className="size-4 shrink-0" strokeWidth={1.75} /> : <Moon className="size-4 shrink-0" strokeWidth={1.75} />}
               {isDark ? "Light mode" : "Dark mode"}
             </button>
-            <button className="w-full flex items-center gap-2.5 px-3 h-9 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors">
+            <button role="menuitem" className="w-full flex items-center gap-2.5 px-3 h-9 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors">
               <Bell className="size-4 shrink-0" strokeWidth={1.75} />
               Notifications
             </button>
-            <button className="w-full flex items-center gap-2.5 px-3 h-9 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors">
+            <button role="menuitem" className="w-full flex items-center gap-2.5 px-3 h-9 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors">
               <HelpCircle className="size-4 shrink-0" strokeWidth={1.75} />
               Help
             </button>
-            <button className="w-full flex items-center gap-2.5 px-3 h-9 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors">
+            <button role="menuitem" className="w-full flex items-center gap-2.5 px-3 h-9 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors">
               <Sparkles className="size-4 shrink-0" strokeWidth={1.75} />
               Upgrade plan
             </button>
-            <div className="h-px bg-border" />
-            <button onClick={handleSignOut}
+            <div className="h-px bg-border" role="separator" />
+            <button role="menuitem" onClick={handleSignOut}
               className="w-full flex items-center gap-2.5 px-3 h-9 text-sm text-muted-foreground hover:text-red-400 hover:bg-secondary transition-colors">
               <LogOut className="size-4 shrink-0" strokeWidth={1.75} />
               Sign out
@@ -848,6 +852,7 @@ function AuthenticatedApp() {
               </button>
             )}
             <button
+              aria-label="Close"
               onClick={() => setToasts(prev => prev.filter(x => x.id !== t.id))}
               className="text-muted-foreground hover:text-foreground shrink-0"
             >

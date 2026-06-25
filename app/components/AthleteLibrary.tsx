@@ -38,11 +38,11 @@ function captureReadiness(count: number): { pct: number; color: string; label: s
 }
 
 // ── Progress ring ─────────────────────────────────────────────────────────────
-function ProgressRing({ pct, color, size = 30 }: { pct: number; color: string; size?: number }) {
+function ProgressRing({ pct, color, size = 30, label }: { pct: number; color: string; size?: number; label?: string }) {
   const r = (size - 5) / 2;
   const circ = 2 * Math.PI * r;
   return (
-    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ transform: "rotate(-90deg)" }}>
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} role="img" aria-label={label ?? `${pct}%`} style={{ transform: "rotate(-90deg)" }}>
       <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="2.5" />
       <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={color} strokeWidth="2.5"
         strokeDasharray={circ} strokeDashoffset={circ * (1 - pct / 100)} strokeLinecap="round" />

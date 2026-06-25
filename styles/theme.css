@@ -1,6 +1,6 @@
 @custom-variant dark (&:is(.dark *));
 
-html { font-size: 13px; }
+html { font-size: 16px; }
 
 /* ============================================================
    Pluribus — Simple Design System (Figma Community) tokens
@@ -280,6 +280,15 @@ html { font-size: 13px; }
     outline: 2px solid var(--ring);
     outline-offset: 2px;
     border-radius: var(--sds-radius-sm);
+  }
+  /* Restore focus ring for form controls whose classes include focus:outline-none.
+     Specificity (0,0,1) can be beaten by Tailwind utility classes (0,1,1),
+     so we use !important here to ensure keyboard focus is always visible. */
+  input:focus-visible,
+  textarea:focus-visible,
+  select:focus-visible {
+    outline: 2px solid var(--ring) !important;
+    outline-offset: 0 !important;
   }
 
   html {

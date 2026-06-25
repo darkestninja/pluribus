@@ -49,6 +49,8 @@ function ColorPicker({
             key={c.id}
             type="button"
             title={c.label}
+            aria-label={c.label}
+            aria-pressed={value === c.id}
             onClick={() => onChange(c.id)}
             className={`size-6 rounded-full border-2 transition-all ${
               value === c.id ? "border-white scale-110" : "border-transparent hover:scale-105"

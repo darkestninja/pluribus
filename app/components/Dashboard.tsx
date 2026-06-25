@@ -101,9 +101,9 @@ export function Dashboard({ onOpenCampaigns, onNewCampaign, onQuickGenerate, onA
                   ? athletes.filter(a => a.name === project.athleteName)
                   : [];
                 return (
-                  <div
+                  <button
                     key={project.id}
-                    className="group rounded-xl overflow-hidden bg-card border border-border hover:border-accent/40 transition-all cursor-pointer"
+                    className="group rounded-xl overflow-hidden bg-card border border-border hover:border-accent/40 transition-all cursor-pointer text-left w-full"
                     onClick={onOpenCampaigns}
                   >
                     <div className="aspect-[16/9] relative overflow-hidden">
@@ -159,7 +159,7 @@ export function Dashboard({ onOpenCampaigns, onNewCampaign, onQuickGenerate, onA
                         );
                       })()}
                     </div>
-                  </div>
+                  </button>
                 );
               })}
             </div>
@@ -191,14 +191,18 @@ export function Dashboard({ onOpenCampaigns, onNewCampaign, onQuickGenerate, onA
                 return (
                   <div
                     key={subject.id}
+                    role="button"
+                    tabIndex={0}
                     className="group relative rounded-lg overflow-hidden bg-card border border-border hover:border-accent/40 transition-colors cursor-pointer"
                     onClick={() => onAthleteClick(subject.id)}
+                    onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onAthleteClick(subject.id); } }}
                   >
                     <div className="aspect-[3/4] relative overflow-hidden">
                       <img src={subject.image} alt={subject.name} className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.03]" />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/10 to-transparent" />
                       <button
                         onClick={e => { e.stopPropagation(); onAthleteGenerate(subject.id); }}
+                        aria-label={`Generate for ${subject.name}`}
                         title="Generate"
                         className="absolute top-2 right-2 size-8 rounded-md bg-black/50 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-all text-white hover:bg-accent hover:text-accent-foreground flex items-center justify-center"
                       >
